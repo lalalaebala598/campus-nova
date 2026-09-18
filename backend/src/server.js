@@ -12,7 +12,7 @@ const snapshot = JSON.parse(fs.readFileSync(path.join(DATA, 'campus.snapshot.jso
 const sessions = new Map();
 const attempts = new Map();
 const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 const TTL = 1000 * 60 * 60 * 8;
 const APP_VERSION = '13.0.0-final';
 const DEBUG_CAMPUS = process.env.DEBUG_CAMPUS === 'true';
