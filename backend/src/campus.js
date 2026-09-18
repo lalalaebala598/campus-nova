@@ -120,7 +120,7 @@ function hasMoodleSessionCookie(jar) {
 function hasWebCookie(jar) {
   return [...(jar?.keys?.() || [])].some(k => /^(?:MoodleSession|session-cookie)/i.test(String(k || '')));
 }
-function extractTestSessionId(pathname) {
+function extractTestSessionId(pathname, baseUrl = CAMPUS_ORIGIN) {
   try {
     const u = new URL(pathname, baseUrl);
     const value = u.searchParams.get('testsession');
@@ -533,7 +533,7 @@ export class CampusSession {
   }
   async bootstrapWebContext(seedPath = '/my/', { maxPages = 4 } = {}) {
     const candidates = [seedPath];
-    const userId = this.userid || extractTestSessionId(seedPath);
+    const userId = this.userid || extractTestSessionId(seedPath, this.baseUrl);
     if (userId) candidates.push(`/user/profile.php?id=${encodeURIComponent(userId)}`);
     candidates.push('/course/index.php', '/');
     const seen = new Set();
@@ -581,12 +581,12 @@ export class CampusSession {
     // Campus uses a two-step testsession redirect. Keep the Moodle cookie
     // produced by the POST and follow the redirect without switching auth modes.
     let followPath = r.headers.get('location') || '/my/';
-    const testsessionId = extractTestSessionId(followPath);
+    const testsessionId = extractTestSessionId(followPath, this.baseUrl);
     if (testsessionId && !this.userid) this.userid = testsessionId;
     const follow = await this.requestPage(followPath, 8);
     const verifyHtml = await follow.response.text();
     const cfg = parseConfig(verifyHtml);
-    const detectedUserId = cfg.userid || extractTestSessionId(followPath) || this.userid || null;
+    const detectedUserId = cfg.userid || extractTestSessionId(followPath, this.baseUrl) || this.userid || null;
     const detectedUser = parseUser(verifyHtml, detectedUserId);
     const authenticated = looksAuthenticatedPage(follow.path, follow.response.status, verifyHtml) || (follow.path.startsWith('/my/') && follow.response.status >= 200 && follow.response.status < 300 && hasWebCookie(this.jar));
 
