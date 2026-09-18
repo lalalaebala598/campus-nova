@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {parseCourse} from '../backend/src/campus.js';
+import {ActivityRegistry} from '../backend/src/activity-registry.js';
+import {ActivityIndex} from '../backend/src/activity-index.js';
+import {CourseGraph} from '../backend/src/course-graph.js';
+import {ActivityEngine} from '../backend/src/activity-engine.js';
+import {FormService} from '../backend/src/form-service.js';
+import {FileService} from '../backend/src/file-service.js';
+import {OperationTrace} from '../backend/src/operation-trace.js';
+
+const html=fs.readFileSync(new URL('./fixtures/course-33043.html',import.meta.url),'utf8');
+const parsed=parseCourse(html,33043);
+const registry=new ActivityRegistry();
+const index=new ActivityIndex({scopeId:'global-test'});
+const trace=new OperationTrace({enabled:false});
+const graph=new CourseGraph({scopeId:'global-test',registry,index,trace});
+graph.mergeCourse(parsed,{source:{transport:'WEB_FORM',endpoint:'/course/view.php?id=33043',operation:'course.view',parser:'fixture'}});
+const fileFixture=graph.mergeCourse({id:99000,title:'Global file fixture',sections:[{id:1,name:'Files',activities:[{id:99001,cmid:99001,instance:99002,modname:'resource',name:'Lecture PDF',contents:[{type:'file',filename:'Lecture.pdf',fileurl:'/pluginfile.php/99002/mod_resource/content/0/Lecture.pdf',mimetype:'application/pdf',filesize:1234}]}]}]});
+assert.equal(graph.getActivitiesByType('assign').length,25);
+assert.equal(graph.getActivitiesByType('quiz').length,5);
+assert.ok(graph.getActivitiesWithCapability('canDownload').length>=1);
+assert.equal(fileFixture.sections[0].activities[0].capabilities.canDownload,true);
+
+const calls=[];
+const session={baseUrl:'https://campus.fa.ru',trace,async request(path,options={}){
+  if(/\/mod\/quiz\/attempt\.php/i.test(String(path))) return new Response('<html><main><h1>Quiz attempt</h1></main></html>',{status:200,headers:{'content-type':'text/html'}});
+  throw new Error('unexpected request '+path);
+},async executeOperation(op,ctx,params,opts){calls.push({op,ctx,params,opts});
+  if(op==='assignment.view')return {response:new Response('<html><title>A</title><div>Add submission</div></html>',{status:200,headers:{'content-type':'text/html'}}),parsed:{html:'<html><title>A</title><div>Add submission</div></html>',title:'A'}};
+  if(op==='assignment.edit')return {response:new Response('<form action="/mod/assign/view.php?id=12" method="post"><input type="hidden" name="sesskey" value="secret"><input type="hidden" name="id" value="12"><textarea name="onlinetext">hello</textarea><input type="submit" name="submitbutton" value="Save changes"><input type="submit" name="submitbutton" value="Submit assignment"></form>',{status:200,headers:{'content-type':'text/html'}}),parsed:{html:'<form action="/mod/assign/view.php?id=12" method="post"><input type="hidden" name="sesskey" value="secret"><input type="hidden" name="id" value="12"><textarea name="onlinetext">hello</textarea><input type="submit" name="submitbutton" value="Save changes"><input type="submit" name="submitbutton" value="Submit assignment"></form>'}};
+  if(op==='quiz.view')return {response:new Response('<html><title>Q</title><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="12"><input type="hidden" name="sesskey" value="secret"><input type="submit" name="submitbutton" value="Attempt quiz"></form></html>',{status:200,headers:{'content-type':'text/html'}}),parsed:{html:'<html><title>Q</title><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="12"><input type="hidden" name="sesskey" value="secret"><input type="submit" name="submitbutton" value="Attempt quiz"></form></html>',title:'Q'}};
+  if(op==='form.submit.runtime'){ if(/startattempt/.test(String(params.action||''))) return {response:new Response('',{status:303,headers:{location:'/mod/quiz/attempt.php?attempt=77&cmid=12','content-type':'text/html'}}),parsed:null}; return {response:new Response('<html><title>ok</title><div>submitted</div></html>',{status:200,headers:{'content-type':'text/html'}}),parsed:{html:'<html><title>ok</title><div>submitted</div></html>',title:'ok'}}; }
+  throw new Error('unexpected '+op);
+}};
+const forms=new FormService({session,trace});
+const files=new FileService({session,trace});
+const engine=new ActivityEngine({registry,index,session,trace,formService:forms,fileService:files});
+const assign=index.getActivitiesByType('assign')[0];
+const assignEdit=await engine.execute(assign.ref,'edit');
+assert.equal(assignEdit.form.hasSesskey,true);
+const assignSave=await engine.execute(assign.ref,'save',{onlinetext:'updated'});
+assert.equal(assignSave.confirmed,true);
+assert.ok(calls.some(c=>c.op==='form.submit.runtime'));
+const quiz=index.getActivitiesByType('quiz')[0];
+const quizOpen=await engine.open(quiz.ref);
+assert.equal(quizOpen.capabilities.canStart,true);
+const quizStart=await engine.execute(quiz.ref,'start',{});
+assert.equal(quizStart.confirmed,true);
+assert.ok(engine.getActions(quiz.ref).find(x=>x.name==='start'&&x.verification==='RUNTIME_DISCOVERED'));
+await assert.rejects(()=>engine.execute(quiz.ref,'finish'), err=>/не подтверждена|UNVERIFIED|HAR/i.test(err?.message||err?.code||''));
+console.log('PASS global activity layer: Activity Index-backed workflow routing + runtime-discovered form execution + unverified quiz finish stays blocked');
+
+const globalAssignments = graph.getActivitiesByType('assign');
+const globalQuizzes = graph.getActivitiesByType('quiz');
+assert.equal(globalAssignments.length, 25);
+assert.equal(globalQuizzes.length, 5);
+assert.ok(globalAssignments.every(a => a.relations?.course?.name));
+assert.ok(globalQuizzes.every(a => a.ref.cmid));
+console.log('PASS global activity model: normalized relations feed the future global sections from one Activity Index');

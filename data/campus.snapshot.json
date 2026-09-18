@@ -1,0 +1,85 @@
+{
+  "source": "Campus Nova demo snapshot",
+  "capturedPages": [],
+  "courses": [
+    {
+      "id": 10001,
+      "fullname": "Основы программирования",
+      "shortname": "Основы программирования",
+      "idnumber": "DEMO-01",
+      "summary": "Демо-курс для просмотра интерфейса Nova.",
+      "summaryformat": 1,
+      "startdate": 0,
+      "enddate": 0,
+      "visible": true,
+      "showactivitydates": true,
+      "showcompletionconditions": null,
+      "fullnamedisplay": "Основы программирования",
+      "viewurl": "#",
+      "progress": 64,
+      "hasprogress": true,
+      "isfavourite": false,
+      "hidden": false,
+      "showshortname": false,
+      "coursecategory": "Демонстрация",
+      "courseimagePresent": false
+    },
+    {
+      "id": 10002,
+      "fullname": "Математический анализ",
+      "shortname": "Матан",
+      "idnumber": "DEMO-02",
+      "summary": "Демо-курс для просмотра оценок и календаря.",
+      "summaryformat": 1,
+      "startdate": 0,
+      "enddate": 0,
+      "visible": true,
+      "showactivitydates": true,
+      "showcompletionconditions": null,
+      "fullnamedisplay": "Математический анализ",
+      "viewurl": "#",
+      "progress": 42,
+      "hasprogress": true,
+      "isfavourite": false,
+      "hidden": false,
+      "showshortname": false,
+      "coursecategory": "Демонстрация",
+      "courseimagePresent": false
+    },
+    {
+      "id": 10003,
+      "fullname": "Экономика",
+      "shortname": "Экономика",
+      "idnumber": "DEMO-03",
+      "summary": "Демо-курс.",
+      "summaryformat": 1,
+      "startdate": 0,
+      "enddate": 0,
+      "visible": true,
+      "showactivitydates": true,
+      "showcompletionconditions": null,
+      "fullnamedisplay": "Экономика",
+      "viewurl": "#",
+      "progress": 78,
+      "hasprogress": true,
+      "isfavourite": false,
+      "hidden": false,
+      "showshortname": false,
+      "coursecategory": "Демонстрация",
+      "courseimagePresent": false
+    }
+  ],
+  "calendarEvents": [],
+  "messages": [],
+  "grades": [
+    {
+      "url": "#",
+      "items": [
+        {"name": "Математический анализ", "grade": "42", "range": "0–100", "percentage": "42 %", "feedback": "", "contribution": "42 %"},
+        {"name": "Основы программирования", "grade": "64", "range": "0–100", "percentage": "64 %", "feedback": "", "contribution": "64 %"}
+      ],
+      "title": "Демо-оценки"
+    }
+  ],
+  "routes": []
+}
