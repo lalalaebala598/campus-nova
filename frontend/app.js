@@ -1283,8 +1283,136 @@ function viewPage(){
   if(state.status.view==='error') body=statePanel('error','view');
   return `<section class="page content-page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="dashboard">${icon('back',17)} Назад</button><button class="secondary" id="content-refresh">${icon('refresh',16)} Обновить</button></div><h1 id="view-title">${esc(title)}</h1><div id="campus-content">${body}</div></div></section>`;
 }
-function login(){const remembered=state.campusUrl||'https://campus.fa.ru';return `<div class="auth"><div class="auth-left"><div class="auth-inner"><div class="auth-wordmark"><span class="auth-wordmark-mark">${icon('university',22)}</span><span class="auth-wordmark-copy"><small>Новый интерфейс Campus</small><b><span>Ваш</span> <strong>Campus Nova</strong></b></span></div><div class="eyebrow">ПОДКЛЮЧЕНИЕ УЧЕБНОГО КАБИНЕТА</div><h1>Всё для учёбы.<br><span>В одном месте.</span></h1><p>Укажи адрес своего Campus. Nova возьмёт реальные курсы, задания, оценки, файлы и расписание из него и покажет их в новом интерфейсе.</p><form id="login-form"><label>Ссылка на Campus<input name="campusUrl" value="${esc(remembered)}" inputmode="url" autocomplete="url" required placeholder="https://campus.example.ru"></label><label>Логин<input name="username" autocomplete="username" required placeholder="Логин"></label><label>Пароль<div class="password"><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Пароль"><button type="button" id="toggle-pass" aria-label="Показать пароль">${icon('eye',15)}</button></div></label><button class="primary wide" type="submit">Подключить Campus ${icon('arrow',17)}</button><button class="secondary wide" type="button" id="demo-mode">Посмотреть демо</button><div class="security">${icon('check',16)} Nova не сохраняет пароль Campus в профиле.</div><div class="connect-note">Можно указать адрес любого доступного Campus на базе Moodle. После подключения все данные привязаны к этой Campus-сессии.</div><div id="login-error"></div></form></div></div><div class="auth-visual"><img class="auth-photo" src="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400" srcset="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x, https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x" sizes="50vw" alt="Университетский кампус" width="2400" height="1600" fetchpriority="high" decoding="async"><div class="auth-visual-overlay"></div><div class="auth-copy"><span>Campus Nova</span><b>Учёба без лишнего шума.</b><small>Твой Campus. Новый интерфейс.</small></div></div></div>`}
+function login(){
+  const remembered = state.campusUrl || 'https://campus.fa.ru';
 
+  return `
+    <div class="auth">
+
+      <section class="auth-left">
+        <div class="auth-inner">
+
+          <div class="auth-wordmark">
+            <span class="auth-wordmark-mark">
+              ${icon('university',22)}
+            </span>
+
+            <span class="auth-wordmark-copy">
+              <small>CAMPUS NOVA</small>
+              <b><span>Ваш</span> Campus</b>
+            </span>
+          </div>
+
+          <div class="eyebrow">ВХОД В CAMPUS</div>
+
+          <h1>
+            Ваш <span>Campus.</span><br>
+            Всё важное рядом.
+          </h1>
+
+          <p class="auth-lead">
+            Войдите, чтобы открыть курсы, задания,
+            расписание и оценки в интерфейсе Nova.
+          </p>
+
+          <form id="login-form">
+
+            <input
+              type="hidden"
+              name="campusUrl"
+              value="${esc(remembered)}"
+            >
+
+            <label>
+              Логин
+              <input
+                name="username"
+                autocomplete="username"
+                required
+                placeholder="Введите логин"
+              >
+            </label>
+
+            <label>
+              Пароль
+
+              <div class="password">
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  placeholder="Введите пароль"
+                >
+
+                <button
+                  type="button"
+                  id="toggle-pass"
+                  aria-label="Показать пароль"
+                >
+                  ${icon('eye',15)}
+                </button>
+              </div>
+            </label>
+
+            <button
+              class="primary wide"
+              type="submit"
+            >
+              Войти в Campus
+              ${icon('arrow',17)}
+            </button>
+
+            <button
+              class="secondary wide"
+              type="button"
+              id="demo-mode"
+            >
+              Посмотреть демо
+            </button>
+
+            <div class="security">
+              ${icon('check',15)}
+              Пароль не сохраняется в профиле Nova.
+            </div>
+
+            <div id="login-error"></div>
+
+          </form>
+        </div>
+      </section>
+
+      <section class="auth-visual">
+
+        <img
+          class="auth-photo"
+          src="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400"
+          srcset="
+            https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x,
+            https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x
+          "
+          sizes="58vw"
+          alt="Университетский кампус"
+          width="2400"
+          height="1600"
+          fetchpriority="high"
+          decoding="async"
+        >
+
+        <div class="auth-visual-overlay"></div>
+
+        <div class="auth-copy">
+          <span>Campus Nova</span>
+          <b>Ваш Campus.<br>Новый взгляд.</b>
+          <small>Курсы · задания · оценки · расписание</small>
+        </div>
+
+      </section>
+
+    </div>
+  `;
+}
 
 function playNavMotion(){
   const active = document.querySelector('.nav-item.active');

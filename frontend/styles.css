@@ -4785,3 +4785,251 @@ tbody tr:hover td{
   }
 }
 
+
+
+/* =========================================================
+   CAMPUS NOVA — PREMIUM LOGIN / CONNECTION SCREEN
+   ========================================================= */
+
+.auth{
+  min-height:100dvh;
+  height:100dvh;
+  grid-template-columns:minmax(430px,.84fr) minmax(560px,1.16fr);
+  overflow:hidden;
+}
+
+.auth-left{
+  min-height:100dvh;
+  height:100dvh;
+  padding:32px clamp(28px,5vw,82px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:auto;
+}
+
+.auth-inner{
+  width:min(470px,100%);
+}
+
+.auth-wordmark{
+  margin-bottom:36px;
+  gap:12px;
+}
+
+.auth-wordmark-mark{
+  width:46px;
+  height:46px;
+  border-radius:15px;
+}
+
+.auth-wordmark-copy small{
+  font-size:9px;
+  letter-spacing:.14em;
+  margin-bottom:5px;
+}
+
+.auth-wordmark-copy b{
+  font-size:22px;
+  letter-spacing:-.05em;
+}
+
+.auth-inner .eyebrow{
+  margin-bottom:10px;
+}
+
+.auth-inner h1{
+  font-size:clamp(42px,4.55vw,66px);
+  line-height:.96;
+  letter-spacing:-.065em;
+  margin:0 0 15px;
+  text-wrap:balance;
+}
+
+.auth-lead{
+  max-width:430px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+  margin:0;
+}
+
+.auth form{
+  margin-top:22px;
+  max-width:440px;
+}
+
+.auth label{
+  font-size:10px;
+  margin-bottom:12px;
+}
+
+.auth input{
+  height:52px;
+  margin-top:6px;
+  border-radius:15px;
+  padding:0 15px;
+  font-size:13px;
+}
+
+.auth form>.primary{
+  height:53px;
+  margin-top:5px;
+  border-radius:15px;
+}
+
+.auth form>.secondary{
+  height:46px;
+  margin-top:8px;
+  border-radius:14px;
+}
+
+.auth .security{
+  margin-top:13px;
+  font-size:9px;
+  opacity:.78;
+}
+
+.auth-visual{
+  position:sticky;
+  top:0;
+  align-self:start;
+  width:100%;
+  height:100dvh;
+  min-height:100dvh;
+  overflow:hidden;
+  background:#09121d;
+}
+
+.auth-photo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center center;
+  transform:scale(1.018);
+  animation:authPhotoIn .95s cubic-bezier(.2,.72,.2,1) both;
+}
+
+.auth-visual-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3,10,18,.04) 0%,
+      rgba(3,10,18,.10) 36%,
+      rgba(3,10,18,.80) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(3,10,18,.24) 0%,
+      transparent 46%,
+      rgba(3,10,18,.08) 100%
+    );
+}
+
+.auth-copy{
+  position:absolute;
+  left:clamp(30px,4.5vw,72px);
+  right:clamp(30px,4.5vw,72px);
+  bottom:clamp(34px,5vw,68px);
+  animation:authCopyIn .8s .08s cubic-bezier(.2,.72,.2,1) both;
+}
+
+.auth-copy span{
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  opacity:.65;
+}
+
+.auth-copy b{
+  display:block;
+  margin-top:9px;
+  max-width:620px;
+  font-size:clamp(34px,3.15vw,53px);
+  line-height:.98;
+  letter-spacing:-.06em;
+}
+
+.auth-copy small{
+  display:block;
+  margin-top:11px;
+  font-size:10px;
+  opacity:.48;
+  letter-spacing:.02em;
+}
+
+/* hidden technical field must never affect layout */
+.auth input[type="hidden"]{
+  display:none!important;
+}
+
+/* cleaner password control */
+.password button{
+  right:5px;
+  top:12px;
+}
+
+/* compact screens */
+@media(max-width:1100px){
+  .auth{
+    grid-template-columns:minmax(400px,.9fr) minmax(480px,1.1fr);
+  }
+
+  .auth-left{
+    padding-inline:34px;
+  }
+
+  .auth-inner h1{
+    font-size:clamp(40px,4.7vw,58px);
+  }
+}
+
+@media(max-width:900px){
+  .auth{
+    display:block;
+    height:auto;
+    min-height:100dvh;
+  }
+
+  .auth-left{
+    height:auto;
+    min-height:100dvh;
+    overflow:visible;
+    padding:34px 22px 40px;
+  }
+
+  .auth-inner{
+    width:min(500px,100%);
+  }
+
+  .auth-wordmark{
+    margin-bottom:42px;
+  }
+
+  .auth-visual{
+    display:none;
+  }
+}
+
+@media(max-width:680px){
+  .auth-left{
+    padding:27px 18px 32px;
+  }
+
+  .auth-wordmark{
+    margin-bottom:38px;
+  }
+
+  .auth-inner h1{
+    font-size:44px;
+  }
+
+  .auth-lead{
+    font-size:12px;
+  }
+}
