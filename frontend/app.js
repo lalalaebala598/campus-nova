@@ -503,303 +503,760 @@ function prepareCampusActivityHtml(html, title = '') {
   return root.innerHTML.trim();
 }
 
+
+function assignmentSourceMarkup(activity, result) {
+  const content = activity?.content || {};
+  const description = String(content.description || '').trim();
+
+  const files = Array.isArray(content.files)
+    ? content.files.filter(file => file?.fileurl)
+    : [];
+
+  const dates = Array.isArray(content.dates)
+    ? content.dates
+    : [];
+
+  const due = dates.find(item =>
+    /срок|deadline|due/i.test(String(item?.label || ''))
+  );
+
+  return `
+    <section class="nova-practice-source">
+
+      <div class="nova-practice-source-head">
+        <div>
+          <span class="eyebrow">УСЛОВИЕ</span>
+          <h2>Практическое задание</h2>
+        </div>
+
+        <span class="nova-practice-badge">
+          ${icon('check-square',14)} Практика
+        </span>
+      </div>
+
+      ${
+        description
+          ? `
+            <div class="nova-practice-description">
+              ${esc(description)}
+            </div>
+          `
+          : `
+            <div class="nova-practice-description">
+              <div class="inline-empty">
+                Campus не передал описание задания.
+              </div>
+            </div>
+          `
+      }
+
+      ${
+        due?.timestamp
+          ? `
+            <div class="nova-practice-meta">
+              <span>
+                ${icon('calendar',14)}
+                Срок
+              </span>
+              <b>${formatLong(due.timestamp)}</b>
+            </div>
+          `
+          : ''
+      }
+
+      ${
+        files.length
+          ? `
+            <div class="nova-practice-files">
+
+              <div class="nova-practice-files-head">
+                <div>
+                  <span class="eyebrow">МАТЕРИАЛЫ</span>
+                  <h3>Исходные файлы</h3>
+                </div>
+
+                <span class="nova-practice-count">
+                  ${files.length}
+                </span>
+              </div>
+
+              <div class="nova-practice-file-list">
+
+                ${files.map(file => `
+                  <a
+                    class="nova-practice-file"
+                    href="${esc(file.fileurl)}"
+                  >
+                    <span class="nova-practice-file-icon">
+                      ${icon('file',19)}
+                    </span>
+
+                    <span class="nova-practice-file-copy">
+                      <b>${esc(file.filename || 'Файл')}</b>
+
+                      <small>
+                        ${
+                          esc(
+                            file.mimetype ||
+                            'Материал задания'
+                          )
+                        }
+
+                        ${
+                          file.filesize
+                            ? ` · ${formatFileSize(file.filesize)}`
+                            : ''
+                        }
+                      </small>
+                    </span>
+
+                    <span class="nova-practice-file-action">
+                      ${icon('download',16)}
+                    </span>
+                  </a>
+                `).join('')}
+
+              </div>
+            </div>
+          `
+          : ''
+      }
+
+    </section>
+  `;
+}
+
+
+function assignmentFieldMarkup(control) {
+  const type = String(control?.type || 'text').toLowerCase();
+  const name = String(control?.name || '');
+
+  if (!name) return '';
+
+  if (type === 'textarea') {
+    return `
+      <label class="nova-answer-field">
+        <span>Комментарий или текст ответа</span>
+
+        <textarea
+          name="${esc(name)}"
+          ${control.required ? 'required' : ''}
+          placeholder="Напишите ответ…"
+        >${esc(control.value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  if (type === 'select') {
+    return `
+      <label class="nova-answer-field">
+        <span>Выберите вариант</span>
+
+        <select
+          name="${esc(name)}"
+          ${control.required ? 'required' : ''}
+        >
+          ${(control.options || []).map(option => `
+            <option
+              value="${esc(option.value)}"
+              ${
+                String(option.value) ===
+                String(control.value)
+                  ? 'selected'
+                  : ''
+              }
+            >
+              ${esc(option.label)}
+            </option>
+          `).join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="nova-answer-field">
+      <span>${esc(name)}</span>
+
+      <input
+        type="${esc(type)}"
+        name="${esc(name)}"
+        value="${esc(control.value || '')}"
+        ${control.required ? 'required' : ''}
+        placeholder="Введите значение…"
+      />
+    </label>
+  `;
+}
+
+
+function assignmentFieldsMarkup(form) {
+  const controls = Array.isArray(form?.controls)
+    ? form.controls
+    : [];
+
+  const visible = controls.filter(control => {
+    const type = String(control.type || '').toLowerCase();
+    const name = String(control.name || '').toLowerCase();
+
+    return (
+      !control.disabled &&
+      type !== 'hidden' &&
+      type !== 'submit' &&
+      type !== 'button' &&
+      type !== 'file' &&
+      type !== 'radio' &&
+      type !== 'checkbox' &&
+      !/sesskey|password|filemanager|draftitemid|itemid/.test(name)
+    );
+  });
+
+  if (!visible.length) {
+    return `
+      <div class="nova-answer-note">
+        <div class="nova-answer-note-icon">
+          ${icon('upload',18)}
+        </div>
+
+        <div>
+          <b>Работа сдаётся файлами</b>
+          <span>
+            Добавьте один или несколько файлов ниже.
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  return visible.map(assignmentFieldMarkup).join('');
+}
+
+
+function assignmentUploadMarkup(result) {
+  const uploaded = Array.isArray(result?.uploadedFiles)
+    ? result.uploadedFiles
+    : [];
+
+  return `
+    <form
+      id="nova-assignment-form"
+      class="nova-assignment-form"
+    >
+
+      <section class="nova-answer-panel">
+
+        <div class="nova-answer-panel-head">
+
+          <div>
+            <span class="eyebrow">СДАЧА РАБОТЫ</span>
+            <h2>Подготовьте ответ</h2>
+
+            <p>
+              Загрузите готовые файлы.
+              Можно выбрать несколько одновременно.
+            </p>
+          </div>
+
+          <span class="nova-secure-badge">
+            ${icon('check',14)} Синхронизация с Campus
+          </span>
+
+        </div>
+
+
+        <div class="nova-answer-fields">
+          ${assignmentFieldsMarkup(result.form)}
+        </div>
+
+
+        <div
+          class="nova-upload-zone"
+          id="assignment-upload-zone"
+        >
+
+          <input
+            id="assignment-file-input"
+            type="file"
+            multiple
+            hidden
+          >
+
+          <div class="nova-upload-icon">
+            ${icon('upload',24)}
+          </div>
+
+          <b>Добавьте файлы</b>
+
+          <span>
+            PDF, DOCX, XLSX, ZIP и другие форматы
+          </span>
+
+          <button
+            class="secondary"
+            type="button"
+            id="assignment-choose-files"
+          >
+            ${icon('plus',15)} Выбрать файлы
+          </button>
+
+          <small id="assignment-upload-status">
+            Файлы будут сохранены в защищённом черновике Campus.
+          </small>
+
+        </div>
+
+
+        <div
+          class="nova-upload-list"
+          id="assignment-upload-list"
+        >
+
+          ${uploaded.map(file => `
+            <div class="nova-upload-item nova-uploaded">
+
+              <span class="nova-upload-item-icon">
+                ${icon('file',17)}
+              </span>
+
+              <span class="nova-upload-item-info">
+                <b>
+                  ${esc(file.filename || 'Файл')}
+                </b>
+
+                <small>
+                  ${
+                    file.filesize
+                      ? formatFileSize(file.filesize)
+                      : ''
+                  }
+                  · загружено
+                </small>
+              </span>
+
+              <span class="nova-upload-item-state">
+                ${icon('check',16)}
+              </span>
+
+            </div>
+          `).join('')}
+
+        </div>
+
+
+        <div class="nova-answer-actions">
+
+          <button
+            class="secondary"
+            type="button"
+            data-activity-action="save"
+          >
+            ${icon('save',16)}
+            Сохранить черновик
+          </button>
+
+          <button
+            class="primary"
+            type="button"
+            data-activity-action="submit"
+          >
+            ${icon('send',16)}
+            Отправить преподавателю
+          </button>
+
+        </div>
+
+      </section>
+
+    </form>
+  `;
+}
+
 function activityPage(){
   if(state.status.activity==='loading')
-    return `<section class="page">
-      <div class="content-card">
-        <div class="content-toolbar">
-          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
-            ${icon('back',17)} Назад
-          </button>
+    return `
+      <section class="page">
+        <div class="content-card">
+          <div class="content-toolbar">
+            <button
+              class="back-button"
+              data-back="${state.routeBeforeActivity||'courses'}"
+            >
+              ${icon('back',17)} Назад
+            </button>
+          </div>
+
+          ${statePanel('loading','activity',false)}
         </div>
-        ${statePanel('loading','activity',false)}
-      </div>
-    </section>`;
+      </section>
+    `;
 
   if(state.status.activity==='error')
-    return `<section class="page">
-      <div class="content-card">
-        <div class="content-toolbar">
-          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
-            ${icon('back',17)} Назад
-          </button>
+    return `
+      <section class="page">
+        <div class="content-card">
+          <div class="content-toolbar">
+            <button
+              class="back-button"
+              data-back="${state.routeBeforeActivity||'courses'}"
+            >
+              ${icon('back',17)} Назад
+            </button>
+          </div>
+
+          ${statePanel('error','activity')}
         </div>
-        ${statePanel('error','activity')}
-      </div>
-    </section>`;
+      </section>
+    `;
 
   const data = state.data.activity || {};
   const a = data.activity || {};
   const result = data.result || {};
+
   const kind = result.kind || 'activity';
-  const title = result.title || a.identity?.name || 'Активность';
-  const cleanHtml = activityHtml(result, title);
 
-  if(data.fallback){
-    return `<section class="page">
-      <div class="content-card">
-        <div class="content-toolbar">
-          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
-            ${icon('back',17)} Назад
-          </button>
-        </div>
-        <div class="eyebrow">${esc(activityTypeLabel(a))}</div>
-        <h1>${esc(a.identity?.name||'Активность')}</h1>
-
-        <div class="state-card">
-          <div class="state-icon">${icon('arrow',22)}</div>
-          <h3>Эту активность нужно открыть в Campus</h3>
-          <p>${esc(data.message||'Для этого типа пока нет подтверждённого native workflow Nova.')}</p>
-          <button class="primary" id="open-activity-fallback">
-            Открыть в Campus ${icon('arrow',16)}
-          </button>
-        </div>
-      </div>
-    </section>`;
-  }
-
-  const firstFile =
-    result.file ||
-    (Array.isArray(result.files) ? result.files[0] : null) ||
-    firstCampusFile(result.html);
+  const title =
+    result.title ||
+    a.identity?.name ||
+    'Активность';
 
   let body = '';
-  let topAction = '';
 
-  if(kind === 'file'){
-    const file = result.file || firstFile || {};
+  if(data.fallback){
+    return `
+      <section class="page">
+        <div class="content-card">
+
+          <div class="content-toolbar">
+            <button
+              class="back-button"
+              data-back="${state.routeBeforeActivity||'courses'}"
+            >
+              ${icon('back',17)} Назад
+            </button>
+          </div>
+
+          <div class="eyebrow">
+            ${esc(activityTypeLabel(a))}
+          </div>
+
+          <h1>${esc(title)}</h1>
+
+          <div class="state-card">
+            <div class="state-icon">
+              ${icon('arrow',22)}
+            </div>
+
+            <h3>Эту активность пока нельзя открыть в Nova</h3>
+
+            <p>
+              ${esc(
+                data.message ||
+                'Откройте исходную страницу Campus.'
+              )}
+            </p>
+
+            <button
+              class="primary"
+              id="open-activity-fallback"
+            >
+              Открыть Campus ${icon('arrow',16)}
+            </button>
+          </div>
+
+        </div>
+      </section>
+    `;
+  }
+
+
+  if(kind === 'assignment'){
+
+    body = `
+      ${assignmentSourceMarkup(a, result)}
+
+      <section class="nova-bottom-cta">
+
+        <div>
+          <span class="eyebrow">СДАЧА</span>
+
+          <h2>
+            Готовы отправить работу?
+          </h2>
+
+          <p>
+            Добавьте свои файлы и отправьте их преподавателю
+            прямо из Nova.
+          </p>
+        </div>
+
+        <button
+          class="primary"
+          type="button"
+          data-activity-action="edit"
+        >
+          ${icon('upload',17)}
+          Добавить ответ
+        </button>
+
+      </section>
+    `;
+  }
+
+
+  else if(kind === 'assignment-form'){
+
+    body = assignmentUploadMarkup(result);
+  }
+
+
+  else if(kind === 'file'){
+
+    const file =
+      result.file ||
+      (
+        Array.isArray(result.files)
+          ? result.files[0]
+          : null
+      ) ||
+      {};
 
     body = `
       <div class="nova-file-card">
+
         <div class="nova-file-icon">
-          ${icon('download',28)}
+          ${icon('file',26)}
         </div>
 
         <div class="nova-file-info">
           <span class="eyebrow">ФАЙЛ</span>
-          <h2>${esc(file.filename || title || 'Файл')}</h2>
-          <p>${esc(file.mimetype || 'Документ Campus')}</p>
-        </div>
 
-        ${file.fileurl
-          ? `<button class="primary nova-file-download"
-               data-download="${esc(file.fileurl)}">
-               ${icon('download',17)} Скачать
-             </button>`
-          : ''
-        }
-      </div>`;
+          <h2>
+            ${esc(file.filename || title)}
+          </h2>
 
-  } else if(kind === 'resource') {
-    body = `
-      ${firstFile?.fileurl ? `
-        <div class="nova-download-card">
-          <div class="nova-download-icon">
-            ${icon('download',22)}
-          </div>
-
-          <div class="nova-download-copy">
-            <span class="eyebrow">ЛЕКЦИЯ</span>
-            <h2>${esc(firstFile.filename || 'Материал лекции')}</h2>
-            <p>Файл хранится в Campus и открывается через защищённую сессию.</p>
-          </div>
-
-          <button class="primary"
-                  data-download="${esc(firstFile.fileurl)}">
-            ${icon('download',17)} Скачать лекцию
-          </button>
-        </div>
-      ` : ''}
-
-      ${cleanHtml
-        ? `<div class="nova-activity-html">${cleanHtml}</div>`
-        : `<div class="inline-empty">Содержимое материала отсутствует.</div>`
-      }`;
-
-  } else if(kind === 'quiz') {
-    topAction = `
-      <button class="primary" id="quiz-start-button">
-        ${icon('arrow',17)} Начать тест
-      </button>`;
-
-    body = `
-      <div class="nova-quiz-intro">
-        <div class="nova-quiz-icon">${icon('quiz',25)}</div>
-        <div>
-          <span class="eyebrow">ТЕСТ</span>
-          <h2>${esc(title)}</h2>
           <p>
-            Запуск выполняется через настоящую форму Campus.
-            Ответы и попытка останутся синхронизированы с Moodle.
+            ${esc(
+              file.mimetype ||
+              'Файл из Campus'
+            )}
           </p>
         </div>
-      </div>
 
-      <div class="nova-activity-html nova-quiz-html">
-        ${cleanHtml || '<div class="inline-empty">Campus не передал содержимое теста.</div>'}
-      </div>`;
-
-  } else if(kind === 'quiz-action') {
-    body = `
-      <div class="nova-quiz-status">
-        <span class="nova-quiz-status-icon">${icon('check',20)}</span>
-        <div>
-          <span class="eyebrow">ТЕСТ</span>
-          <h3>Попытка теста запущена</h3>
-          <p>Отвечай на вопросы ниже. Форма отправляет ответы прямо в Campus.</p>
-        </div>
-      </div>
-
-      <div class="nova-activity-html nova-quiz-html">
-        ${cleanHtml || '<div class="inline-empty">Campus не передал вопросы теста.</div>'}
-      </div>`;
-
-  } else if(kind === 'assignment'){
-    body = `
-      <div class="nova-assignment-head">
-        <div class="nova-assignment-icon">
-          ${icon('check-square',24)}
-        </div>
-
-        <div class="nova-assignment-head-copy">
-          <span class="eyebrow">ЗАДАНИЕ</span>
-          <h2>${esc(title)}</h2>
-          <p>
-            Здесь можно посмотреть условие, скачать исходные материалы
-            и затем отправить свою работу.
-          </p>
-        </div>
-      </div>
-
-      <div class="nova-assignment-overview">
-        <div class="nova-assignment-overview-icon">
-          ${icon('file',21)}
-        </div>
-
-        <div>
-          <b>Условие задания</b>
-          <span>
-            Изучи описание ниже и подготовь файл с решением.
-          </span>
-        </div>
-      </div>
-
-      <div class="nova-activity-html nova-assignment-source">
         ${
-          cleanHtml ||
-          '<div class="inline-empty">Содержимое задания отсутствует.</div>'
+          file.fileurl
+            ? `
+              <a
+                class="primary"
+                href="${esc(file.fileurl)}"
+              >
+                ${icon('download',16)}
+                Скачать
+              </a>
+            `
+            : ''
         }
-      </div>`;
 
-  } else if(kind === 'assignment-form'){
-    body = `
-      <div class="nova-assignment-head">
-        <div class="nova-assignment-icon">
-          ${icon('upload',24)}
-        </div>
-
-        <div class="nova-assignment-head-copy">
-          <span class="eyebrow">СДАЧА РАБОТЫ</span>
-          <h2>${esc(title)}</h2>
-          <p>
-            Добавь один или несколько файлов, сохрани черновик
-            или отправь работу преподавателю.
-          </p>
-        </div>
       </div>
-
-      <div class="nova-upload-zone" id="assignment-upload-zone">
-        <input
-          id="assignment-file-input"
-          type="file"
-          multiple
-          hidden
-        />
-
-        <div class="nova-upload-icon">
-          ${icon('upload',25)}
-        </div>
-
-        <b>Загрузить файлы</b>
-
-        <span>
-          PDF, DOCX, XLSX, ZIP и другие форматы
-        </span>
-
-        <button
-          class="secondary"
-          type="button"
-          id="assignment-choose-files">
-          Выбрать файлы
-        </button>
-
-        <small id="assignment-upload-status">
-          Файлы загружаются в защищённый черновик Campus.
-        </small>
-      </div>
-
-      <div
-        class="nova-upload-list"
-        id="assignment-upload-list">
-      </div>
-
-      <div class="nova-activity-html nova-assignment-form">
-        ${
-          cleanHtml ||
-          '<div class="inline-empty">Форма задания отсутствует.</div>'
-        }
-      </div>`;
-
-  } else {
-    body = `
-      <div class="nova-activity-html">
-        ${cleanHtml || '<div class="inline-empty">У этой активности пока нет отображаемого содержимого.</div>'}
-      </div>`;
+    `;
   }
 
-  return `<section class="page activity-page">
-    <div class="content-card">
-      <div class="content-toolbar">
-        <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
-          ${icon('back',17)} Назад
+
+  else if(kind === 'resource'){
+
+    body = `
+      <div class="nova-download-card">
+
+        <div class="nova-download-icon">
+          ${icon('download',24)}
+        </div>
+
+        <div class="nova-download-copy">
+
+          <span class="eyebrow">
+            МАТЕРИАЛ
+          </span>
+
+          <h2>
+            ${esc(title)}
+          </h2>
+
+          <p>
+            Материал доступен через защищённую
+            Campus-сессию.
+          </p>
+
+        </div>
+
+        ${
+          result.file?.fileurl
+            ? `
+              <a
+                class="primary"
+                href="${esc(result.file.fileurl)}"
+              >
+                ${icon('download',16)}
+                Скачать
+              </a>
+            `
+            : ''
+        }
+
+      </div>
+
+      ${
+        result.html
+          ? `
+            <div class="nova-activity-html">
+              ${activityHtml(result,title)}
+            </div>
+          `
+          : ''
+      }
+    `;
+  }
+
+
+  else if(kind === 'quiz'){
+
+    body = `
+      <section class="nova-quiz-intro">
+
+        <div class="nova-quiz-icon">
+          ${icon('quiz',24)}
+        </div>
+
+        <div>
+          <span class="eyebrow">ТЕСТ</span>
+
+          <h2>
+            ${esc(title)}
+          </h2>
+
+          <p>
+            После запуска вопросы и ответы
+            синхронизируются с Campus.
+          </p>
+        </div>
+
+        <button
+          class="primary"
+          id="quiz-start-button"
+          type="button"
+        >
+          ${icon('arrow',16)}
+          Начать тест
         </button>
 
-        <div class="activity-actions">
-          ${topAction}
+      </section>
 
-          ${kind==='assignment'
-            ? `<button class="secondary"
-                       data-activity-action="edit">
-                 ${icon('edit',16)} Добавить ответ
-               </button>`
-            : ''
-          }
+      ${
+        result.html
+          ? `
+            <div class="nova-activity-html nova-quiz-html">
+              ${activityHtml(result,title)}
+            </div>
+          `
+          : ''
+      }
+    `;
+  }
 
-          ${kind==='assignment-form'
-            ? `<button class="secondary"
-                       data-activity-action="save">
-                 ${icon('save',16)} Сохранить
-               </button>
-               <button class="primary"
-                       data-activity-action="submit">
-                 ${icon('send',16)} Отправить
-               </button>`
-            : ''
-          }
+
+  else if(kind === 'quiz-action'){
+
+    body = `
+      <section class="nova-quiz-status">
+
+        <div class="nova-quiz-status-icon">
+          ${icon('check',20)}
         </div>
+
+        <div>
+          <span class="eyebrow">ТЕСТ</span>
+
+          <h3>
+            Попытка запущена
+          </h3>
+
+          <p>
+            Выберите ответы и завершите тест
+            через кнопку внизу.
+          </p>
+        </div>
+
+      </section>
+
+      <div class="nova-activity-html nova-quiz-html">
+        ${
+          result.html ||
+          '<div class="inline-empty">Вопросы теста не переданы Campus.</div>'
+        }
+      </div>
+    `;
+  }
+
+
+  else {
+
+    body = `
+      ${
+        result.html
+          ? `
+            <div class="nova-activity-html">
+              ${activityHtml(result,title)}
+            </div>
+          `
+          : `
+            <div class="inline-empty">
+              Содержимое активности отсутствует.
+            </div>
+          `
+      }
+    `;
+  }
+
+
+  return `
+    <section class="page activity-page">
+
+      <div class="content-card">
+
+        <div class="content-toolbar">
+
+          <button
+            class="back-button"
+            data-back="${state.routeBeforeActivity||'courses'}"
+          >
+            ${icon('back',17)}
+            Назад
+          </button>
+
+        </div>
+
+
+        <div class="eyebrow">
+          ${esc(activityTypeLabel(a))}
+          ·
+          ${esc(
+            a?.relations?.course?.name ||
+            'Курс'
+          )}
+        </div>
+
+
+        <h1>
+          ${esc(title)}
+        </h1>
+
+
+        <div id="campus-content">
+          ${body}
+        </div>
+
       </div>
 
-      <div class="eyebrow">
-        ${esc(activityTypeLabel(a))} · ${esc(a?.relations?.course?.name || 'Курс')}
-      </div>
-
-      <h1>${esc(title)}</h1>
-
-      <div id="campus-content">
-        ${body}
-      </div>
-    </div>
-  </section>`;
+    </section>
+  `;
 }
 
 function profilePage(){
