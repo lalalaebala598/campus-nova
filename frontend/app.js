@@ -124,10 +124,14 @@ function firstName(){
     user.firstName,
     user.givenname,
     user.givenName
-  ].find(value=>String(value||'').trim());
+  ].find(
+    value=>String(value||'').trim()
+  );
 
   if(direct){
-    return String(direct).trim().split(/\s+/)[0];
+    return String(direct)
+      .trim()
+      .split(/\s+/)[0];
   }
 
   const full=String(
@@ -140,7 +144,9 @@ function firstName(){
     return 'Студент';
   }
 
-  return full.split(/\s+/)[0]||'Студент';
+  return full
+    .split(/\s+/)[0]||
+    'Студент';
 }
 function campusOrigin(){try{return new URL(state.campusUrl||'').origin}catch{return ''}}
 function campusHost(){try{return new URL(state.campusUrl||'').host}catch{return 'вашего Campus'}}
@@ -184,25 +190,31 @@ function statePanel(kind,service,retry=true){
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
 function hero(){
-  const calendar=state.data.calendar||{};
-  const events=flattenCalendar(calendar);
+  const calendar=
+    state.data.calendar||{};
 
-  const now=new Date();
+  const events=
+    flattenCalendar(calendar);
+
+  const now=
+    new Date();
 
   const todayKey=
     `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
 
   const todayEvents=
-    events.filter(event=>{
-      return dateKey(event.timestart)===todayKey;
-    });
+    events.filter(
+      event=>
+        dateKey(event.timestart)===todayKey
+    );
 
   const tasks=
     Array.isArray(state.data.tasks)
       ? state.data.tasks
       : [];
 
-  const hour=now.getHours();
+  const hour=
+    now.getHours();
 
   const greeting=
     hour<12
@@ -212,9 +224,9 @@ function hero(){
         : 'Добрый вечер';
 
   const photos=[
-    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=82&w=2000',
-    'https://images.unsplash.com/photo-1769284008279-46e4c97959db?auto=format&fit=crop&fm=jpg&q=80&w=2000',
-    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=80&w=2000'
+    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=82&w=1800',
+    'https://images.unsplash.com/photo-1769284008279-46e4c97959db?auto=format&fit=crop&fm=jpg&q=80&w=1800',
+    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=80&w=1800'
   ];
 
   const dateText=
@@ -231,6 +243,7 @@ function hero(){
     <section class="hero dashboard-hero">
 
       <div class="hero-media">
+
         ${photos.map((src,index)=>`
           <img
             class="hero-photo hero-photo-${index}"
@@ -240,22 +253,30 @@ function hero(){
             decoding="async"
           >
         `).join('')}
+
       </div>
 
       <div class="hero-overlay"></div>
 
       <div class="hero-brand">
+
         ${icon('university',23)}
 
         <span>
           <b>Финансовый университет</b>
           <small>Краснодарский филиал</small>
         </span>
+
       </div>
 
       <div class="hero-date">
+
         ${icon('calendar',15)}
-        <span>${esc(dateText)}</span>
+
+        <span>
+          ${esc(dateText)}
+        </span>
+
       </div>
 
       <div class="hero-copy">
@@ -277,7 +298,11 @@ function hero(){
       <div class="hero-stats">
 
         <div class="hero-stat">
-          <strong>${todayEvents.length}</strong>
+
+          <strong>
+            ${todayEvents.length}
+          </strong>
+
           <span>
             ${
               todayEvents.length===1
@@ -285,12 +310,17 @@ function hero(){
                 : 'событий сегодня'
             }
           </span>
+
         </div>
 
         <div class="hero-stat-divider"></div>
 
         <div class="hero-stat">
-          <strong>${tasks.length}</strong>
+
+          <strong>
+            ${tasks.length}
+          </strong>
+
           <span>
             ${
               tasks.length===1
@@ -298,13 +328,18 @@ function hero(){
                 : 'активных заданий'
             }
           </span>
+
         </div>
 
       </div>
 
       <div class="hero-quote">
+
         Знания сегодня<br>
-        <strong>возможности завтра.</strong>
+        <strong>
+          возможности завтра.
+        </strong>
+
       </div>
 
     </section>
@@ -328,11 +363,117 @@ function dashboard(){
       ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
-    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions"><button data-go="files">${icon('download',19)}<b>Файлы</b><small>Скачать</small></button><button data-go="messages">${icon('message',19)}<b>Сообщения</b><small>Открыть</small></button><button data-go="tasks">${icon('check-square',19)}<b>Задания</b><small>Открыть</small></button><button data-go="tests">${icon('quiz',19)}<b>Тесты</b><small>Открыть</small></button></div></section><section class="quote-card"><div><b>Всё необходимое<br>для учёбы. В одном месте.</b><small>Campus Nova сохраняет данные Campus и меняет только опыт.</small></div>${icon('arrow',20)}</section></aside></div></section>`;
+    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions"><button data-go="files">${icon('download',19)}<b>Файлы</b><small>Скачать</small></button><button data-go="messages">${icon('message',19)}<b>Сообщения</b><small>Открыть</small></button><button data-go="tasks">${icon('check-square',19)}<b>Задания</b><small>Открыть</small></button><button data-go="tests">${icon('quiz',19)}<b>Тесты</b><small>Открыть</small></button></div></section><button
+  type="button"
+  class="quote-card"
+  data-go="courses"
+>
+  <span class="quote-card-copy">
+    <b>
+      Всё необходимое<br>
+      для учёбы. В одном месте.
+    </b>
+
+    <small>
+      Campus Nova сохраняет данные Campus
+      и меняет только опыт.
+    </small>
+  </span>
+
+  <span class="quote-card-action">
+    ${icon('arrow',20)}
+  </span>
+</button></aside></div></section>`;
 }
 
 function Panel({title,iconName='grid',action='',go='',wide=false,children}){return `<section class="panel ${wide?'wide':''}"><div class="panel-head"><div><h2>${icon(iconName,16)} ${esc(title)}</h2><small>Актуальные данные</small></div>${action?`<button class="panel-action" data-go="${go}">${esc(action)} ${icon('arrow',13)}</button>`:''}</div>${children}</section>`}
 function miniCourse(c){const p=Number.isFinite(Number(c.progress))?Math.max(0,Math.min(100,Number(c.progress))):null;return `<button class="mini-course" data-go="course" data-param="${esc(c.id)}"><span class="course-thumb" style="${c.courseimage?`background-image:url('${String(c.courseimage).replace(/'/g,'%27')}')`:''}">${c.courseimage?'':icon('grid',20)}</span><span><b>${esc(c.fullnamedisplay||c.fullname||'Курс')}</b><small>${esc(c.shortname||'')}</small>${p!==null?`<i><em style="width:${p}%"></em></i>`:''}</span>${p!==null?`<strong>${p}%</strong>`:''}</button>`}
+
+function groupByCourse(items,getter){
+  const map=new Map();
+
+  for(const item of items||[]){
+    const name=
+      String(
+        getter?.(item)||
+        'Без курса'
+      ).trim()||
+      'Без курса';
+
+    const key=name.toLowerCase();
+
+    if(!map.has(key)){
+      map.set(key,{
+        name,
+        items:[]
+      });
+    }
+
+    map.get(key).items.push(item);
+  }
+
+  return [...map.values()]
+    .sort(
+      (a,b)=>
+        a.name.localeCompare(
+          b.name,
+          'ru',
+          {
+            sensitivity:'base'
+          }
+        )
+    );
+}
+
+function courseGroupHead(name,count,type='activity'){
+  const iconName=
+    type==='file'
+      ? 'folder'
+      : type==='test'
+        ? 'quiz'
+        : type==='material'
+          ? 'folder'
+          : 'university';
+
+  const label=
+    count===1
+      ? (
+          type==='file'
+            ? 'файл'
+            : type==='test'
+              ? 'тест'
+              : type==='material'
+                ? 'материал'
+                : 'элемент'
+        )
+      : (
+          type==='file'
+            ? 'файла'
+            : type==='test'
+              ? 'тестов'
+              : type==='material'
+                ? 'материалов'
+                : 'элементов'
+        );
+
+  return `
+    <summary class="course-group-head">
+      <span class="course-group-icon">
+        ${icon(iconName,17)}
+      </span>
+
+      <span class="course-group-title">
+        <b>${esc(name)}</b>
+        <small>${count} ${label}</small>
+      </span>
+
+      <span class="course-group-chevron">
+        ${icon('chevron',16)}
+      </span>
+    </summary>
+  `;
+}
+
 function taskRow(t){const due=t.due?formatLong(t.due):'Срок не указан';return `<button class="compact-row" data-view="${esc(t.url||'')}" data-route-url><span class="compact-icon ${t.type}">${icon(t.type==='quiz'?'quiz':'check-square',17)}</span><span><b>${esc(t.name)}</b><small>${esc(t.course)}</small></span><em>${esc(due)}</em></button>`}
 function gradeRow(g){return `<button class="compact-row grade" data-go="grades"><span class="compact-icon grade">${icon('chart',17)}</span><span><b>${esc(g.course||g.name||'Оценка')}</b><small>${esc(g.percentage||g.range||'')}</small></span><strong>${esc(g.grade||'—')}</strong></button>`}
 function ann(e){return `<button class="ann" data-view="${esc(e.url||'')}" data-route-url><span>${icon('message',17)}</span><b>${esc(e.name||'Объявление')}</b><small>${esc(e.description||formatLong(e.timestart))}</small></button>`}
@@ -389,16 +530,351 @@ function gradePage(){
 }
 function activityRefAttr(a){return esc(encodeURIComponent(JSON.stringify(a?.ref||a)));}
 function activityDue(a){const due=(a?.content?.dates||[]).find(d=>/due|срок|deadline/i.test(String(d.label||d.type||'')));return due?.timestamp||0}
-function activityCourseName(a){return a?.relations?.course?.name||'Курс'}
+function activityCourseName(a){
+  const direct=
+    a?.relations?.course?.name||
+    a?.relations?.course?.fullname||
+    a?.course?.fullname||
+    a?.course?.name;
+
+  if(direct){
+    return String(direct);
+  }
+
+  const courseId=
+    Number(
+      a?.relations?.course?.id||
+      a?.ref?.courseId||
+      a?.courseId||
+      0
+    );
+
+  if(courseId){
+    const known=
+      (state.data.courses||[])
+        .find(
+          c=>Number(c.id)===courseId
+        );
+
+    if(known){
+      return String(
+        known.fullnamedisplay||
+        known.fullname||
+        known.shortname||
+        `Курс ${courseId}`
+      );
+    }
+
+    return `Курс ${courseId}`;
+  }
+
+  return 'Без курса';
+}
 function tasksPage(){
-  if(state.status.tasks==='loading') return `<section class="page">${PageHead({eyebrow:'ПЛАН',title:'Задания',sub:'Собираем задания из Activity Index…'})}${skeletonGrid(6)}</section>`;
-  if(state.status.tasks==='error') return `<section class="page">${PageHead({eyebrow:'ПЛАН',title:'Задания',sub:'Не удалось собрать задания.'})}${statePanel('error','tasks')}</section>`;
-  const tasks=state.data.tasks||[]; return `<section class="page">${PageHead({eyebrow:'ПЛАН',title:'Мои задания',sub:'Единые Assignment activities из всех курсов',children:`<button class="secondary" data-retry="tasks">${icon('refresh',16)} Обновить</button>`})}<div class="task-list">${tasks.map(a=>{const due=activityDue(a);return `<button class="task-card" data-activity="${activityRefAttr(a)}"><span class="task-kind assign">${icon('check-square',18)}</span><span><b>${esc(a.identity?.name||'Задание')}</b><small>${esc(activityCourseName(a))}</small></span><time>${due?esc(formatLong(due)):'Срок не указан'}</time>${icon('arrow',16)}</button>`}).join('')||'<div class="inline-empty">Заданий сейчас нет.</div>'}</div></section>`;
+  if(state.status.tasks==='loading'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'ПЛАН',
+          title:'Мои задания',
+          sub:'Загружаем задания из Campus…'
+        })}
+        ${skeletonGrid(6)}
+      </section>
+    `;
+  }
+
+  if(state.status.tasks==='error'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'ПЛАН',
+          title:'Мои задания',
+          sub:'Не удалось загрузить задания.'
+        })}
+        ${statePanel('error','tasks')}
+      </section>
+    `;
+  }
+
+  const tasks=
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : [];
+
+  const groups=
+    groupByCourse(
+      tasks,
+      activityCourseName
+    );
+
+  return `
+    <section class="page tasks-page">
+
+      ${PageHead({
+        eyebrow:'ПЛАН',
+        title:'Мои задания',
+        sub:
+          tasks.length
+            ? `Всего ${tasks.length} заданий, распределённых по курсам.`
+            : 'Активных заданий сейчас нет.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="tasks"
+          >
+            ${icon('refresh',16)}
+            Обновить
+          </button>
+        `
+      })}
+
+      <div class="course-groups">
+
+        ${
+          groups.map(group=>`
+            <details
+              class="course-group"
+              open
+            >
+
+              ${courseGroupHead(
+                group.name,
+                group.items.length,
+                'activity'
+              )}
+
+              <div class="course-group-body">
+
+                ${
+                  group.items.map(a=>{
+                    const due=activityDue(a);
+
+                    return `
+                      <button
+                        class="task-card"
+                        data-activity="${activityRefAttr(a)}"
+                      >
+
+                        <span class="task-kind assign">
+                          ${icon('check-square',18)}
+                        </span>
+
+                        <span class="task-card-main">
+                          <b>
+                            ${esc(
+                              a.identity?.name||
+                              'Задание'
+                            )}
+                          </b>
+
+                          <small>
+                            ${
+                              due
+                                ? `Срок сдачи · ${esc(formatLong(due))}`
+                                : 'Срок не указан'
+                            }
+                          </small>
+                        </span>
+
+                        ${
+                          due
+                            ? `
+                              <time>
+                                ${esc(formatDate(due))}
+                              </time>
+                            `
+                            : ''
+                        }
+
+                        <span class="task-card-arrow">
+                          ${icon('arrow',16)}
+                        </span>
+
+                      </button>
+                    `;
+                  }).join('')
+                }
+
+              </div>
+
+            </details>
+          `).join('')
+        }
+
+        ${
+          !groups.length
+            ? `
+              <div class="state-card empty">
+                <div class="state-icon">
+                  ${icon('check-square',22)}
+                </div>
+
+                <h3>
+                  Заданий сейчас нет
+                </h3>
+
+                <p>
+                  Когда преподаватель добавит работу,
+                  она появится здесь внутри своего курса.
+                </p>
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
+    </section>
+  `;
 }
 function testsPage(){
-  if(state.status.tests==='loading') return `<section class="page">${PageHead({eyebrow:'КОНТРОЛЬ',title:'Тесты',sub:'Загружаем доступные тесты из Activity Index…'})}${skeletonGrid(5)}</section>`;
-  if(state.status.tests==='error') return `<section class="page">${PageHead({eyebrow:'КОНТРОЛЬ',title:'Тесты',sub:'Не удалось получить список тестов.'})}${statePanel('error','tests')}</section>`;
-  const tests=state.data.tests||[]; return `<section class="page">${PageHead({eyebrow:'КОНТРОЛЬ',title:'Тесты',sub:'Единые Quiz activities из всех курсов.',children:`<button class="secondary" data-retry="tests">${icon('refresh',16)} Обновить</button>`})}<div class="test-grid">${tests.map(a=>{const due=activityDue(a);return `<button class="test-card" data-activity="${activityRefAttr(a)}"><span class="test-icon">${icon('quiz',22)}</span><span><b>${esc(a.identity?.name||'Тест')}</b><small>${esc(activityCourseName(a))}${due?` · ${esc(formatLong(due))}`:''}</small></span>${icon('arrow',16)}</button>`}).join('')||'<div class="inline-empty">Тестов сейчас нет.</div>'}</div></section>`;
+  if(state.status.tests==='loading'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'КОНТРОЛЬ',
+          title:'Тесты',
+          sub:'Загружаем тесты из Campus…'
+        })}
+        ${skeletonGrid(5)}
+      </section>
+    `;
+  }
+
+  if(state.status.tests==='error'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'КОНТРОЛЬ',
+          title:'Тесты',
+          sub:'Не удалось загрузить тесты.'
+        })}
+        ${statePanel('error','tests')}
+      </section>
+    `;
+  }
+
+  const tests=
+    Array.isArray(state.data.tests)
+      ? state.data.tests
+      : [];
+
+  const groups=
+    groupByCourse(
+      tests,
+      activityCourseName
+    );
+
+  return `
+    <section class="page tests-page">
+
+      ${PageHead({
+        eyebrow:'КОНТРОЛЬ',
+        title:'Тесты',
+        sub:
+          tests.length
+            ? `Всего ${tests.length} тестов, распределённых по курсам.`
+            : 'Доступных тестов сейчас нет.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="tests"
+          >
+            ${icon('refresh',16)}
+            Обновить
+          </button>
+        `
+      })}
+
+      <div class="course-groups">
+
+        ${
+          groups.map(group=>`
+            <details
+              class="course-group"
+              open
+            >
+
+              ${courseGroupHead(
+                group.name,
+                group.items.length,
+                'test'
+              )}
+
+              <div class="course-group-body">
+
+                ${
+                  group.items.map(a=>{
+                    const due=activityDue(a);
+
+                    return `
+                      <button
+                        class="test-card"
+                        data-activity="${activityRefAttr(a)}"
+                      >
+
+                        <span class="test-icon">
+                          ${icon('quiz',21)}
+                        </span>
+
+                        <span class="test-card-main">
+                          <b>
+                            ${esc(
+                              a.identity?.name||
+                              'Тест'
+                            )}
+                          </b>
+
+                          <small>
+                            ${
+                              due
+                                ? `Окончание · ${esc(formatLong(due))}`
+                                : 'Дата не указана'
+                            }
+                          </small>
+                        </span>
+
+                        <span class="test-card-arrow">
+                          ${icon('arrow',16)}
+                        </span>
+
+                      </button>
+                    `;
+                  }).join('')
+                }
+
+              </div>
+
+            </details>
+          `).join('')
+        }
+
+        ${
+          !groups.length
+            ? `
+              <div class="state-card empty">
+                <div class="state-icon">
+                  ${icon('quiz',22)}
+                </div>
+
+                <h3>
+                  Тестов сейчас нет
+                </h3>
+
+                <p>
+                  Доступные тесты появятся здесь
+                  после публикации в Campus.
+                </p>
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
+    </section>
+  `;
 }
 function schedulePage(){
   if(state.status.schedule==='loading') return `<section class="page">${PageHead({eyebrow:'РАСПИСАНИЕ',title:'Расписание',sub:'События выбранного дня.'})}${skeletonGrid(4)}</section>`;
@@ -470,7 +946,10 @@ function CalendarWidget(){
           Календарь
         </span>
 
-        <button data-go="calendar">
+        <button
+          class="panel-link-button"
+          data-go="calendar"
+        >
           Все
         </button>
       </div>
@@ -485,7 +964,9 @@ function CalendarWidget(){
           ${icon('back',14)}
         </button>
 
-        <b>${esc(monthLabel())}</b>
+        <b>
+          ${esc(monthLabel())}
+        </b>
 
         <button
           class="icon-btn tiny"
@@ -516,7 +997,6 @@ function CalendarWidget(){
     </section>
   `;
 }
-
 function calendarGrid(mini=false){
   const first=
     new Date(
@@ -536,7 +1016,9 @@ function calendarGrid(mini=false){
     ).getDate();
 
   const totalCells=
-    Math.ceil((offset+days)/7)*7;
+    mini
+      ? 42
+      : Math.ceil((offset+days)/7)*7;
 
   const prevDays=
     new Date(
@@ -591,6 +1073,16 @@ function calendarGrid(mini=false){
       }
 
       other=true;
+    }
+
+    if(mini && other){
+      html+=`
+        <span
+          class="day day-empty"
+          aria-hidden="true"
+        ></span>
+      `;
+      continue;
     }
 
     const key=
@@ -673,19 +1165,352 @@ function messagesPage(){
   return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Переписка остаётся внутри Nova.',children:`<button class="secondary" data-retry="messages">${icon('refresh',16)} Обновить</button>`})}<div class="messages-shell"><div class="conversation-list">${conv.map(c=>`<button class="conversation-item ${String(c.id)===String(state.selectedConversation)?'active':''}" data-conversation="${esc(c.id)}"><span class="avatar">${esc((c.name||'Д').slice(0,1))}</span><span><b>${esc(c.name||'Диалог')}</b><small>${esc(text(c.messages?.[0]?.text||'Нет сообщений').slice(0,70))}</small></span></button>`).join('')||'<div class="inline-empty">Новых сообщений нет.</div>'}</div><div class="conversation-view" id="conversation-view">${state.selectedConversation?'<div class="loading-center"><span class="spinner"></span><p>Открываем переписку…</p></div>':'<div class="conversation-empty">'+icon('message',28)+'<h2>Выберите диалог</h2><p>История переписки и отправка сообщений доступны внутри Nova.</p></div>'}</div></div></section>`;
 }
 function filesPage(){
-  if(state.status.files==='loading') return `<section class="page">${PageHead({eyebrow:'ХРАНИЛИЩЕ',title:'Файлы',sub:'Собираем файлы через Activity Index…'})}${skeletonGrid(5)}</section>`;
-  if(state.status.files==='error') return `<section class="page">${PageHead({eyebrow:'ХРАНИЛИЩЕ',title:'Файлы',sub:'Не удалось получить файлы.'})}${statePanel('error','files')}</section>`;
-  const files=state.data.files||[]; return `<section class="page">${PageHead({eyebrow:'ХРАНИЛИЩЕ',title:'Мои файлы',sub:'Файлы, связанные с реальными Campus activities',children:`<button class="secondary" data-retry="files">${icon('refresh',16)} Обновить</button>`})}<div class="files-card">${files.map(item=>{const a=item.activity||{};const f=item.file||{};const ref=activityRefAttr(a);return `<div class="file-row"><button class="file-row-main" data-activity="${ref}"><span class="file-name"><span class="file-type">${icon('download',17)}</span><span><b>${esc(f.filename||a.identity?.name||'Файл')}</b><small>${esc(activityCourseName(a))} · ${esc(f.mimetype||'Файл')}${f.filesize?` · ${esc(formatBytes(f.filesize))}`:''}</small></span></span>${icon('arrow',15)}</button><button class="icon-btn tiny" data-download="${esc(f.fileurl||'')}" aria-label="Скачать">${icon('download',16)}</button></div>`}).join('')||'<div class="inline-empty">Файлов сейчас нет.</div>'}</div></section>`;
+  if(state.status.files==='loading'){
+    return `
+      <section class="page files-page">
+        ${PageHead({
+          eyebrow:'ХРАНИЛИЩЕ',
+          title:'Мои файлы',
+          sub:'Собираем файлы из курсов Campus…'
+        })}
+        ${skeletonGrid(5)}
+      </section>
+    `;
+  }
+
+  if(state.status.files==='error'){
+    return `
+      <section class="page files-page">
+        ${PageHead({
+          eyebrow:'ХРАНИЛИЩЕ',
+          title:'Мои файлы',
+          sub:'Не удалось получить файлы.'
+        })}
+        ${statePanel('error','files')}
+      </section>
+    `;
+  }
+
+  const files=
+    Array.isArray(state.data.files)
+      ? state.data.files
+      : [];
+
+  const groups=
+    groupByCourse(
+      files,
+      item=>
+        activityCourseName(
+          item?.activity||{}
+        )
+    );
+
+  return `
+    <section class="page files-page">
+
+      ${PageHead({
+        eyebrow:'ХРАНИЛИЩЕ',
+        title:'Мои файлы',
+        sub:
+          files.length
+            ? `${files.length} файлов из твоих курсов.`
+            : 'Файлов сейчас нет.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="files"
+          >
+            ${icon('refresh',16)}
+            Обновить
+          </button>
+        `
+      })}
+
+      <div class="course-groups files-groups">
+
+        ${
+          groups.map(group=>`
+            <details
+              class="course-group"
+              open
+            >
+
+              ${courseGroupHead(
+                group.name,
+                group.items.length,
+                'file'
+              )}
+
+              <div class="course-group-body file-group-body">
+
+                ${
+                  group.items.map(item=>{
+                    const a=item.activity||{};
+                    const f=item.file||{};
+                    const ref=activityRefAttr(a);
+
+                    const filename=
+                      f.filename||
+                      a.identity?.name||
+                      'Файл';
+
+                    const type=
+                      String(
+                        f.mimetype||
+                        ''
+                      );
+
+                    const size=
+                      f.filesize
+                        ? formatBytes(f.filesize)
+                        : '';
+
+                    return `
+                      <div class="nova-file-row">
+
+                        <button
+                          class="nova-file-main"
+                          data-activity="${ref}"
+                        >
+
+                          <span class="nova-file-icon">
+                            ${icon('file',19)}
+                          </span>
+
+                          <span class="nova-file-copy">
+
+                            <b>
+                              ${esc(filename)}
+                            </b>
+
+                            <small>
+                              ${
+                                type
+                                  ? esc(type)
+                                  : 'Файл Campus'
+                              }
+
+                              ${
+                                size
+                                  ? ` · ${esc(size)}`
+                                  : ''
+                              }
+                            </small>
+
+                          </span>
+
+                          <span class="nova-file-open">
+                            ${icon('arrow',15)}
+                          </span>
+
+                        </button>
+
+                        ${
+                          f.fileurl
+                            ? `
+                              <button
+                                class="nova-file-download icon-btn tiny"
+                                data-download="${esc(f.fileurl)}"
+                                aria-label="Скачать файл"
+                                title="Скачать"
+                              >
+                                ${icon('download',16)}
+                              </button>
+                            `
+                            : ''
+                        }
+
+                      </div>
+                    `;
+                  }).join('')
+                }
+
+              </div>
+
+            </details>
+          `).join('')
+        }
+
+        ${
+          !groups.length
+            ? `
+              <div class="state-card empty">
+                <div class="state-icon">
+                  ${icon('folder',22)}
+                </div>
+
+                <h3>
+                  Файлов пока нет
+                </h3>
+
+                <p>
+                  Когда в курсах появятся документы,
+                  они будут автоматически разложены здесь по курсам.
+                </p>
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
+    </section>
+  `;
 }
 function formatBytes(n){const x=Number(n)||0;if(x<1024)return `${x} Б`;if(x<1024*1024)return `${(x/1024).toFixed(1)} КБ`;if(x<1024*1024*1024)return `${(x/1024/1024).toFixed(1)} МБ`;return `${(x/1024/1024/1024).toFixed(1)} ГБ`}
 
 function materialsPage(){
-  if(state.status.materials==='loading') return `<section class="page">${PageHead({eyebrow:'МАТЕРИАЛЫ',title:'Материалы',sub:'Собираем материалы из Activity Index…'})}${skeletonGrid(5)}</section>`;
-  if(state.status.materials==='error') return `<section class="page">${PageHead({eyebrow:'МАТЕРИАЛЫ',title:'Не удалось получить материалы',sub:state.errors?.materials||'Campus не вернул материалы.'})}${statePanel('error','materials')}</section>`;
-  const items=state.data.materials||[];
-  return `<section class="page">${PageHead({eyebrow:'МАТЕРИАЛЫ',title:'Материалы',sub:'Единые resource/page/folder и plugin activities',children:`<button class="secondary" data-retry="materials">${icon('refresh',16)} Обновить</button>`})}<div class="task-list">${items.map(a=>`<button class="task-card" data-activity="${activityRefAttr(a)}"><span class="task-kind resource">${icon(a.ref?.type==='folder'?'folder':'grid',18)}</span><span><b>${esc(a.identity?.name||'Материал')}</b><small>${esc(activityCourseName(a))} · ${esc(a.ref?.type||'activity')}</small></span>${icon('arrow',16)}</button>`).join('')||'<div class="inline-empty">Материалов сейчас нет.</div>'}</div></section>`;
-}
+  if(state.status.materials==='loading'){
+    return `
+      <section class="page materials-page">
+        ${PageHead({
+          eyebrow:'МАТЕРИАЛЫ',
+          title:'Материалы',
+          sub:'Собираем материалы из курсов Campus…'
+        })}
+        ${skeletonGrid(5)}
+      </section>
+    `;
+  }
 
+  if(state.status.materials==='error'){
+    return `
+      <section class="page materials-page">
+        ${PageHead({
+          eyebrow:'МАТЕРИАЛЫ',
+          title:'Материалы',
+          sub:'Не удалось получить материалы.'
+        })}
+        ${statePanel('error','materials')}
+      </section>
+    `;
+  }
+
+  const items=
+    Array.isArray(state.data.materials)
+      ? state.data.materials
+      : [];
+
+  const groups=
+    groupByCourse(
+      items,
+      activityCourseName
+    );
+
+  return `
+    <section class="page materials-page">
+
+      ${PageHead({
+        eyebrow:'МАТЕРИАЛЫ',
+        title:'Материалы',
+        sub:
+          items.length
+            ? `${items.length} материалов из твоих курсов.`
+            : 'Материалов сейчас нет.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="materials"
+          >
+            ${icon('refresh',16)}
+            Обновить
+          </button>
+        `
+      })}
+
+      <div class="course-groups materials-groups">
+
+        ${
+          groups.map(group=>`
+            <details
+              class="course-group"
+              open
+            >
+
+              ${courseGroupHead(
+                group.name,
+                group.items.length,
+                'material'
+              )}
+
+              <div class="course-group-body">
+
+                ${
+                  group.items.map(a=>`
+                    <button
+                      class="material-card task-card"
+                      data-activity="${activityRefAttr(a)}"
+                    >
+
+                      <span class="material-card-icon">
+                        ${icon(
+                          a.ref?.type==='folder'
+                            ? 'folder'
+                            : 'file',
+                          19
+                        )}
+                      </span>
+
+                      <span class="material-card-main">
+
+                        <b>
+                          ${esc(
+                            a.identity?.name||
+                            'Материал'
+                          )}
+                        </b>
+
+                        <small>
+                          ${
+                            esc(
+                              a.ref?.type||
+                              'material'
+                            )
+                          }
+                        </small>
+
+                      </span>
+
+                      <span class="material-card-arrow">
+                        ${icon('arrow',16)}
+                      </span>
+
+                    </button>
+                  `).join('')
+                }
+
+              </div>
+
+            </details>
+          `).join('')
+        }
+
+        ${
+          !groups.length
+            ? `
+              <div class="state-card empty">
+                <div class="state-icon">
+                  ${icon('folder',22)}
+                </div>
+
+                <h3>
+                  Материалов пока нет
+                </h3>
+
+                <p>
+                  Материалы будут собраны автоматически
+                  и отсортированы по курсам.
+                </p>
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
+    </section>
+  `;
+}
 function firstCampusFile(html) {
   const source = String(html || '');
   const doc = new DOMParser().parseFromString(source, 'text/html');
