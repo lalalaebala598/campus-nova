@@ -257,49 +257,273 @@ function normalizeCourseContents(data, courseId, meta = null) {
     sections
   };
 }
-export function parseCourse(html, courseId, baseUrl = CAMPUS_ORIGIN) {
+export function parseActivityLinks(html, courseId) {
+  const source = String(html || '');
+  const out = [];
+  const seen = new Set();
+
+  const push = (href, type, id, label, chunk = '') => {
+    const cmid = Number(id || 0);
+    if (!cmid || seen.has(cmid)) return;
+
+    let name = textOnly(label || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!name) return;
+
+    const contents = [];
+    for (const fm of String(chunk || '').matchAll(
+      /(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi
+    )) {
+      const fileurl = decodeHtml(fm[1]);
+      if (fileurl && !contents.some(f => f.fileurl === fileurl)) {
+        contents.push({
+          type: 'file',
+          filename: decodeURIComponent(fileurl.split('/').pop()?.split('?')[0] || ''),
+          filepath: '/',
+          filesize: 0,
+          fileurl,
+          content: '',
+          sortorder: contents.length,
+          mimetype: ''
+        });
+      }
+    }
+
+    out.push({
+      id: cmid,
+      cmid,
+      instance: null,
+      type: String(type || 'activity').toLowerCase(),
+      name,
+      url: decodeHtml(href || ''),
+      description: '',
+      visible: true,
+      uservisible: true,
+      contents
+    });
+
+    seen.add(cmid);
+  };
+
+  for (const m of source.matchAll(
+    /<a\b[^>]*href=["']([^"']*\/mod\/([a-z0-9_]+)\/view\.php\?[^"']*?\bid=(\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+  )) {
+    const href = m[1];
+    const type = m[2];
+    const id = m[3];
+    const label = textOnly(m[4]);
+
+    push(
+      href,
+      type,
+      id,
+      label,
+      source.slice(Math.max(0, m.index - 1500), Math.min(source.length, m.index + 3000))
+    );
+  }
+
+  for (const m of source.matchAll(/<(?:li|div)\b([^>]*)>/gi)) {
+    const attrs = m[1];
+
+    const id =
+      attrs.match(/\bid=["']module-(\d+)["']/i)?.[1] ||
+      attrs.match(/\bdata-id=["'](\d+)["']/i)?.[1] ||
+      attrs.match(/\bdata-cmid=["'](\d+)["']/i)?.[1];
+
+    const type =
+      attrs.match(/\bmodtype_([a-z0-9_]+)/i)?.[1] ||
+      attrs.match(/\bdata-modname=["']([^"']+)["']/i)?.[1];
+
+    if (!id || !type) continue;
+
+    const chunk = source.slice(
+      m.index + m[0].length,
+      Math.min(source.length, m.index + 7000)
+    );
+
+    const href =
+      chunk.match(/<a\b[^>]*href=["']([^"']+)["']/i)?.[1] || '';
+
+    const label =
+      textOnly(
+        chunk.match(
+          /<span[^>]+class=["'][^"']*instancename[^"']*["'][^>]*>([\s\S]*?)<\/span>/i
+        )?.[1] ||
+        chunk.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1] ||
+        attrs.match(/\baria-label=["']([^"']+)["']/i)?.[1] ||
+        ''
+      );
+
+    push(href, type, id, label || type, chunk);
+  }
+
+  return out;
+}
+
+function parseCourse(html, courseId, baseUrl = CAMPUS_ORIGIN) {
   const source = String(html || '');
   const h1 = textOnly(source.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || '');
-  const title = (h1 || textOnly(source.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || '')).replace(/^Курс:\s*/i, '').trim();
+  const title = (h1 || textOnly(source.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || ''))
+    .replace(/^Курс:\s*/i, '')
+    .trim();
+
   const sections = [];
+
   for (const sec of sectionBlocks(source)) {
-    const name = textOnly(sec.html.match(/<h[23][^>]*class=["'][^"']*sectionname[^"']*["'][^>]*>([\s\S]*?)<\/h[23]>/i)?.[1] || '') || `Раздел ${sections.length + 1}`;
+    const name =
+      textOnly(
+        sec.html.match(
+          /<h[23][^>]*class=["'][^"']*sectionname[^"']*["'][^>]*>([\s\S]*?)<\/h[23]>/i
+        )?.[1] || ''
+      ) || `Раздел ${sections.length + 1}`;
+
     const activities = [];
+
     for (const a of activityBlocks(sec.html)) {
-      const href = decodeHtml(a.html.match(/<a[^>]+href=["']([^"']+)["']/i)?.[1] || '');
-      const rawName = textOnly(a.html.match(/<span[^>]+class=["'][^"']*instancename[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || '');
+      const href =
+        decodeHtml(a.html.match(/<a[^>]+href=["']([^"']+)["']/i)?.[1] || '');
+
+      const rawName =
+        textOnly(
+          a.html.match(
+            /<span[^>]+class=["'][^"']*instancename[^"']*["'][^>]*>([\s\S]*?)<\/span>/i
+          )?.[1] || ''
+        );
+
       const label = rawName || textOnly(a.html).slice(0, 220);
-      const type = a.cls.match(/\bmodtype_([a-z0-9_]+)/i)?.[1] || 'activity';
-      const description = textOnly(a.html.match(/<div[^>]+class=["'][^"']*(?:activityinstance|contentafterlink)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || '').slice(0, 240);
+
+      const type =
+        a.cls.match(/\bmodtype_([a-z0-9_]+)/i)?.[1] || 'activity';
+
+      const description = textOnly(
+        a.html.match(
+          /<div[^>]+class=["'][^"']*(?:activityinstance|contentafterlink)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i
+        )?.[1] || ''
+      ).slice(0, 500);
+
       const contents = [];
-      for (const fm of a.html.matchAll(/(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi)) {
+
+      for (const fm of a.html.matchAll(
+        /(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi
+      )) {
         const fileurl = decodeHtml(fm[1]);
-        if (!contents.some(f => f.fileurl === fileurl)) contents.push({ type: 'file', filename: decodeURIComponent(fileurl.split('/').pop()?.split('?')[0] || ''), filepath: '/', filesize: 0, fileurl, content: '', sortorder: contents.length, mimetype: '' });
+
+        if (!contents.some(f => f.fileurl === fileurl)) {
+          contents.push({
+            type: 'file',
+            filename: decodeURIComponent(
+              fileurl.split('/').pop()?.split('?')[0] || ''
+            ),
+            filepath: '/',
+            filesize: 0,
+            fileurl,
+            content: '',
+            sortorder: contents.length,
+            mimetype: ''
+          });
+        }
       }
-      if (label) activities.push({ id: a.id, cmid: a.id, instance: null, type, name: label.replace(/\s+(?:Гиперссылка|Файл|Задание|Тест|Форум|Страница)$/i, ''), url: href, description, visible: true, uservisible: true, contents });
+
+      if (label) {
+        activities.push({
+          id: a.id,
+          cmid: a.id,
+          instance: null,
+          type,
+          name: label.replace(
+            /\s+(?:Гиперссылка|Файл|Задание|Тест|Форум|Страница|Ресурс)$/i,
+            ''
+          ),
+          url: href,
+          description,
+          visible: true,
+          uservisible: true,
+          contents
+        });
+      }
     }
-    sections.push({ id: sec.id, name, activities });
+
+    sections.push({
+      id: sec.id,
+      name,
+      activities
+    });
   }
-  const summary = textOnly(source.match(/<div[^>]+id=["']intro["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || source.match(/<div[^>]+class=["'][^"']*(?:course-summary|summary)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || '');
-  const courseimage = decodeHtml(source.match(/<img[^>]+src=["']([^"']+course\/overviewfiles[^"']+)["']/i)?.[1] || '') || null;
-  const teachers = []; const teacherSeen = new Set();
-  for (const m of source.matchAll(/<a\b[^>]+href=["']([^"']*\/user\/profile\.php\?id=(\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const id=Number(m[2]); const name=textOnly(m[3]); const parent=source.slice(Math.max(0,m.index-700),Math.min(source.length,m.index+900));
-    if(id&&name&&!teacherSeen.has(id)&&/преподав|teacher|instructor/i.test(parent)){teacherSeen.add(id);teachers.push({id,fullname:name,url:decodeHtml(m[1])});}
+
+  const directActivities = parseActivityLinks(source, courseId);
+
+  const existing = new Set(
+    sections.flatMap(sec => (sec.activities || []).map(a => Number(a.cmid || a.id)))
+  );
+
+  for (const activity of directActivities) {
+    if (!existing.has(Number(activity.cmid || activity.id))) {
+      let target = sections[0];
+
+      if (!target) {
+        target = {
+          id: 0,
+          name: 'Содержание курса',
+          activities: []
+        };
+        sections.push(target);
+      }
+
+      target.activities.push(activity);
+      existing.add(Number(activity.cmid || activity.id));
+    }
   }
-  if (!sections.length) {
-    const fallbackActivities = activityBlocks(source).map(a => {
-      const href = decodeHtml(a.html.match(/<a[^>]+href=["']([^"']+)["']/i)?.[1] || '');
-      const rawName = textOnly(a.html.match(/<span[^>]+class=["'][^"']*instancename[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || '');
-      const label = rawName || textOnly(a.html).slice(0, 220);
-      const type = a.cls.match(/\bmodtype_([a-z0-9_]+)/i)?.[1] || 'activity';
-      const contents=[];
-      for (const fm of a.html.matchAll(/(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi)) { const fileurl=decodeHtml(fm[1]); if(!contents.some(f=>f.fileurl===fileurl)) contents.push({type:'file',filename:decodeURIComponent(fileurl.split('/').pop()?.split('?')[0]||''),filepath:'/',filesize:0,fileurl,content:'',sortorder:contents.length,mimetype:''}); }
-      return label ? { id:a.id, cmid:a.id, instance:null, type, name:label.replace(/\s+(?:Гиперссылка|Файл|Задание|Тест|Форум|Страница)$/i,''), url:href, description:'', visible:true, uservisible:true, contents } : null;
-    }).filter(Boolean);
-    if (fallbackActivities.length) sections.push({ id: 0, name: 'Содержание курса', activities: fallbackActivities });
+
+  const summary = textOnly(
+    source.match(
+      /<div[^>]+id=["']intro["'][^>]*>([\s\S]*?)<\/div>/i
+    )?.[1] ||
+    source.match(
+      /<div[^>]+class=["'][^"']*(?:course-summary|summary)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i
+    )?.[1] ||
+    ''
+  );
+
+  const courseimage =
+    decodeHtml(
+      source.match(
+        /<img[^>]+src=["']([^"']+course\/overviewfiles[^"']+)["']/i
+      )?.[1] || ''
+    ) || null;
+
+  const teachers = [];
+  const teacherSeen = new Set();
+
+  for (const m of source.matchAll(
+    /<a\b[^>]+href=["']([^"']*\/user\/profile\.php\?id=(\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+  )) {
+    const id = Number(m[2]);
+    const name = textOnly(m[3]);
+
+    if (
+      id &&
+      name &&
+      !teacherSeen.has(id)
+    ) {
+      teacherSeen.add(id);
+      teachers.push({
+        id,
+        fullname: name,
+        url: decodeHtml(m[1])
+      });
+    }
   }
-  return { id: Number(courseId), title: title || `Курс ${courseId}`, description: summary, courseimage, teachers, sections };
+
+  return {
+    id: Number(courseId),
+    title: title || `Курс ${courseId}`,
+    description: summary,
+    courseimage,
+    teachers,
+    sections
+  };
 }
 
 function firstFileLink(html) {
