@@ -3597,3 +3597,687 @@ tbody tr:hover td{
   }
 }
 
+
+
+/* =========================================================
+   CAMPUS NOVA — NAVIGATION MOTION ENGINE
+   ========================================================= */
+
+.nav-item{
+  position:relative;
+  isolation:isolate;
+  transform:translateZ(0);
+}
+
+.nav-item .icon{
+  display:block;
+  flex:0 0 auto;
+  transform-box:fill-box;
+  transform-origin:center;
+  will-change:transform,opacity;
+}
+
+.nav-item span{
+  will-change:transform,color;
+}
+
+
+/* -----------------------------
+   Общая реакция пункта
+   ----------------------------- */
+
+.nav-item{
+  transition:
+    background .22s cubic-bezier(.2,.8,.2,1),
+    color .18s ease,
+    transform .22s cubic-bezier(.2,.8,.2,1);
+}
+
+.nav-item:hover{
+  transform:translateX(2px);
+}
+
+.nav-item:hover .icon{
+  transform:scale(1.035);
+  transition:
+    transform .22s cubic-bezier(.2,.8,.2,1);
+}
+
+.nav-item:hover span{
+  transform:translateX(1px);
+  transition:
+    transform .22s cubic-bezier(.2,.8,.2,1);
+}
+
+
+/* -----------------------------
+   Active indicator
+   ----------------------------- */
+
+.nav-item.active:before{
+  content:"";
+  position:absolute;
+
+  left:0;
+  top:8px;
+  bottom:8px;
+
+  width:3px;
+  border-radius:999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--accent),
+      #6d69ff
+    );
+
+  box-shadow:
+    0 0 11px rgba(24,183,255,.35);
+
+  transform-origin:center;
+  animation:novaIndicator .38s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaIndicator{
+  0%{
+    opacity:0;
+    transform:scaleY(.15);
+  }
+
+  55%{
+    opacity:1;
+    transform:scaleY(1.08);
+  }
+
+  100%{
+    opacity:1;
+    transform:scaleY(1);
+  }
+}
+
+
+/* =========================================================
+   ГЛАВНАЯ
+   ========================================================= */
+
+.nav-item.active[data-go="dashboard"] .icon{
+  animation:novaHome .62s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaHome{
+  0%{
+    opacity:.45;
+    transform:
+      translateY(5px)
+      scale(.82);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      translateY(-2px)
+      scale(1.08);
+  }
+
+  70%{
+    transform:
+      translateY(1px)
+      scale(.98);
+  }
+
+  100%{
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   КУРСЫ
+   ========================================================= */
+
+.nav-item.active[data-go="courses"] .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:novaCourses .42s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(1){
+  animation-delay:.02s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(2){
+  animation-delay:.08s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(3){
+  animation-delay:.14s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(4){
+  animation-delay:.20s;
+}
+
+@keyframes novaCourses{
+  0%{
+    opacity:.1;
+    transform:scale(.35);
+  }
+
+  65%{
+    opacity:1;
+    transform:scale(1.12);
+  }
+
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+
+/* =========================================================
+   РАСПИСАНИЕ
+   ========================================================= */
+
+.nav-item.active[data-go="schedule"] .icon{
+  animation:novaSchedule .65s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaSchedule{
+  0%{
+    opacity:.4;
+    transform:rotate(-20deg) scale(.9);
+  }
+
+  50%{
+    opacity:1;
+    transform:rotate(8deg) scale(1.05);
+  }
+
+  75%{
+    transform:rotate(-2deg) scale(1);
+  }
+
+  100%{
+    transform:rotate(0deg) scale(1);
+  }
+}
+
+
+/* =========================================================
+   ОЦЕНКИ
+   ========================================================= */
+
+.nav-item.active[data-go="grades"] .icon{
+  animation:novaGrades .62s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaGrades{
+  0%{
+    opacity:.35;
+    transform:translateY(3px) scale(.9);
+  }
+
+  40%{
+    opacity:1;
+    transform:translateY(-2px) scale(1.05);
+  }
+
+  70%{
+    transform:translateY(1px) scale(.99);
+  }
+
+  100%{
+    transform:translateY(0) scale(1);
+  }
+}
+
+.nav-item.active[data-go="grades"] .icon path:last-child{
+  stroke-dasharray:50;
+  stroke-dashoffset:50;
+  animation:novaGraph .55s
+    ease-out .08s forwards;
+}
+
+@keyframes novaGraph{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* =========================================================
+   ЗАДАНИЯ
+   ========================================================= */
+
+.nav-item.active[data-go="tasks"] .icon{
+  animation:novaTaskBox .55s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+.nav-item.active[data-go="tasks"] .icon path{
+  stroke-dasharray:30;
+  stroke-dashoffset:30;
+  animation:novaTaskCheck .42s
+    ease-out .12s forwards;
+}
+
+@keyframes novaTaskBox{
+  0%{
+    transform:scale(.88);
+    opacity:.45;
+  }
+
+  50%{
+    transform:scale(1.06);
+    opacity:1;
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+@keyframes novaTaskCheck{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* =========================================================
+   КАЛЕНДАРЬ
+   ========================================================= */
+
+.nav-item.active[data-go="calendar"] .icon{
+  animation:novaCalendar .6s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaCalendar{
+  0%{
+    opacity:.35;
+    transform:
+      translateY(3px)
+      rotate(-8deg)
+      scale(.9);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      translateY(-1px)
+      rotate(4deg)
+      scale(1.06);
+  }
+
+  75%{
+    transform:
+      rotate(-1deg)
+      scale(.99);
+  }
+
+  100%{
+    transform:
+      rotate(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   СООБЩЕНИЯ
+   ========================================================= */
+
+.nav-item.active[data-go="messages"] .icon{
+  animation:novaMessages .65s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaMessages{
+  0%{
+    opacity:.35;
+    transform:
+      translateY(4px)
+      scale(.88);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      translateY(-3px)
+      scale(1.06);
+  }
+
+  68%{
+    transform:
+      translateY(1px)
+      scale(.99);
+  }
+
+  100%{
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   ФАЙЛЫ
+   ========================================================= */
+
+.nav-item.active[data-go="files"] .icon{
+  animation:novaFiles .58s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaFiles{
+  0%{
+    opacity:.35;
+    transform:
+      translateY(3px)
+      scaleY(.86);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      translateY(-1px)
+      scaleY(1.06);
+  }
+
+  70%{
+    transform:scaleY(.99);
+  }
+
+  100%{
+    transform:scaleY(1);
+  }
+}
+
+
+/* =========================================================
+   МАТЕРИАЛЫ
+   ========================================================= */
+
+.nav-item.active[data-go="materials"] .icon{
+  animation:novaMaterials .62s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaMaterials{
+  0%{
+    opacity:.3;
+    transform:
+      translateX(-5px)
+      rotate(-3deg);
+  }
+
+  50%{
+    opacity:1;
+    transform:
+      translateX(1px)
+      rotate(.8deg);
+  }
+
+  75%{
+    transform:
+      translateX(0)
+      rotate(-.2deg);
+  }
+
+  100%{
+    transform:
+      translateX(0)
+      rotate(0);
+  }
+}
+
+
+/* =========================================================
+   ТЕСТЫ
+   ========================================================= */
+
+.nav-item.active[data-go="tests"] .icon{
+  animation:novaTests .65s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaTests{
+  0%{
+    opacity:.25;
+    transform:
+      perspective(100px)
+      rotateX(-18deg)
+      translateY(3px)
+      scale(.9);
+  }
+
+  48%{
+    opacity:1;
+    transform:
+      perspective(100px)
+      rotateX(4deg)
+      translateY(-1px)
+      scale(1.06);
+  }
+
+  72%{
+    transform:
+      perspective(100px)
+      rotateX(-1deg)
+      scale(.995);
+  }
+
+  100%{
+    transform:
+      perspective(100px)
+      rotateX(0)
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   ПРОФИЛЬ
+   ========================================================= */
+
+.sidebar-bottom .nav-item[data-go="profile"] .icon{
+  transition:
+    transform .25s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+.sidebar-bottom .nav-item[data-go="profile"]:hover .icon{
+  transform:
+    translateY(-1px)
+    scale(1.045);
+}
+
+.sidebar-bottom .nav-item.active[data-go="profile"] .icon{
+  animation:novaProfile .62s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaProfile{
+  0%{
+    opacity:.35;
+    transform:scale(.82);
+  }
+
+  50%{
+    opacity:1;
+    transform:scale(1.09);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+
+/* =========================================================
+   УВЕДОМЛЕНИЯ
+   ========================================================= */
+
+#notifications:hover .icon{
+  transform-origin:50% 18%;
+  animation:novaBell .62s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaBell{
+  0%{transform:rotate(0)}
+  18%{transform:rotate(9deg)}
+  34%{transform:rotate(-8deg)}
+  50%{transform:rotate(6deg)}
+  66%{transform:rotate(-3deg)}
+  100%{transform:rotate(0)}
+}
+
+
+/* =========================================================
+   ТЕМА
+   ========================================================= */
+
+#theme-top .icon,
+#theme-sidebar .icon{
+  transform-origin:center;
+}
+
+#theme-top:hover .icon,
+#theme-sidebar:hover .icon{
+  animation:novaTheme .55s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaTheme{
+  0%{transform:rotate(0) scale(1)}
+  55%{transform:rotate(55deg) scale(1.08)}
+  100%{transform:rotate(90deg) scale(1)}
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.search:focus-within .icon{
+  animation:novaSearch .48s
+    cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes novaSearch{
+  0%{
+    opacity:.45;
+    transform:scale(.88);
+  }
+
+  65%{
+    opacity:1;
+    transform:scale(1.08);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+
+/* =========================================================
+   CARD MICRO-MOTION
+   ========================================================= */
+
+.course-card,
+.metric,
+.task-card,
+.test-card,
+.activity,
+.schedule-card,
+.panel,
+.files-card,
+.table-card{
+  transition:
+    transform .24s cubic-bezier(.2,.8,.2,1),
+    border-color .24s ease,
+    box-shadow .28s ease;
+}
+
+.course-card:hover,
+.task-card:hover,
+.test-card:hover,
+.activity:hover,
+.schedule-card:hover{
+  transform:translateY(-2px);
+}
+
+
+/* =========================================================
+   CTA
+   ========================================================= */
+
+.primary{
+  transition:
+    transform .18s cubic-bezier(.2,.8,.2,1),
+    filter .2s ease,
+    box-shadow .24s ease;
+}
+
+.primary:hover{
+  transform:translateY(-1px);
+}
+
+.primary:active{
+  transform:scale(.975);
+}
+
+
+/* =========================================================
+   PAGE ENTRY
+   ========================================================= */
+
+#page{
+  opacity:0;
+  transform:translateY(7px);
+}
+
+#page.page-entered{
+  opacity:1;
+  transform:translateY(0);
+
+  transition:
+    opacity .32s ease,
+    transform .38s
+      cubic-bezier(.2,.8,.2,1);
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *::before,
+  *::after{
+    animation:none!important;
+    transition:none!important;
+  }
+
+  #page{
+    opacity:1!important;
+    transform:none!important;
+  }
+}
+
