@@ -760,3 +760,264 @@ body[data-theme="light"] .hero-overlay{
   }
 }
 
+
+
+/* =========================================================
+   CAMPUS NOVA - POLISHED ACTIVITY LAYER
+   ========================================================= */
+
+.activity-page .content-card{
+  overflow:hidden;
+}
+
+.activity-page h1{
+  max-width:1000px;
+  margin-top:8px;
+}
+
+.nova-activity-html{
+  margin-top:20px;
+  color:var(--text);
+}
+
+.nova-activity-html > p:first-child{
+  margin-top:0;
+}
+
+.nova-activity-html .navfooter,
+.nova-activity-html .activity-navigation,
+.nova-activity-html .block_navigation,
+.nova-activity-html .block_settings{
+  display:none !important;
+}
+
+.nova-download-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr) auto;
+  align-items:center;
+  gap:16px;
+  padding:18px;
+  margin:18px 0;
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 18%,
+    var(--line)
+  );
+  border-radius:18px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(24,183,255,.08),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      var(--surface),
+      var(--surface-2)
+    );
+  box-shadow:0 14px 38px rgba(0,0,0,.10);
+}
+
+.nova-download-icon{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb,var(--accent) 16%,var(--surface-3)),
+      var(--surface-3)
+    );
+  color:var(--accent);
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 20%,
+    var(--line)
+  );
+}
+
+.nova-download-copy{
+  min-width:0;
+}
+
+.nova-download-copy .eyebrow{
+  margin-bottom:4px;
+}
+
+.nova-download-copy h2{
+  margin:0 0 5px;
+  font-size:15px;
+  letter-spacing:-.025em;
+}
+
+.nova-download-copy p{
+  margin:0;
+  color:var(--muted);
+  font-size:10.5px;
+  line-height:1.5;
+}
+
+.nova-quiz-intro{
+  padding:20px;
+  margin:18px 0;
+  border:1px solid color-mix(
+    in srgb,
+    var(--purple) 18%,
+    var(--line)
+  );
+  border-radius:18px;
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(169,119,255,.10),
+      transparent 35%
+    ),
+    var(--surface);
+}
+
+.nova-quiz-intro,
+.nova-quiz-status{
+  display:flex;
+  align-items:flex-start;
+  gap:15px;
+}
+
+.nova-quiz-intro .nova-quiz-icon,
+.nova-quiz-status-icon{
+  flex:0 0 48px;
+}
+
+.nova-quiz-intro h2{
+  margin:3px 0 5px;
+  font-size:17px;
+}
+
+.nova-quiz-intro p{
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+}
+
+.nova-quiz-html{
+  margin-top:14px;
+}
+
+.nova-quiz-html form{
+  margin:0;
+}
+
+.nova-quiz-html .que{
+  position:relative;
+  padding:20px;
+  margin:12px 0;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(
+    180deg,
+    var(--surface),
+    var(--surface-2)
+  );
+  box-shadow:0 10px 30px rgba(0,0,0,.07);
+}
+
+.nova-quiz-html .qtext,
+.nova-quiz-html .formulation{
+  color:var(--text);
+  font-size:13px;
+  line-height:1.65;
+}
+
+.nova-quiz-html .answer{
+  display:grid;
+  gap:8px;
+  margin-top:15px;
+}
+
+.nova-quiz-html .answer > div,
+.nova-quiz-html .answer > label{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface-2);
+  color:var(--text);
+  cursor:pointer;
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    transform .18s ease;
+}
+
+.nova-quiz-html .answer > div:hover,
+.nova-quiz-html .answer > label:hover{
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 38%,
+    var(--line)
+  );
+  background:color-mix(
+    in srgb,
+    var(--accent) 5%,
+    var(--surface-2)
+  );
+  transform:translateY(-1px);
+}
+
+.nova-quiz-html input[type="radio"],
+.nova-quiz-html input[type="checkbox"]{
+  margin-top:3px;
+  accent-color:var(--accent);
+}
+
+.nova-quiz-html .submitbtns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+}
+
+.nova-quiz-html .submitbtns input,
+.nova-quiz-html .submitbtns button{
+  min-height:42px;
+  padding:0 15px;
+  border:0;
+  border-radius:12px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent),
+      #557dff
+    );
+  color:#fff;
+  font:800 11px inherit;
+  cursor:pointer;
+}
+
+@media (max-width:760px){
+  .nova-download-card{
+    grid-template-columns:48px minmax(0,1fr);
+  }
+
+  .nova-download-card .primary{
+    grid-column:1/-1;
+    width:100%;
+  }
+
+  .nova-quiz-intro{
+    padding:17px;
+  }
+
+  .nova-quiz-html .que{
+    padding:15px;
+  }
+}
+

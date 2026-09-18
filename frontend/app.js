@@ -289,48 +289,24 @@ function firstCampusFile(html) {
 }
 
 function bindQuizStart() {
-  const root = $('#campus-content');
   const button = $('#quiz-start-button');
+  if (!button) return;
 
-  if (!root || !button) return;
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
 
-  const startForm = [...root.querySelectorAll('form')].find(form => {
-    const action = form.getAttribute('action') || form.action || '';
-    return /startattempt\.php/i.test(action);
-  });
+    button.disabled = true;
+    const original = button.innerHTML;
 
-  if (!startForm) {
-    button.addEventListener('click', () => {
-      toast('Campus не передал форму запуска теста.', 'error');
-    });
-    return;
-  }
+    button.innerHTML = `${icon('spinner',16)} Запускаем…`;
 
-  startForm.classList.add('nova-system-form');
-
-  startForm.querySelectorAll(
-    'button[type="submit"], input[type="submit"]'
-  ).forEach(el => {
-    el.classList.add('nova-system-submit');
-  });
-
-  button.addEventListener('click', () => {
     try {
-      const submitter =
-        startForm.querySelector('button[type="submit"], input[type="submit"]');
-
-      if (submitter && typeof startForm.requestSubmit === 'function') {
-        startForm.requestSubmit(submitter);
-      } else if (typeof startForm.requestSubmit === 'function') {
-        startForm.requestSubmit();
-      } else {
-        startForm.dispatchEvent(
-          new Event('submit', { bubbles: true, cancelable: true })
-        );
+      await executeActivityAction('start');
+    } finally {
+      if (document.body.contains(button)) {
+        button.disabled = false;
+        button.innerHTML = original;
       }
-    } catch (error) {
-      console.error('[Nova][QuizStart]', error);
-      toast('Не удалось запустить тест.', 'error');
     }
   });
 }
@@ -451,8 +427,33 @@ function prepareCampusActivityHtml(html, title = '') {
   if (!root) root = doc.body;
 
   root.querySelectorAll(
-    '.navbar,.breadcrumb,.breadcrumbs,.block_navigation,.block_settings,.usermenu,#page-header,#page-footer'
+    '.navbar,.breadcrumb,.breadcrumbs,.block_navigation,.block_settings,.usermenu,#page-header,#page-footer,.navfooter,.activity-navigation,.activity-navigation .navbutton'
   ).forEach(el => el.remove());
+
+  // Remove duplicate legacy Moodle navigation/copy links.
+  [...root.querySelectorAll('p')].forEach(el => {
+    const text = normalize(el.textContent);
+    if (
+      text.startsWith('нажмите на ссылку') ||
+      text === 'назад' ||
+      text.startsWith('назад') ||
+      text.startsWith('далее')
+    ) {
+      el.remove();
+    }
+  });
+
+  // The Nova page already has its own title.
+  [...root.querySelectorAll('h1,h2,h3')].forEach(el => {
+    if (normalize(el.textContent) === wanted) {
+      el.remove();
+      return;
+    }
+
+    if (/^лекция №\d+$/i.test(el.textContent.trim()) && /лекц/i.test(title)) {
+      el.remove();
+    }
+  });
 
   root.querySelectorAll('[style]').forEach(el => {
     el.removeAttribute('style');
@@ -868,6 +869,7 @@ function bindCampusContent(){
   const root = $('#campus-content');
   if(!root) return;
 
+  // Files
   $$('[href],[src]',root).forEach(el=>{
     const attr = el.hasAttribute('href') ? 'href' : 'src';
     const raw = el.getAttribute(attr);
@@ -875,77 +877,87 @@ function bindCampusContent(){
 
     if(!x) return;
 
-    if(isFile(x) || (attr==='src' && /\/pluginfile\.php/i.test(x))){
+    if(
+      isFile(x) ||
+      (attr==='src' && /\/pluginfile\.php/i.test(x))
+    ){
       el.addEventListener('click',e=>{
         e.preventDefault();
         downloadCampus(x);
       });
 
       if(attr==='href') el.setAttribute('href','#');
-    } else {
-      el.addEventListener('click',e=>{
-        if(e.defaultPrevented) return;
-        const t=e.target.closest('a');
-
-        if(t){
-          e.preventDefault();
-          openCampusPath(x);
-        }
-      });
+      return;
     }
+
+    el.addEventListener('click',e=>{
+      const t=e.target.closest('a');
+      if(!t || e.defaultPrevented) return;
+
+      e.preventDefault();
+      openCampusPath(x);
+    });
   });
 
+  // Explicit Nova forms
   $$('form[data-nova-form]',root).forEach(form=>{
+    if(form.dataset.novaBound) return;
+    form.dataset.novaBound='1';
     form.addEventListener('submit',handleCampusForm);
   });
 
+  // Activity forms
   if(state.route==='activity'){
     $$('form',root).forEach(form=>{
+      if(form.dataset.novaBound) return;
+      form.dataset.novaBound='1';
+
       form.addEventListener('submit',e=>{
         e.preventDefault();
 
         const submitter=e.submitter;
+        const label=
+          `${submitter?.name||''} ${submitter?.value||''}`
+            .toLowerCase();
 
-        if(
-          submitter &&
-          /cancel|отмена/i.test(
-            `${submitter.name||''} ${submitter.value||''}`
-          )
-        ) return;
+        if(/cancel|отмена/.test(label)) return;
 
         const kind=String(
           state.data.activity?.result?.kind||''
         );
 
-        const isQuizStart =
-          /startattempt\.php/i.test(
-            form.getAttribute('action')||form.action||''
-          );
-
-        if(isQuizStart){
+        // Quiz start and quiz attempt forms are both routed
+        // through Nova's Campus proxy.
+        if(
+          kind==='quiz' ||
+          kind==='quiz-action'
+        ){
           handleCampusForm(e);
           return;
         }
 
-        if(
-          kind==='assignment-form' &&
-          submitter &&
-          /submit|отправ|сдать/i.test(
-            `${submitter.name||''} ${submitter.value||''}`
-          )
-        ){
-          executeActivityAction('submit');
-        } else if(kind==='assignment-form'){
-          executeActivityAction('save');
+        if(kind==='assignment-form'){
+          if(
+            /submit|отправ|сдать/.test(label)
+          ){
+            executeActivityAction('submit');
+          } else {
+            executeActivityAction('save');
+          }
         }
       });
     });
   }
 
   $$('[data-activity-action]').forEach(el=>{
+    if(el.dataset.novaBound) return;
+    el.dataset.novaBound='1';
+
     el.addEventListener(
       'click',
-      ()=>executeActivityAction(el.dataset.activityAction)
+      ()=>executeActivityAction(
+        el.dataset.activityAction
+      )
     );
   });
 
