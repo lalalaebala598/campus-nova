@@ -1319,4 +1319,4 @@ function parseUserGrades(html) {
 }
 
 export function makeSessionId() { return crypto.randomBytes(32).toString('base64url'); }
-export { CAMPUS_ORIGIN };
+export { parseCourse, CAMPUS_ORIGIN };

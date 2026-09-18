@@ -29,6 +29,15 @@ const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
 const esc = (s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const text = (s='')=>String(s).replace(/\s+/g,' ').trim();
 
+const novaFrame=(callback)=>{
+  if(typeof window!=='undefined' &&
+     typeof window.requestAnimationFrame==='function'){
+    return window.requestAnimationFrame.call(window,callback);
+  }
+
+  return setTimeout(()=>callback(Date.now()),0);
+};
+
 function icon(name,size=18){
   const paths={
     home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-6h6v6"/>',
@@ -1368,6 +1377,8 @@ function filesPage(){
   `;
 }
 function formatBytes(n){const x=Number(n)||0;if(x<1024)return `${x} Б`;if(x<1024*1024)return `${(x/1024).toFixed(1)} КБ`;if(x<1024*1024*1024)return `${(x/1024/1024).toFixed(1)} МБ`;return `${(x/1024/1024/1024).toFixed(1)} ГБ`}
+
+function formatFileSize(n){return formatBytes(n)}
 
 function materialsPage(){
   if(state.status.materials==='loading'){
@@ -2928,7 +2939,7 @@ function render(animateNav=false){
   if(!state.connected){
     app.innerHTML=login();
     bind();
-    requestAnimationFrame(()=>document.body.classList.add('nova-ready'));
+    novaFrame(()=>document.body.classList.add('nova-ready'));
     return;
   }
 
@@ -2954,7 +2965,7 @@ function render(animateNav=false){
   app.innerHTML=shell(body);
   bind();
 
-  requestAnimationFrame(()=>{
+  novaFrame(()=>{
     $('#page')?.classList.add('page-entered');
     document.body.classList.add('nova-ready');
 
@@ -3639,7 +3650,7 @@ document.addEventListener('pointerdown',e=>{
 
   target.classList.remove('nova-press');
 
-  requestAnimationFrame(()=>{
+  novaFrame(()=>{
     target.classList.add('nova-press');
   });
 });

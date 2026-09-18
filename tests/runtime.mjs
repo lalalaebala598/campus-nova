@@ -32,10 +32,37 @@ const fetch = async (url)=>{
   throw new Error(`Unexpected fetch in runtime test: ${url}`);
 };
 const consoleProxy = {log(){},warn(){},error(){}};
-const context = {window,document,localStorage,location,history,fetch,console:consoleProxy,Headers,URLSearchParams,URL,Date,Number,String,Boolean,Math,JSON,setTimeout,clearTimeout};
+const context = {
+  window,
+  document,
+  localStorage,
+  location,
+  history,
+  fetch,
+  console: consoleProxy,
+  Headers,
+  URLSearchParams,
+  URL,
+  Date,
+  Number,
+  String,
+  Boolean,
+  Math,
+  JSON,
+  setTimeout,
+  clearTimeout
+};
+
 vm.createContext(context);
-vm.runInContext(appSource, context, {filename:'app.js'});
+
+vm.runInContext(
+  appSource,
+  context,
+  {filename:'app.js'}
+);
+
 await new Promise(r=>setTimeout(r,30));
+
 assert.ok(app.innerHTML.length > 500, 'bootstrap must render visible UI');
 assert.match(app.innerHTML, /Campus\s*FA|Campus Nova/i, 'rendered UI should contain branding');
 assert.ok(app.innerHTML.includes('Главная') || app.innerHTML.includes('Мои курсы'), 'demo UI should contain navigation');
