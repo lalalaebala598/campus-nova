@@ -1289,95 +1289,276 @@ function playNavMotion(){
   if(!active) return;
 
   const icon = active.querySelector('.icon');
-  if(!icon) return;
+  if(!icon || typeof icon.animate !== 'function') return;
 
   const route = active.dataset.go || 'default';
 
-  if(icon.__novaMotion){
-    try{ icon.__novaMotion.cancel(); }catch{}
+  if(icon.__novaAnimations){
+    for(const animation of icon.__novaAnimations){
+      try{ animation.cancel(); }catch{}
+    }
   }
 
-  const animations = {
-    dashboard: [
-      {transform:'translateY(4px) scale(.86)', opacity:.4},
-      {transform:'translateY(-3px) scale(1.1)', opacity:1},
-      {transform:'translateY(1px) scale(.98)', opacity:1},
-      {transform:'translateY(0) scale(1)', opacity:1}
-    ],
-    courses: [
-      {transform:'scale(.86)', opacity:.45},
-      {transform:'scale(1.1)', opacity:1},
-      {transform:'scale(.98)', opacity:1},
-      {transform:'scale(1)', opacity:1}
-    ],
-    schedule: [
-      {transform:'rotate(-18deg) scale(.88)', opacity:.4},
-      {transform:'rotate(6deg) scale(1.08)', opacity:1},
-      {transform:'rotate(-1deg) scale(.99)', opacity:1},
-      {transform:'rotate(0) scale(1)', opacity:1}
-    ],
-    grades: [
-      {transform:'translateY(3px) scale(.9)', opacity:.4},
-      {transform:'translateY(-2px) scale(1.07)', opacity:1},
-      {transform:'translateY(1px) scale(.99)', opacity:1},
-      {transform:'translateY(0) scale(1)', opacity:1}
-    ],
-    tasks: [
-      {transform:'scale(.84)', opacity:.4},
-      {transform:'scale(1.1)', opacity:1},
-      {transform:'scale(.97)', opacity:1},
-      {transform:'scale(1)', opacity:1}
-    ],
-    calendar: [
-      {transform:'rotate(-9deg) translateY(3px) scale(.9)', opacity:.4},
-      {transform:'rotate(5deg) translateY(-2px) scale(1.07)', opacity:1},
-      {transform:'rotate(-1deg) scale(.99)', opacity:1},
-      {transform:'rotate(0) translateY(0) scale(1)', opacity:1}
-    ],
-    messages: [
-      {transform:'translateY(4px) scale(.86)', opacity:.4},
-      {transform:'translateY(-3px) scale(1.08)', opacity:1},
-      {transform:'translateY(1px) scale(.99)', opacity:1},
-      {transform:'translateY(0) scale(1)', opacity:1}
-    ],
-    files: [
-      {transform:'translateY(3px) scaleY(.86)', opacity:.4},
-      {transform:'translateY(-2px) scaleY(1.07)', opacity:1},
-      {transform:'scaleY(.99)', opacity:1},
-      {transform:'translateY(0) scaleY(1)', opacity:1}
-    ],
-    materials: [
-      {transform:'translateX(-6px) rotate(-3deg) scale(.93)', opacity:.35},
-      {transform:'translateX(2px) rotate(1deg) scale(1.06)', opacity:1},
-      {transform:'translateX(0) rotate(0) scale(1)', opacity:1}
-    ],
-    tests: [
-      {transform:'perspective(100px) rotateX(-15deg) scale(.9)', opacity:.35},
-      {transform:'perspective(100px) rotateX(4deg) scale(1.07)', opacity:1},
-      {transform:'perspective(100px) rotateX(-1deg) scale(.99)', opacity:1},
-      {transform:'perspective(100px) rotateX(0) scale(1)', opacity:1}
-    ],
-    profile: [
-      {transform:'scale(.82)', opacity:.35},
-      {transform:'scale(1.1)', opacity:1},
-      {transform:'scale(.98)', opacity:1},
-      {transform:'scale(1)', opacity:1}
-    ]
+  const animations = [];
+
+  const play = (element, keyframes, options={}) => {
+    if(!element) return null;
+
+    const animation = element.animate(keyframes,{
+      duration: options.duration ?? 820,
+      delay: options.delay ?? 0,
+      easing: options.easing ?? 'cubic-bezier(.2,.82,.2,1)',
+      fill: 'both'
+    });
+
+    animations.push(animation);
+    return animation;
   };
 
-  const keyframes = animations[route] || animations.dashboard;
+  const q = selector => icon.querySelector(selector);
+  const qa = selector => [...icon.querySelectorAll(selector)];
 
-  icon.__novaMotion = icon.animate(keyframes,{
-    duration:620,
-    easing:'cubic-bezier(.2,.82,.2,1)',
-    fill:'both'
-  });
+  switch(route){
+
+    case 'dashboard':
+      play(icon,[
+        {transform:'translateY(8px) scale(.88)',opacity:.25},
+        {transform:'translateY(-4px) scale(1.08)',opacity:1},
+        {transform:'translateY(1px) scale(.985)',opacity:1},
+        {transform:'translateY(0) scale(1)',opacity:1}
+      ],{duration:880});
+      break;
+
+    case 'courses':
+      play(icon,[
+        {transform:'scale(.95)',opacity:.7},
+        {transform:'scale(1.025)',opacity:1},
+        {transform:'scale(1)',opacity:1}
+      ],{duration:760});
+
+      qa('rect').forEach((el,index)=>{
+        play(el,[
+          {transform:'scale(.25)',opacity:0},
+          {transform:'scale(1.12)',opacity:1},
+          {transform:'scale(.96)',opacity:1},
+          {transform:'scale(1)',opacity:1}
+        ],{
+          duration:540,
+          delay:90 + index*85,
+          easing:'cubic-bezier(.16,1,.3,1)'
+        });
+      });
+      break;
+
+    case 'schedule': {
+      const paths = qa('path');
+      const hands = paths[1];
+
+      play(icon,[
+        {transform:'rotate(-7deg) scale(.94)',opacity:.5},
+        {transform:'rotate(4deg) scale(1.045)',opacity:1},
+        {transform:'rotate(-1.2deg) scale(.995)',opacity:1},
+        {transform:'rotate(0) scale(1)',opacity:1}
+      ],{duration:900});
+
+      if(hands){
+        play(hands,[
+          {transform:'rotate(-15deg)',transformOrigin:'12px 12px'},
+          {transform:'rotate(12deg)',transformOrigin:'12px 12px'},
+          {transform:'rotate(0deg)',transformOrigin:'12px 12px'}
+        ],{
+          duration:760,
+          delay:100,
+          easing:'cubic-bezier(.2,.9,.2,1)'
+        });
+      }
+      break;
+    }
+
+    case 'grades': {
+      const paths = qa('path');
+      const graph = paths[2];
+
+      play(icon,[
+        {transform:'translateY(3px) scale(.95)',opacity:.45},
+        {transform:'translateY(-1px) scale(1.035)',opacity:1},
+        {transform:'translateY(0) scale(1)',opacity:1}
+      ],{duration:820});
+
+      if(graph){
+        const length = 70;
+        graph.style.strokeDasharray = length;
+        play(graph,[
+          {strokeDashoffset:length,opacity:.2},
+          {strokeDashoffset:0,opacity:1}
+        ],{
+          duration:760,
+          delay:120,
+          easing:'cubic-bezier(.2,.8,.2,1)'
+        });
+      }
+      break;
+    }
+
+    case 'tasks': {
+      const box = q('rect');
+      const check = qa('path')[0];
+
+      if(box){
+        play(box,[
+          {transform:'scale(.82)',opacity:.3},
+          {transform:'scale(1.08)',opacity:1},
+          {transform:'scale(.985)',opacity:1},
+          {transform:'scale(1)',opacity:1}
+        ],{
+          duration:620,
+          easing:'cubic-bezier(.16,1,.3,1)'
+        });
+      }
+
+      if(check){
+        const length = 32;
+        check.style.strokeDasharray = length;
+        play(check,[
+          {strokeDashoffset:length,opacity:0},
+          {strokeDashoffset:0,opacity:1}
+        ],{
+          duration:620,
+          delay:250,
+          easing:'cubic-bezier(.2,.8,.2,1)'
+        });
+      }
+
+      play(icon,[
+        {transform:'translateY(2px)',opacity:.55},
+        {transform:'translateY(-1px)',opacity:1},
+        {transform:'translateY(0)',opacity:1}
+      ],{duration:900});
+      break;
+    }
+
+    case 'calendar':
+      play(icon,[
+        {transform:'translateY(4px) rotate(-6deg) scale(.92)',opacity:.35},
+        {transform:'translateY(-2px) rotate(4deg) scale(1.045)',opacity:1},
+        {transform:'translateY(1px) rotate(-1deg) scale(.99)',opacity:1},
+        {transform:'translateY(0) rotate(0) scale(1)',opacity:1}
+      ],{duration:880});
+
+      if(q('rect')){
+        play(q('rect'),[
+          {transform:'scale(.94)',opacity:.5},
+          {transform:'scale(1.025)',opacity:1},
+          {transform:'scale(1)',opacity:1}
+        ],{duration:700,delay:90});
+      }
+      break;
+
+    case 'messages': {
+      const paths = qa('path');
+      const dots = paths[1];
+
+      play(icon,[
+        {transform:'translateY(5px) scale(.86)',opacity:.3},
+        {transform:'translateY(-3px) scale(1.07)',opacity:1},
+        {transform:'translateY(1px) scale(.99)',opacity:1},
+        {transform:'translateY(0) scale(1)',opacity:1}
+      ],{duration:860});
+
+      if(dots){
+        play(dots,[
+          {transform:'translateY(3px)',opacity:0},
+          {transform:'translateY(0)',opacity:1}
+        ],{
+          duration:520,
+          delay:250,
+          easing:'cubic-bezier(.16,1,.3,1)'
+        });
+      }
+      break;
+    }
+
+    case 'files':
+      play(icon,[
+        {transform:'translateY(5px) scaleY(.9)',opacity:.35},
+        {transform:'translateY(-2px) scaleY(1.045)',opacity:1},
+        {transform:'translateY(1px) scaleY(.995)',opacity:1},
+        {transform:'translateY(0) scaleY(1)',opacity:1}
+      ],{duration:860});
+
+      if(q('path:last-child')){
+        play(q('path:last-child'),[
+          {transform:'translateY(2px)',opacity:.35},
+          {transform:'translateY(-1px)',opacity:1},
+          {transform:'translateY(0)',opacity:1}
+        ],{duration:560,delay:160});
+      }
+      break;
+
+    case 'materials':
+      play(icon,[
+        {transform:'translateX(-10px) rotate(-4deg) scale(.94)',opacity:.2},
+        {transform:'translateX(3px) rotate(1deg) scale(1.035)',opacity:1},
+        {transform:'translateX(-1px) rotate(-.3deg) scale(.995)',opacity:1},
+        {transform:'translateX(0) rotate(0) scale(1)',opacity:1}
+      ],{duration:920});
+      break;
+
+    case 'tests': {
+      const paths = qa('path');
+
+      play(icon,[
+        {transform:'translateY(5px) rotateX(-10deg) scale(.9)',opacity:.3},
+        {transform:'translateY(-2px) rotateX(3deg) scale(1.045)',opacity:1},
+        {transform:'translateY(1px) rotateX(-1deg) scale(.995)',opacity:1},
+        {transform:'translateY(0) rotateX(0) scale(1)',opacity:1}
+      ],{duration:900});
+
+      paths.slice(1).forEach((el,index)=>{
+        play(el,[
+          {transform:'translateX(-5px)',opacity:0},
+          {transform:'translateX(0)',opacity:1}
+        ],{
+          duration:420,
+          delay:230 + index*95,
+          easing:'cubic-bezier(.16,1,.3,1)'
+        });
+      });
+      break;
+    }
+
+    case 'profile':
+      play(icon,[
+        {transform:'scale(.8)',opacity:.2},
+        {transform:'scale(1.11)',opacity:1},
+        {transform:'scale(.975)',opacity:1},
+        {transform:'scale(1)',opacity:1}
+      ],{duration:900});
+      break;
+
+    default:
+      play(icon,[
+        {transform:'translateY(5px) scale(.9)',opacity:.35},
+        {transform:'translateY(-2px) scale(1.06)',opacity:1},
+        {transform:'translateY(0) scale(1)',opacity:1}
+      ],{duration:850});
+  }
+
+  icon.__novaAnimations = animations;
 
   active.classList.add('nova-nav-motion');
 
+  const total = Math.max(
+    ...animations.map(animation=>{
+      const timing = animation.effect?.getTiming?.();
+      return (timing?.delay || 0) + (timing?.duration || 0);
+    }),
+    850
+  );
+
   setTimeout(()=>{
     active.classList.remove('nova-nav-motion');
-  },700);
+  }, total + 80);
 }
 function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready');playNavMotion()})}
 function bind(){
