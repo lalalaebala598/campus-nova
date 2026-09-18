@@ -109,7 +109,9 @@ function navigate(route,param='',replace=false){
   const path=target==='/'?'/':target; const method=replace?'replaceState':'pushState'; history[method]({nova:true,route,param},'',path); state.routeEpoch++; parseRoute(); window.scrollTo({top:0,behavior:'smooth'});
   const loadingRoute={dashboard:'dashboard',courses:'courses',course:'course',schedule:'schedule',grades:'grades',tasks:'tasks',calendar:'calendar',messages:'messages',files:'files',materials:'materials',tests:'tests',activity:'activity',profile:'profile',view:null}[state.route];
   if(loadingRoute && !state.demo) state.status[loadingRoute]='loading';
-  render(); loadRouteData(); }
+  render(true);
+  loadRouteData();
+}
 function back(fallback='dashboard'){ if(history.state?.nova){history.back();return} navigate(fallback); }
 function formatDate(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
 function formatLong(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}
@@ -1560,7 +1562,49 @@ function playNavMotion(){
     active.classList.remove('nova-nav-motion');
   }, total + 80);
 }
-function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready');playNavMotion()})}
+function render(animateNav=false){
+  setTheme();
+
+  const app=$('#app');
+
+  if(!state.connected){
+    app.innerHTML=login();
+    bind();
+    requestAnimationFrame(()=>document.body.classList.add('nova-ready'));
+    return;
+  }
+
+  let body='';
+
+  switch(state.route){
+    case 'courses':body=coursesPage();break;
+    case 'course':body=coursePage();break;
+    case 'schedule':body=schedulePage();break;
+    case 'grades':body=gradePage();break;
+    case 'tasks':body=tasksPage();break;
+    case 'calendar':body=calendarPage();break;
+    case 'messages':body=messagesPage();break;
+    case 'files':body=filesPage();break;
+    case 'tests':body=testsPage();break;
+    case 'materials':body=materialsPage();break;
+    case 'activity':body=activityPage();break;
+    case 'profile':body=profilePage();break;
+    case 'view':body=viewPage();break;
+    default:body=dashboard();
+  }
+
+  app.innerHTML=shell(body);
+  bind();
+
+  requestAnimationFrame(()=>{
+    $('#page')?.classList.add('page-entered');
+    document.body.classList.add('nova-ready');
+
+    if(animateNav){
+      playNavMotion();
+    }
+  });
+}
 function bind(){
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
     if(event.defaultPrevented) return;
@@ -2212,7 +2256,12 @@ async function openConversation(id){
 }
 function conversationMarkup(c){const msgs=[...(c?.messages||[])].sort((a,b)=>Number(a.timecreated||0)-Number(b.timecreated||0));const title=c?.name||c?.members?.find?.(m=>String(m.id)!==String(state.user?.id))?.fullname||'Диалог';return `<div class="conversation"><div class="conversation-head"><span class="avatar large">${esc(title.slice(0,1))}</span><div><h2>${esc(title)}</h2><p>${msgs.length} ${msgs.length===1?'сообщение':'сообщений'}</p></div></div><div class="conversation-body">${msgs.map(m=>`<div class="bubble ${String(m.userid||m.user?.id)===String(state.user?.id)?'mine':''}"><p>${esc(text(m.text||m.message||''))}</p><small>${m.timecreated?formatLong(m.timecreated)+' · '+formatTime(m.timecreated):''}</small></div>`).join('')||'<div class="inline-empty">История переписки пуста.</div>'}</div><form id="message-form" class="message-form"><textarea name="text" rows="1" required placeholder="Написать сообщение…"></textarea><button class="primary" type="submit" title="Отправить">${icon('send',18)}</button></form></div>`}
 function bindMessageForm(){$('#message-form')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button');const tx=form.querySelector('textarea');const value=tx.value.trim();if(!value)return;btn.disabled=true;try{await api('/api/messages/send',{method:'POST',body:JSON.stringify({conversationId:state.selectedConversation,text:value})});tx.value='';await openConversation(state.selectedConversation);toast('Сообщение отправлено','success')}catch(ex){toast(ex.message,'error')}finally{btn.disabled=false}})}
-window.addEventListener('popstate',()=>{state.routeEpoch++;parseRoute();render();loadRouteData(false,state.routeEpoch)});window.addEventListener('error',e=>console.error('[Nova]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[Nova]',e.reason));
+window.addEventListener('popstate',()=>{
+  state.routeEpoch++;
+  parseRoute();
+  render(true);
+  loadRouteData(false,state.routeEpoch);
+});window.addEventListener('error',e=>console.error('[Nova]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[Nova]',e.reason));
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#global-search')?.focus()}});
 document.addEventListener('click',e=>{
   const target=e.target?.closest?.('a[data-go]');
