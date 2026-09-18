@@ -269,6 +269,82 @@ function materialsPage(){
   const items=state.data.materials||[];
   return `<section class="page">${PageHead({eyebrow:'МАТЕРИАЛЫ',title:'Материалы',sub:'Единые resource/page/folder и plugin activities',children:`<button class="secondary" data-retry="materials">${icon('refresh',16)} Обновить</button>`})}<div class="task-list">${items.map(a=>`<button class="task-card" data-activity="${activityRefAttr(a)}"><span class="task-kind resource">${icon(a.ref?.type==='folder'?'folder':'grid',18)}</span><span><b>${esc(a.identity?.name||'Материал')}</b><small>${esc(activityCourseName(a))} · ${esc(a.ref?.type||'activity')}</small></span>${icon('arrow',16)}</button>`).join('')||'<div class="inline-empty">Материалов сейчас нет.</div>'}</div></section>`;
 }
+
+function firstCampusFile(html) {
+  const source = String(html || '');
+  const doc = new DOMParser().parseFromString(source, 'text/html');
+
+  const link = [...doc.querySelectorAll('a[href]')].find(a => {
+    const href = a.getAttribute('href') || '';
+    return /\/(?:pluginfile|tokenpluginfile|webservice\/pluginfile|draftfile)\.php/i.test(href)
+      || /\.(?:pdf|docx?|xlsx?|pptx?|zip)(?:$|[?#])/i.test(href);
+  });
+
+  if (!link) return null;
+
+  return {
+    fileurl: normalizePath(link.getAttribute('href') || ''),
+    filename: (link.textContent || '').replace(/\s+/g, ' ').trim() || 'Файл'
+  };
+}
+
+function bindQuizStart() {
+  const root = $('#campus-content');
+  const button = $('#quiz-start-button');
+
+  if (!root || !button) return;
+
+  const startForm = [...root.querySelectorAll('form')].find(form => {
+    const action = form.getAttribute('action') || form.action || '';
+    return /startattempt\.php/i.test(action);
+  });
+
+  if (!startForm) {
+    button.addEventListener('click', () => {
+      toast('Campus не передал форму запуска теста.', 'error');
+    });
+    return;
+  }
+
+  startForm.classList.add('nova-system-form');
+
+  startForm.querySelectorAll(
+    'button[type="submit"], input[type="submit"]'
+  ).forEach(el => {
+    el.classList.add('nova-system-submit');
+  });
+
+  button.addEventListener('click', () => {
+    try {
+      const submitter =
+        startForm.querySelector('button[type="submit"], input[type="submit"]');
+
+      if (submitter && typeof startForm.requestSubmit === 'function') {
+        startForm.requestSubmit(submitter);
+      } else if (typeof startForm.requestSubmit === 'function') {
+        startForm.requestSubmit();
+      } else {
+        startForm.dispatchEvent(
+          new Event('submit', { bubbles: true, cancelable: true })
+        );
+      }
+    } catch (error) {
+      console.error('[Nova][QuizStart]', error);
+      toast('Не удалось запустить тест.', 'error');
+    }
+  });
+}
+
+function activityHtml(result, title) {
+  if (!result?.html) return '';
+
+  if (typeof prepareCampusActivityHtml === 'function') {
+    return prepareCampusActivityHtml(result.html, title);
+  }
+
+  return String(result.html);
+}
+
 function activityTypeLabel(a){const labels={resource:'Материал',file:'Файл',assign:'Задание',quiz:'Тест',page:'Страница',folder:'Папка',url:'Ссылка',forum:'Форум',glossary:'Глоссарий',lanebs:'Campus-активность',znaniumcombook:'Campus-активность'};return labels[a?.ref?.type]||a?.ref?.type||'Активность'}
 function prepareCampusActivityHtml(html, title = '') {
   const source = String(html || '');
@@ -390,26 +466,238 @@ function prepareCampusActivityHtml(html, title = '') {
 }
 
 function activityPage(){
-  if(state.status.activity==='loading') return `<section class="page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="courses">${icon('back',17)} Назад</button></div>${statePanel('loading','activity',false)}</div></section>`;
-  if(state.status.activity==='error') return `<section class="page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="courses">${icon('back',17)} Назад</button></div>${statePanel('error','activity')}</div></section>`;
-  const data=state.data.activity||{}; const a=data.activity||{}; const result=data.result||{};
-  if(data.fallback){ return `<section class="page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="courses">${icon('back',17)} Назад</button></div><div class="eyebrow">${esc(activityTypeLabel(a))}</div><h1>${esc(a.identity?.name||'Активность')}</h1><div class="state-card"><div class="state-icon">${icon('arrow',22)}</div><h3>Эту активность нужно открыть в Campus</h3><p>${esc(data.message||'Для этого типа пока нет подтверждённого native workflow Nova.')}</p><button class="primary" id="open-activity-fallback">Открыть в Campus ${icon('arrow',16)}</button></div></div></section>`; }
-  const title=result.title||a.identity?.name||'Активность';
-  const kind=result.kind||'activity';
-  let body='';
-  let actions=[];
-  if(kind==='file'){
-    const f=result.file||{}; body=`<div class="file-download"><span class="file-big">${icon('download',30)}</span><div><div class="eyebrow">ФАЙЛ</div><h2>${esc(f.filename||a.identity?.name||'Файл')}</h2><p>${esc(f.mimetype||'Файл')}${result.contentLength?` · ${esc(formatBytes(result.contentLength))}`:''}</p><button class="primary" data-activity-action="download">${icon('download',17)} Скачать файл</button></div></div>`;
-  } else {
-    body=result.html?`<div class="nova-campus-content">${prepareCampusActivityHtml(result.html,title)}</div>`:`<div class="inline-empty">У этой активности пока нет отображаемого содержимого.</div>`;
-    if(kind==='assignment') actions.push({name:'edit',label:'Добавить ответ'});
-    if(kind==='assignment-form'){ actions.push({name:'save',label:'Сохранить'}); actions.push({name:'submit',label:'Отправить'}); if(result.form?.hasFileManager) body=`<div class="inline-warning">${icon('info',15)} Загрузка нового файла через этот интерфейс пока не подтверждена контрактом Campus. Сама форма и текстовый ответ работают через реальный Moodle form.</div>${body}`; }
-    if(kind==='quiz' && result.capabilities?.canStart===true) actions.push({name:'start',label:'Начать тест'});
-    if(kind==='quiz-action' && result.action==='start') { body=result.html||`<div class="state-card"><h3>Попытка запущена</h3><p>${result.attemptId?`Попытка №${esc(result.attemptId)} открыта на Campus.`:'Campus ответил, но номер попытки не удалось подтвердить.'}</p></div>`; }
-    if(kind==='resource' && Array.isArray(result.files) && result.files.length) actions.push({name:'download',label:'Скачать файл'});
+  if(state.status.activity==='loading')
+    return `<section class="page">
+      <div class="content-card">
+        <div class="content-toolbar">
+          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
+            ${icon('back',17)} Назад
+          </button>
+        </div>
+        ${statePanel('loading','activity',false)}
+      </div>
+    </section>`;
+
+  if(state.status.activity==='error')
+    return `<section class="page">
+      <div class="content-card">
+        <div class="content-toolbar">
+          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
+            ${icon('back',17)} Назад
+          </button>
+        </div>
+        ${statePanel('error','activity')}
+      </div>
+    </section>`;
+
+  const data = state.data.activity || {};
+  const a = data.activity || {};
+  const result = data.result || {};
+  const kind = result.kind || 'activity';
+  const title = result.title || a.identity?.name || 'Активность';
+  const cleanHtml = activityHtml(result, title);
+
+  if(data.fallback){
+    return `<section class="page">
+      <div class="content-card">
+        <div class="content-toolbar">
+          <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
+            ${icon('back',17)} Назад
+          </button>
+        </div>
+        <div class="eyebrow">${esc(activityTypeLabel(a))}</div>
+        <h1>${esc(a.identity?.name||'Активность')}</h1>
+
+        <div class="state-card">
+          <div class="state-icon">${icon('arrow',22)}</div>
+          <h3>Эту активность нужно открыть в Campus</h3>
+          <p>${esc(data.message||'Для этого типа пока нет подтверждённого native workflow Nova.')}</p>
+          <button class="primary" id="open-activity-fallback">
+            Открыть в Campus ${icon('arrow',16)}
+          </button>
+        </div>
+      </div>
+    </section>`;
   }
-  return `<section class="page activity-page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">${icon('back',17)} Назад</button><div class="activity-actions">${actions.map(x=>`<button class="${x.name==='submit'?'primary':'secondary'}" data-activity-action="${esc(x.name)}">${icon(x.name==='download'?'download':x.name==='submit'?'send':x.name==='start'?'arrow':'edit',16)} ${esc(x.label)}</button>`).join('')}</div></div><div class="eyebrow">${esc(activityTypeLabel(a))} · ${esc(activityCourseName(a))}</div><h1>${esc(title)}</h1><div id="campus-content">${body}</div></div></section>`;
+
+  const firstFile =
+    result.file ||
+    (Array.isArray(result.files) ? result.files[0] : null) ||
+    firstCampusFile(result.html);
+
+  let body = '';
+  let topAction = '';
+
+  if(kind === 'file'){
+    const file = result.file || firstFile || {};
+
+    body = `
+      <div class="nova-file-card">
+        <div class="nova-file-icon">
+          ${icon('download',28)}
+        </div>
+
+        <div class="nova-file-info">
+          <span class="eyebrow">ФАЙЛ</span>
+          <h2>${esc(file.filename || title || 'Файл')}</h2>
+          <p>${esc(file.mimetype || 'Документ Campus')}</p>
+        </div>
+
+        ${file.fileurl
+          ? `<button class="primary nova-file-download"
+               data-download="${esc(file.fileurl)}">
+               ${icon('download',17)} Скачать
+             </button>`
+          : ''
+        }
+      </div>`;
+
+  } else if(kind === 'resource') {
+    body = `
+      ${firstFile?.fileurl ? `
+        <div class="nova-download-card">
+          <div class="nova-download-icon">
+            ${icon('download',22)}
+          </div>
+
+          <div class="nova-download-copy">
+            <span class="eyebrow">ЛЕКЦИЯ</span>
+            <h2>${esc(firstFile.filename || 'Материал лекции')}</h2>
+            <p>Файл хранится в Campus и открывается через защищённую сессию.</p>
+          </div>
+
+          <button class="primary"
+                  data-download="${esc(firstFile.fileurl)}">
+            ${icon('download',17)} Скачать лекцию
+          </button>
+        </div>
+      ` : ''}
+
+      ${cleanHtml
+        ? `<div class="nova-activity-html">${cleanHtml}</div>`
+        : `<div class="inline-empty">Содержимое материала отсутствует.</div>`
+      }`;
+
+  } else if(kind === 'quiz') {
+    topAction = `
+      <button class="primary" id="quiz-start-button">
+        ${icon('arrow',17)} Начать тест
+      </button>`;
+
+    body = `
+      <div class="nova-quiz-intro">
+        <div class="nova-quiz-icon">${icon('quiz',25)}</div>
+        <div>
+          <span class="eyebrow">ТЕСТ</span>
+          <h2>${esc(title)}</h2>
+          <p>
+            Запуск выполняется через настоящую форму Campus.
+            Ответы и попытка останутся синхронизированы с Moodle.
+          </p>
+        </div>
+      </div>
+
+      <div class="nova-activity-html nova-quiz-html">
+        ${cleanHtml || '<div class="inline-empty">Campus не передал содержимое теста.</div>'}
+      </div>`;
+
+  } else if(kind === 'quiz-action') {
+    body = `
+      <div class="nova-quiz-status">
+        <span class="nova-quiz-status-icon">${icon('check',20)}</span>
+        <div>
+          <span class="eyebrow">ТЕСТ</span>
+          <h3>Попытка теста запущена</h3>
+          <p>Отвечай на вопросы ниже. Форма отправляет ответы прямо в Campus.</p>
+        </div>
+      </div>
+
+      <div class="nova-activity-html nova-quiz-html">
+        ${cleanHtml || '<div class="inline-empty">Campus не передал вопросы теста.</div>'}
+      </div>`;
+
+  } else if(kind === 'assignment'){
+    body = `
+      <div class="nova-assignment-head">
+        <div class="nova-assignment-icon">${icon('check-square',24)}</div>
+        <div>
+          <span class="eyebrow">ЗАДАНИЕ</span>
+          <h2>${esc(title)}</h2>
+          <p>Ответ будет отправлен через реальную форму Campus.</p>
+        </div>
+      </div>
+
+      <div class="nova-activity-html">
+        ${cleanHtml || '<div class="inline-empty">Содержимое задания отсутствует.</div>'}
+      </div>`;
+
+  } else if(kind === 'assignment-form'){
+    body = `
+      <div class="nova-assignment-head">
+        <div class="nova-assignment-icon">${icon('edit',24)}</div>
+        <div>
+          <span class="eyebrow">ОТВЕТ</span>
+          <h2>${esc(title)}</h2>
+          <p>Заполни форму и отправь ответ в Campus.</p>
+        </div>
+      </div>
+
+      <div class="nova-activity-html">
+        ${cleanHtml || '<div class="inline-empty">Форма задания отсутствует.</div>'}
+      </div>`;
+
+  } else {
+    body = `
+      <div class="nova-activity-html">
+        ${cleanHtml || '<div class="inline-empty">У этой активности пока нет отображаемого содержимого.</div>'}
+      </div>`;
+  }
+
+  return `<section class="page activity-page">
+    <div class="content-card">
+      <div class="content-toolbar">
+        <button class="back-button" data-back="${state.routeBeforeActivity||'courses'}">
+          ${icon('back',17)} Назад
+        </button>
+
+        <div class="activity-actions">
+          ${topAction}
+
+          ${kind==='assignment'
+            ? `<button class="secondary"
+                       data-activity-action="edit">
+                 ${icon('edit',16)} Добавить ответ
+               </button>`
+            : ''
+          }
+
+          ${kind==='assignment-form'
+            ? `<button class="secondary"
+                       data-activity-action="save">
+                 ${icon('save',16)} Сохранить
+               </button>
+               <button class="primary"
+                       data-activity-action="submit">
+                 ${icon('send',16)} Отправить
+               </button>`
+            : ''
+          }
+        </div>
+      </div>
+
+      <div class="eyebrow">
+        ${esc(activityTypeLabel(a))} · ${esc(a?.relations?.course?.name || 'Курс')}
+      </div>
+
+      <h1>${esc(title)}</h1>
+
+      <div id="campus-content">
+        ${body}
+      </div>
+    </div>
+  </section>`;
 }
+
 function profilePage(){
   if(state.status.profile==='loading') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Загружаем профиль…'})}${skeletonGrid(2)}</section>`;
   if(state.status.profile==='error') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Не удалось загрузить профиль.'})}${statePanel('error','profile')}</section>`;
@@ -576,13 +864,253 @@ async function loadView(force=false,epoch=state.routeEpoch){
     target.innerHTML=data.html||'<div class="inline-empty">Материал пуст.</div>';bindCampusContent();
   }catch(e){if(state.requests.view!==seq||!state.connected)return;if(epoch!==state.routeEpoch||state.route!=='view'||state.param!==p)return;state.errors.view=e.message;state.status.view='error';render();}
 }
-function bindCampusContent(){const root=$('#campus-content');if(!root)return;$$('[href],[src]',root).forEach(el=>{const attr=el.hasAttribute('href')?'href':'src';const raw=el.getAttribute(attr);const x=normalizePath(raw);if(!x)return;if(isFile(x)||attr==='src'&&/\/pluginfile\.php/i.test(x)){el.addEventListener('click',e=>{e.preventDefault();downloadCampus(x)});if(attr==='href')el.setAttribute('href','#')}else{el.addEventListener('click',e=>{if(e.defaultPrevented)return;const t=e.target.closest('a');if(t){e.preventDefault();openCampusPath(x)}})}});$$('form[data-nova-form]',root).forEach(form=>form.addEventListener('submit',handleCampusForm));if(state.route==='activity')$$('form',root).forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const submitter=e.submitter;if(submitter&&/cancel|отмена/i.test(`${submitter.name||''} ${submitter.value||''}`))return;const kind=String(state.data.activity?.result?.kind||'');executeActivityAction(kind==='assignment-form'&&submitter&&/submit|отправ|сдать/i.test(`${submitter.name||''} ${submitter.value||''}`)?'submit':kind==='assignment-form'?'save':'open')}));}
+function bindCampusContent(){
+  const root = $('#campus-content');
+  if(!root) return;
+
+  $$('[href],[src]',root).forEach(el=>{
+    const attr = el.hasAttribute('href') ? 'href' : 'src';
+    const raw = el.getAttribute(attr);
+    const x = normalizePath(raw);
+
+    if(!x) return;
+
+    if(isFile(x) || (attr==='src' && /\/pluginfile\.php/i.test(x))){
+      el.addEventListener('click',e=>{
+        e.preventDefault();
+        downloadCampus(x);
+      });
+
+      if(attr==='href') el.setAttribute('href','#');
+    } else {
+      el.addEventListener('click',e=>{
+        if(e.defaultPrevented) return;
+        const t=e.target.closest('a');
+
+        if(t){
+          e.preventDefault();
+          openCampusPath(x);
+        }
+      });
+    }
+  });
+
+  $$('form[data-nova-form]',root).forEach(form=>{
+    form.addEventListener('submit',handleCampusForm);
+  });
+
+  if(state.route==='activity'){
+    $$('form',root).forEach(form=>{
+      form.addEventListener('submit',e=>{
+        e.preventDefault();
+
+        const submitter=e.submitter;
+
+        if(
+          submitter &&
+          /cancel|отмена/i.test(
+            `${submitter.name||''} ${submitter.value||''}`
+          )
+        ) return;
+
+        const kind=String(
+          state.data.activity?.result?.kind||''
+        );
+
+        const isQuizStart =
+          /startattempt\.php/i.test(
+            form.getAttribute('action')||form.action||''
+          );
+
+        if(isQuizStart){
+          handleCampusForm(e);
+          return;
+        }
+
+        if(
+          kind==='assignment-form' &&
+          submitter &&
+          /submit|отправ|сдать/i.test(
+            `${submitter.name||''} ${submitter.value||''}`
+          )
+        ){
+          executeActivityAction('submit');
+        } else if(kind==='assignment-form'){
+          executeActivityAction('save');
+        }
+      });
+    });
+  }
+
+  $$('[data-activity-action]').forEach(el=>{
+    el.addEventListener(
+      'click',
+      ()=>executeActivityAction(el.dataset.activityAction)
+    );
+  });
+
+  bindQuizStart();
+}
+
 async function handleCampusForm(e){
-  e.preventDefault(); const form=e.currentTarget; const action=normalizePath(form.getAttribute('action')||state.param); const method=(form.getAttribute('method')||'POST').toUpperCase(); if(!action)return toast('Не удалось определить действие Campus.','error');
-  if(method!=='POST') return openCampusPath(action);
-  const fd=new FormData(form); const hasFile=[...fd.values()].some(v=>typeof File!=='undefined'&&v instanceof File&&v.size>0); let body; const headers={};
-  if(hasFile || /multipart\/form-data/i.test(form.enctype||'')){if(e.submitter?.name&&!fd.has(e.submitter.name))fd.append(e.submitter.name,e.submitter.value||'');body=fd;}else{body=new URLSearchParams();for(const [k,v] of fd.entries())body.append(k,String(v));if(e.submitter?.name&&!fd.has(e.submitter.name))body.append(e.submitter.name,e.submitter.value||'');headers['content-type']='application/x-www-form-urlencoded'}
-  try{const d=await api(`/api/campus/action?path=${encodeURIComponent(action)}`,{method:'POST',headers,body});if(d.downloadPath){downloadCampus(d.downloadPath,d.filename);return}if(d.page){state.pageCache.set(`page:${d.page.path||action}`,d.page);render();loadView(true);toast(d.success===false?'Campus не подтвердил действие.':'Действие выполнено','success')}}catch(ex){toast(ex.message,'error')}}
+  e.preventDefault();
+
+  const form=e.currentTarget;
+  const action=normalizePath(
+    form.getAttribute('action') || state.param
+  );
+
+  const method=(
+    form.getAttribute('method') || 'POST'
+  ).toUpperCase();
+
+  if(!action){
+    return toast(
+      'Не удалось определить действие Campus.',
+      'error'
+    );
+  }
+
+  if(method!=='POST'){
+    return openCampusPath(action);
+  }
+
+  const fd=new FormData(form);
+
+  const hasFile=[...fd.values()].some(
+    v =>
+      typeof File!=='undefined' &&
+      v instanceof File &&
+      v.size>0
+  );
+
+  let body;
+  const headers={};
+
+  if(
+    hasFile ||
+    /multipart\/form-data/i.test(form.enctype||'')
+  ){
+    if(
+      e.submitter?.name &&
+      !fd.has(e.submitter.name)
+    ){
+      fd.append(
+        e.submitter.name,
+        e.submitter.value||''
+      );
+    }
+
+    body=fd;
+  } else {
+    body=new URLSearchParams();
+
+    for(const [k,v] of fd.entries()){
+      body.append(k,String(v));
+    }
+
+    if(
+      e.submitter?.name &&
+      !fd.has(e.submitter.name)
+    ){
+      body.append(
+        e.submitter.name,
+        e.submitter.value||''
+      );
+    }
+
+    headers['content-type'] =
+      'application/x-www-form-urlencoded';
+  }
+
+  try{
+    const d=await api(
+      `/api/campus/action?path=${encodeURIComponent(action)}`,
+      {
+        method:'POST',
+        headers,
+        body
+      }
+    );
+
+    if(d.downloadPath){
+      downloadCampus(
+        d.downloadPath,
+        d.filename
+      );
+      return;
+    }
+
+    if(d.page){
+      /*
+       * Activity forms stay inside Nova.
+       * We replace only the activity payload with the new
+       * Campus response instead of navigating to /view.
+       */
+      if(state.route==='activity'){
+        const current=state.data.activity||{};
+        const previous=current.result||{};
+
+        let kind=previous.kind||'activity';
+
+        if(
+          /startattempt\.php/i.test(action) ||
+          kind==='quiz'
+        ){
+          kind='quiz-action';
+        }
+
+        state.data.activity={
+          activity:current.activity,
+          result:{
+            ...previous,
+            kind,
+            title:d.page.title||previous.title||current.activity?.identity?.name||'Активность',
+            html:d.page.html||'',
+            redirectedPath:d.page.path||d.redirectedPath||null
+          }
+        };
+
+        state.status.activity='success';
+        state.errors.activity=null;
+
+        render();
+        bindCampusContent();
+
+        toast(
+          kind==='quiz-action'
+            ? 'Тест запущен.'
+            : 'Действие выполнено.',
+          'success'
+        );
+
+        return;
+      }
+
+      state.pageCache.set(
+        `page:${d.page.path||action}`,
+        d.page
+      );
+
+      render();
+      loadView(true);
+
+      toast(
+        d.success===false
+          ? 'Campus не подтвердил действие.'
+          : 'Действие выполнено',
+        'success'
+      );
+    }
+  } catch(ex){
+    toast(
+      ex.message ||
+      'Не удалось выполнить действие.',
+      'error'
+    );
+  }
+}
+
 async function openConversation(id){
   state.selectedConversation=id;render();const view=$('#conversation-view');if(!view)return;const seq=(state.requests.conversation||0)+1;state.requests.conversation=seq;
   try{const d=await api(`/api/messages/conversation?id=${encodeURIComponent(id)}`);if(state.requests.conversation!==seq||state.route!=='messages'||String(state.selectedConversation)!==String(id))return;view.innerHTML=conversationMarkup(d.conversation);bindMessageForm()}
