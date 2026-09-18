@@ -138,6 +138,188 @@ function firstName(){
 
   return full.split(/\s+/)[0]||'Студент';
 }
+
+function campusOrigin(){
+  try{
+    return new URL(state.campusUrl||'').origin;
+  }catch{
+    return '';
+  }
+}
+
+function campusHost(){
+  try{
+    return new URL(state.campusUrl||'').host;
+  }catch{
+    return 'вашего Campus';
+  }
+}
+
+function avatar(){
+  return firstName().slice(0,1).toUpperCase();
+}
+
+function flattenCalendar(c){
+  const a=[];
+
+  for(const w of c?.weeks||[]){
+    for(const d of w.days||[]){
+      for(const e of d.events||[]){
+        a.push({
+          ...e,
+          timestart:e.timestart??d.timestamp
+        });
+      }
+    }
+  }
+
+  return a;
+}
+
+function dateKey(ts){
+  const value=Number(ts);
+
+  if(Number.isFinite(value) && value>0){
+    const d=new Date(value*1000);
+
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  }
+
+  const d=new Date(ts);
+
+  if(!Number.isNaN(d.getTime())){
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  }
+
+  return '';
+}
+
+function selectedKey(){
+  return `${state.year}-${state.month}-${state.selectedDay}`;
+}
+
+function monthLabel(){
+  return new Date(
+    state.year,
+    state.month-1,
+    1
+  )
+    .toLocaleDateString(
+      'ru-RU',
+      {
+        month:'long',
+        year:'numeric'
+      }
+    )
+    .replace(/^./,c=>c.toUpperCase());
+}
+
+function themeToggle(){
+  state.theme=
+    state.theme==='dark'
+      ? 'light'
+      : 'dark';
+
+  setTheme();
+
+  localStorage.setItem(
+    'nova-theme',
+    state.theme
+  );
+
+  render();
+}
+
+function setTheme(){
+  document.body.dataset.theme=state.theme;
+
+  const root=document.documentElement;
+
+  if(root){
+    root.dataset.theme=state.theme;
+    root.style.colorScheme=state.theme;
+  }
+}
+
+function brand(){
+  return `
+    <div class="brand">
+      <span class="brand-mark">
+        ${icon('university',22)}
+      </span>
+
+      <span>
+        <b>Campus <em>FA</em></b>
+        <small>Nova</small>
+      </span>
+    </div>
+  `;
+}
+
+function notificationItems(){
+  const items=[];
+
+  const tasks=
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : [];
+
+  for(
+    const t of tasks.slice(0,5)
+  ){
+    items.push({
+      type:'task',
+      title:t.name||'Задание',
+      meta:t.course||'Campus',
+      action:()=>navigate(
+        'view',
+        t.url||'/my/'
+      )
+    });
+  }
+
+  const msgs=
+    state.data.messages||{};
+
+  for(
+    const c of (msgs.conversations||[])
+      .filter(
+        x=>Number(
+          x.unreadcount||
+          x.unreadCount||
+          0
+        )>0
+      )
+      .slice(0,5)
+  ){
+    items.push({
+      type:'message',
+      title:c.name||'Новое сообщение',
+      meta:'Сообщения',
+      action:()=>navigate('messages')
+    });
+  }
+
+  for(
+    const e of flattenCalendar(
+      state.data.calendar||{}
+    )
+      .filter(
+        x=>Number(x.timestart||0)*1000>=Date.now()
+      )
+      .slice(0,4)
+  ){
+    items.push({
+      type:'event',
+      title:e.name||'Событие',
+      meta:e.course?.fullname||'Расписание',
+      action:()=>navigate('calendar')
+    });
+  }
+
+  return items.slice(0,8);
+}
+
 function showNotifications(){
   const existing=$('#notification-modal'); if(existing){existing.remove();return;}
   const items=notificationItems();
@@ -164,7 +346,9 @@ function hero(){
   const calendar=state.data.calendar||{};
   const events=flattenCalendar(calendar);
 
-  const todayKeyValue=dateKey(new Date().toISOString());
+  const today=new Date();
+  const todayKeyValue=
+    `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
 
   const todayEvents=events.filter(event=>{
     return dateKey(event.timestart)===todayKeyValue;
