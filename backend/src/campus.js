@@ -848,12 +848,27 @@ export class CampusSession {
     try {
       const result = await this.tryFormLogin(username, password);
       this.cache.delete('authWarning');
-      // Keep a REST capability beside the web session. This makes read-only
-      // screens resilient while preserving the real Moodle web session for forms.
+
+      // Do not make the user wait for the optional REST capability.
+      // The web session is already authenticated and can serve the UI.
+      // Obtain the token in the background so later read-only requests
+      // can transparently switch to REST when it becomes available.
       if (!this.token) {
-        try { await this.obtainServiceToken(username, password); } catch (e) { this.cache.set('tokenCapabilityWarning', String(e?.message || e)); }
+        void this.obtainServiceToken(username, password)
+          .catch(e => {
+            this.cache.set(
+              'tokenCapabilityWarning',
+              String(e?.message || e)
+            );
+          });
       }
-      return { user: this.user, token: Boolean(this.token), session: true, mode: result.mode };
+
+      return {
+        user: this.user,
+        token: Boolean(this.token),
+        session: true,
+        mode: result.mode
+      };
     } catch (e) {
       formError = e;
       if (this.trace?.enabled) {
@@ -948,10 +963,10 @@ export class CampusSession {
   cacheSet(key, value) { this.cache.set(key, { t: Date.now(), v: value }); return value; }
 
   async courses() {
-    const cached = this.cacheGet('courses', 30000);
+    const cached = this.cacheGet('courses', 120000);
     if (cached !== null) return cached;
     return this._singleFlight('courses', async () => {
-      const again = this.cacheGet('courses', 30000);
+      const again = this.cacheGet('courses', 120000);
       if (again !== null) return again;
       let readError = null;
       const args = { offset: 0, limit: 0, classification: 'allincludinghidden', sort: 'ul.timeaccess desc', customfieldname: 'groups_name', customfieldvalue: '' };
@@ -987,7 +1002,7 @@ export class CampusSession {
   async calendar({ year, month, courseid = 1, day = 1, mini = true, includenavigation = true } = {}) {
     const now = new Date(); year = Number(year || now.getFullYear()); month = Number(month || now.getMonth() + 1); day = Number(day || now.getDate());
     const key = `cal:${year}:${month}:${courseid}:${mini}`;
-    const cached = this.cacheGet(key, 12000);
+    const cached = this.cacheGet(key, 30000);
     if (cached !== null) return cached;
     return this._singleFlight(key, async () => {
       const again = this.cacheGet(key, 12000);
@@ -1010,6 +1025,9 @@ export class CampusSession {
   }
 
   async messages() {
+    const cached = this.cacheGet('messages', 15000);
+    if (cached !== null) return cached;
+
     return this._singleFlight('messages', async () => {
       const userid = Number(this.userid); const conversations = new Map(); const errors = [];
       const call = async (methodname, args, critical = false) => {
@@ -1113,10 +1131,10 @@ export class CampusSession {
     const courseId = Number(id); if (!Number.isInteger(courseId) || courseId <= 0) throw new Error('Некорректный ID курса.');
     const key = `course:${courseId}`;
     if (force) this.cache.delete(key);
-    const cached = this.cacheGet(key, 30000); if (cached !== null) { this._syncCourseGraph(cached); return cached; }
+    const cached = this.cacheGet(key, 120000); if (cached !== null) { this._syncCourseGraph(cached); return cached; }
     return this._singleFlight(key, async () => {
       if (force) this.cache.delete(key);
-      const again = this.cacheGet(key, 30000); if (again !== null) { this._syncCourseGraph(again); return again; }
+      const again = this.cacheGet(key, 120000); if (again !== null) { this._syncCourseGraph(again); return again; }
       let pageError = null;
       let meta = null;
       try {

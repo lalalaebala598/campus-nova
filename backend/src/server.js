@@ -141,7 +141,7 @@ async function ensureActivityGraph(s, { force = false } = {}) {
   return sessionFlight(s, cacheKey, async () => {
     if (!force) {
       const cached = s.cache?.[cacheKey];
-      if (cached && Date.now() - cached.t < 60000 && s.campus.getCourseGraph().allCourses().length) return cached.v;
+      if (cached && Date.now() - cached.t < 300000 && s.campus.getCourseGraph().allCourses().length) return cached.v;
     }
     const courses = await sessionFlight(s, 'courses', () => s.campus.getAdapter().listCourses());
     if (!Array.isArray(courses) || !courses.length) {
@@ -149,7 +149,7 @@ async function ensureActivityGraph(s, { force = false } = {}) {
       return s.cache[cacheKey].v;
     }
     let failed = 0;
-    await mapLimit(courses, 5, async (c) => {
+    await mapLimit(courses, 8, async (c) => {
       try { await s.campus.course(c.id, { force }); return true; }
       catch { failed += 1; return false; }
     });
@@ -354,7 +354,29 @@ async function api(req, res, route, q) {
     const s = requireSession(req, res); if (!s) return;
     activeSession = s;
     if (route === '/api/dashboard' && req.method === 'GET') { const cached=s.cache.dashboard; if(cached && Date.now()-cached.t<12000) return json(res,200,{ok:true,...cached.v}); const data=await sessionFlight(s,'dashboard',()=>dashboardData(s.campus)); s.cache.dashboard={t:Date.now(),v:{data}}; return json(res,200,{ok:true,data}); }
-    if (route === '/api/courses' && req.method === 'GET') return json(res, 200, { ok: true, courses: await sessionFlight(s,'courses',()=>s.campus.getAdapter().listCourses()) });
+    if (route === '/api/courses' && req.method === 'GET') {
+      const courses = await sessionFlight(
+        s,
+        'courses',
+        () => s.campus.getAdapter().listCourses()
+      );
+
+      // Start warming the course/activity graph without blocking
+      // the response. Opening a course or the tasks/tests section
+      // can then reuse data that is already being fetched.
+      void ensureActivityGraph(s)
+        .catch(error => {
+          console.debug(
+            '[Nova][Prewarm]',
+            String(error?.message || error)
+          );
+        });
+
+      return json(res, 200, {
+        ok: true,
+        courses
+      });
+    }
     if (route === '/api/calendar' && req.method === 'GET') { const key=`calendar:${q.get('year')||''}:${q.get('month')||''}:${q.get('day')||''}`; return json(res,200,{ok:true,calendar:await sessionFlight(s,key,()=>s.campus.getAdapter().loadCalendar({ year:q.get('year'),month:q.get('month'),day:q.get('day') }))}); }
     if (route === '/api/messages' && req.method === 'GET') return json(res, 200, { ok: true, messages: await sessionFlight(s,'messages',()=>s.campus.getAdapter().listMessages()) });
     if (route === '/api/messages/conversation' && req.method === 'GET') { const id=q.get('id'); if(!id)return json(res,400,{ok:false,error:'Не указан диалог.'}); return json(res,200,{ok:true,conversation:await sessionFlight(s,`conversation:${id}`,()=>s.campus.getAdapter().getConversation(id))}); }
