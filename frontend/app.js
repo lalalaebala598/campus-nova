@@ -426,50 +426,60 @@ function groupByCourse(items,getter){
 }
 
 function courseGroupHead(name,count,type='activity'){
-  const iconName=
-    type==='file'
-      ? 'folder'
-      : type==='test'
-        ? 'quiz'
-        : type==='material'
-          ? 'folder'
-          : 'university';
+  const config={
+    activity:{
+      icon:'university',
+      label:count===1?'задание':'заданий'
+    },
 
-  const label=
-    count===1
-      ? (
-          type==='file'
-            ? 'файл'
-            : type==='test'
-              ? 'тест'
-              : type==='material'
-                ? 'материал'
-                : 'элемент'
-        )
-      : (
-          type==='file'
-            ? 'файла'
-            : type==='test'
-              ? 'тестов'
-              : type==='material'
-                ? 'материалов'
-                : 'элементов'
-        );
+    test:{
+      icon:'quiz',
+      label:count===1?'тест':'тестов'
+    },
+
+    material:{
+      icon:'folder',
+      label:count===1?'материал':'материалов'
+    },
+
+    file:{
+      icon:'folder',
+      label:count===1?'файл':'файлов'
+    }
+  };
+
+  const cfg=
+    config[type]||
+    config.activity;
 
   return `
-    <summary class="course-group-head">
+    <summary
+      class="course-group-head"
+      aria-label="${esc(
+        `${name}, ${count} ${cfg.label}`
+      )}"
+    >
+
       <span class="course-group-icon">
-        ${icon(iconName,17)}
+        ${icon(cfg.icon,18)}
       </span>
 
       <span class="course-group-title">
-        <b>${esc(name)}</b>
-        <small>${count} ${label}</small>
+
+        <b>
+          ${esc(name)}
+        </b>
+
+        <small>
+          ${count} ${cfg.label}
+        </small>
+
       </span>
 
       <span class="course-group-chevron">
-        ${icon('chevron',16)}
+        ${icon('chevron',15)}
       </span>
+
     </summary>
   `;
 }
