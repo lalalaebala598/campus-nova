@@ -705,10 +705,9 @@ export class CampusSession {
     for (let i = 0; i <= maxRedirects; i++) {
       const r = await this.request(current, { method: 'GET', redirect: 'manual' }); const loc = r.headers.get('location');
       if (r.status >= 300 && r.status < 400 && loc) { const next = pathOnly(loc, this.baseUrl); if (next === current) return { response: r, path: current }; if (/^\/login\/index\.php/i.test(next) && !/^\/login\/index\.php/i.test(current)) return { response: r, path: next }; current = next; continue; }
-      const ct = r.headers.get('content-type') || '';
-      if (/text\/html|application\/xhtml\+xml/i.test(ct)) {
-        const text = await r.clone().text(); const redirect = detectHtmlRedirect(text); if (redirect) { const next = pathOnly(redirect, this.baseUrl); if (next !== current) { current = next; continue; } }
-      }
+      // Moodle may contain client-side location code inside normal HTML/JS.
+      // Treat HTTP Location redirects as navigation redirects, but do not
+      // follow arbitrary meta-refresh/window.location snippets from the page.
       return { response: r, path: current };
     }
     throw new Error('Campus вернул слишком много перенаправлений.');
