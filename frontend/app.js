@@ -1286,28 +1286,99 @@ function login(){const remembered=state.campusUrl||'https://campus.fa.ru';return
 
 function playNavMotion(){
   const active = document.querySelector('.nav-item.active');
-
   if(!active) return;
 
-  const route =
-    active.dataset.go ||
-    'default';
+  const icon = active.querySelector('.icon');
+  if(!icon) return;
 
-  active.classList.remove('nova-nav-motion');
-  active.dataset.motion = route;
+  const route = active.dataset.go || 'default';
 
-  /*
-   * Force browser reflow.
-   * This guarantees that the same animation
-   * can be started again after every navigation.
-   */
-  void active.offsetWidth;
+  if(icon.__novaMotion){
+    try{ icon.__novaMotion.cancel(); }catch{}
+  }
 
-  requestAnimationFrame(()=>{
-    active.classList.add('nova-nav-motion');
+  const animations = {
+    dashboard: [
+      {transform:'translateY(4px) scale(.86)', opacity:.4},
+      {transform:'translateY(-3px) scale(1.1)', opacity:1},
+      {transform:'translateY(1px) scale(.98)', opacity:1},
+      {transform:'translateY(0) scale(1)', opacity:1}
+    ],
+    courses: [
+      {transform:'scale(.86)', opacity:.45},
+      {transform:'scale(1.1)', opacity:1},
+      {transform:'scale(.98)', opacity:1},
+      {transform:'scale(1)', opacity:1}
+    ],
+    schedule: [
+      {transform:'rotate(-18deg) scale(.88)', opacity:.4},
+      {transform:'rotate(6deg) scale(1.08)', opacity:1},
+      {transform:'rotate(-1deg) scale(.99)', opacity:1},
+      {transform:'rotate(0) scale(1)', opacity:1}
+    ],
+    grades: [
+      {transform:'translateY(3px) scale(.9)', opacity:.4},
+      {transform:'translateY(-2px) scale(1.07)', opacity:1},
+      {transform:'translateY(1px) scale(.99)', opacity:1},
+      {transform:'translateY(0) scale(1)', opacity:1}
+    ],
+    tasks: [
+      {transform:'scale(.84)', opacity:.4},
+      {transform:'scale(1.1)', opacity:1},
+      {transform:'scale(.97)', opacity:1},
+      {transform:'scale(1)', opacity:1}
+    ],
+    calendar: [
+      {transform:'rotate(-9deg) translateY(3px) scale(.9)', opacity:.4},
+      {transform:'rotate(5deg) translateY(-2px) scale(1.07)', opacity:1},
+      {transform:'rotate(-1deg) scale(.99)', opacity:1},
+      {transform:'rotate(0) translateY(0) scale(1)', opacity:1}
+    ],
+    messages: [
+      {transform:'translateY(4px) scale(.86)', opacity:.4},
+      {transform:'translateY(-3px) scale(1.08)', opacity:1},
+      {transform:'translateY(1px) scale(.99)', opacity:1},
+      {transform:'translateY(0) scale(1)', opacity:1}
+    ],
+    files: [
+      {transform:'translateY(3px) scaleY(.86)', opacity:.4},
+      {transform:'translateY(-2px) scaleY(1.07)', opacity:1},
+      {transform:'scaleY(.99)', opacity:1},
+      {transform:'translateY(0) scaleY(1)', opacity:1}
+    ],
+    materials: [
+      {transform:'translateX(-6px) rotate(-3deg) scale(.93)', opacity:.35},
+      {transform:'translateX(2px) rotate(1deg) scale(1.06)', opacity:1},
+      {transform:'translateX(0) rotate(0) scale(1)', opacity:1}
+    ],
+    tests: [
+      {transform:'perspective(100px) rotateX(-15deg) scale(.9)', opacity:.35},
+      {transform:'perspective(100px) rotateX(4deg) scale(1.07)', opacity:1},
+      {transform:'perspective(100px) rotateX(-1deg) scale(.99)', opacity:1},
+      {transform:'perspective(100px) rotateX(0) scale(1)', opacity:1}
+    ],
+    profile: [
+      {transform:'scale(.82)', opacity:.35},
+      {transform:'scale(1.1)', opacity:1},
+      {transform:'scale(.98)', opacity:1},
+      {transform:'scale(1)', opacity:1}
+    ]
+  };
+
+  const keyframes = animations[route] || animations.dashboard;
+
+  icon.__novaMotion = icon.animate(keyframes,{
+    duration:620,
+    easing:'cubic-bezier(.2,.82,.2,1)',
+    fill:'both'
   });
-}
 
+  active.classList.add('nova-nav-motion');
+
+  setTimeout(()=>{
+    active.classList.remove('nova-nav-motion');
+  },700);
+}
 function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready');playNavMotion()})}
 function bind(){
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
