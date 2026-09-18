@@ -5033,3 +5033,214 @@ tbody tr:hover td{
     font-size:12px;
   }
 }
+
+
+/* =========================================================
+   LOGIN FINAL VISUAL PASS
+   ========================================================= */
+
+.auth{
+  min-height:100dvh;
+  height:100dvh;
+  grid-template-columns:minmax(430px,.84fr) minmax(560px,1.16fr);
+  overflow:hidden;
+}
+
+.auth-left{
+  min-height:100dvh;
+  height:100dvh;
+  padding:34px clamp(28px,5vw,82px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.auth-inner{
+  width:min(470px,100%);
+}
+
+.auth-wordmark{
+  margin-bottom:38px;
+}
+
+.auth-inner .eyebrow{
+  margin-bottom:11px;
+}
+
+.auth-inner h1{
+  max-width:650px;
+  font-size:clamp(42px,4.5vw,66px);
+  line-height:.96;
+  letter-spacing:-.065em;
+  margin:0 0 16px;
+  text-wrap:balance;
+}
+
+.auth-lead{
+  max-width:430px;
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.58;
+}
+
+.auth form{
+  max-width:440px;
+  margin-top:23px;
+}
+
+.auth label{
+  font-size:10px;
+  margin-bottom:12px;
+}
+
+.auth input{
+  height:52px;
+  margin-top:6px;
+  border-radius:15px;
+}
+
+.auth form>.primary{
+  height:53px;
+  margin-top:5px;
+  border-radius:15px;
+}
+
+.auth .security{
+  justify-content:flex-start;
+  margin-top:14px;
+  font-size:9px;
+  opacity:.7;
+}
+
+.auth-visual{
+  position:relative;
+  width:100%;
+  height:100dvh;
+  min-height:100dvh;
+  overflow:hidden;
+  background:#09121d;
+}
+
+.auth-photo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+
+  /*
+   * В кадре держим фасад и основную архитектуру,
+   * а не только верхнюю часть здания.
+   */
+  object-position:center 42%;
+
+  transform:scale(1.012);
+  animation:authPhotoIn .95s cubic-bezier(.2,.72,.2,1) both;
+  will-change:transform,opacity;
+}
+
+.auth-visual-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3,10,18,.02) 0%,
+      rgba(3,10,18,.08) 36%,
+      rgba(3,10,18,.76) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(3,10,18,.18) 0%,
+      transparent 48%,
+      rgba(3,10,18,.05) 100%
+    );
+}
+
+.auth-copy{
+  position:absolute;
+  left:clamp(30px,4.5vw,72px);
+  right:clamp(30px,4.5vw,72px);
+  bottom:clamp(34px,5vw,68px);
+}
+
+.auth-copy span{
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  opacity:.62;
+}
+
+.auth-copy b{
+  display:block;
+  max-width:620px;
+  margin-top:9px;
+  font-size:clamp(34px,3.15vw,53px);
+  line-height:.98;
+  letter-spacing:-.06em;
+}
+
+.auth-copy small{
+  display:block;
+  margin-top:11px;
+  font-size:10px;
+  opacity:.44;
+}
+
+.auth input[type="hidden"]{
+  display:none!important;
+}
+
+@media(max-width:1100px){
+  .auth{
+    grid-template-columns:minmax(400px,.9fr) minmax(480px,1.1fr);
+  }
+
+  .auth-left{
+    padding-inline:34px;
+  }
+
+  .auth-inner h1{
+    font-size:clamp(40px,4.7vw,58px);
+  }
+
+  .auth-photo{
+    object-position:center 43%;
+  }
+}
+
+@media(max-width:900px){
+  .auth{
+    display:block;
+    height:auto;
+    min-height:100dvh;
+  }
+
+  .auth-left{
+    height:auto;
+    min-height:100dvh;
+    padding:34px 22px 40px;
+    overflow:visible;
+  }
+
+  .auth-visual{
+    display:none;
+  }
+}
+
+@media(max-width:680px){
+  .auth-left{
+    padding:27px 18px 32px;
+  }
+
+  .auth-inner h1{
+    font-size:44px;
+  }
+
+  .auth-lead{
+    font-size:12px;
+  }
+}

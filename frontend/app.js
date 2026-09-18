@@ -1307,12 +1307,12 @@ function login(){
 
           <h1>
             Ваш <span>Campus.</span><br>
-            Всё важное рядом.
+            Но в новом дизайне.
           </h1>
 
           <p class="auth-lead">
-            Войдите, чтобы открыть курсы, задания,
-            расписание и оценки в интерфейсе Nova.
+            Войдите, чтобы открыть свои курсы,
+            задания, расписание и оценки в Nova.
           </p>
 
           <form id="login-form">
@@ -1364,14 +1364,6 @@ function login(){
               ${icon('arrow',17)}
             </button>
 
-            <button
-              class="secondary wide"
-              type="button"
-              id="demo-mode"
-            >
-              Посмотреть демо
-            </button>
-
             <div class="security">
               ${icon('check',15)}
               Пароль не сохраняется в профиле Nova.
@@ -1380,6 +1372,7 @@ function login(){
             <div id="login-error"></div>
 
           </form>
+
         </div>
       </section>
 
@@ -1387,13 +1380,13 @@ function login(){
 
         <img
           class="auth-photo"
-          src="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400"
+          src="https://images.unsplash.com/photo-1769284019246-f6d24a277645?auto=format&fit=crop&fm=jpg&q=88&w=2400"
           srcset="
-            https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x,
-            https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x
+            https://images.unsplash.com/photo-1769284019246-f6d24a277645?auto=format&fit=crop&fm=jpg&q=88&w=2400 1x,
+            https://images.unsplash.com/photo-1769284019246-f6d24a277645?auto=format&fit=crop&fm=jpg&q=90&w=3840 2x
           "
           sizes="58vw"
-          alt="Университетский кампус"
+          alt="Современный университетский кампус"
           width="2400"
           height="1600"
           fetchpriority="high"
@@ -1404,7 +1397,7 @@ function login(){
 
         <div class="auth-copy">
           <span>Campus Nova</span>
-          <b>Ваш Campus.<br>Новый взгляд.</b>
+          <b>Ваш Campus.<br>Новый дизайн.</b>
           <small>Курсы · задания · оценки · расписание</small>
         </div>
 
@@ -1413,7 +1406,6 @@ function login(){
     </div>
   `;
 }
-
 function playNavMotion(){
   const active = document.querySelector('.nav-item.active');
   if(!active) return;
