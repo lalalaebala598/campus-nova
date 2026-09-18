@@ -373,8 +373,6 @@ function hero(){
     'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=76&w=1800'
   ];
 
-  const today=new Date();
-
   const dateText=today.toLocaleDateString(
     'ru-RU',
     {
