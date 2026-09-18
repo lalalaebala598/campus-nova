@@ -43,6 +43,23 @@ async function rawBody(req, limit = 20 * 1024 * 1024) {
   for await (const c of req) { n += c.length; if (n > limit) throw new Error('Слишком большой запрос.'); chunks.push(c); }
   return Buffer.concat(chunks);
 }
+async function multipartFormData(req) {
+  const { Readable } = await import('node:stream');
+
+  const request = new Request(
+    `http://${req.headers.host || 'localhost'}/`,
+    {
+      method: req.method || 'POST',
+      headers: new Headers(req.headers),
+      body: Readable.toWeb(req),
+      duplex: 'half',
+    }
+  );
+
+  return request.formData();
+}
+
+
 async function bodyJson(req) { const b = await rawBody(req); return JSON.parse(b.toString('utf8') || '{}'); }
 function parseCookies(req) { const out = {}; for (const p of (req.headers.cookie || '').split(';')) { const i = p.indexOf('='); if (i > 0) out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim()); } return out; }
 function getSession(req) { const id = parseCookies(req).nova_sid; return id ? sessions.get(id) : null; }
@@ -175,7 +192,21 @@ function publicForm(form) {
   return {
     action: form.action, method: form.method, enctype: form.enctype, id: form.id, name: form.name,
     controls: (form.controls || []).map(c => ({ tag: c.tag, type: c.type, name: c.name, value: /hidden|password/i.test(c.type) ? undefined : c.value, required: c.required, disabled: c.disabled, checked: c.checked, options: c.options, submitter: c.submitter })),
-    submitters: form.submitters || [], hasSesskey: Boolean(form.hasSesskey), hasFileManager: Boolean(form.hasFileManager),
+    submitters: form.submitters || [],
+    hasSesskey: Boolean(form.hasSesskey),
+    hasFileManager: Boolean(form.hasFileManager),
+    fileManager: form.fileManager ? {
+      fieldName: form.fileManager.fieldName || null,
+      itemid: Number(form.fileManager.itemid || 0) || null,
+      ctx_id: Number(form.fileManager.ctx_id || 0) || null,
+      repo_id: Number(form.fileManager.repo_id || 0) || null,
+      maxbytes: Number(form.fileManager.maxbytes ?? -1),
+      areamaxbytes: Number(form.fileManager.areamaxbytes ?? -1),
+      maxfiles: Number(form.fileManager.maxfiles ?? -1),
+      savepath: form.fileManager.savepath || '/',
+      env: form.fileManager.env || 'filemanager',
+      client_id: form.fileManager.client_id || null,
+    } : null,
   };
 }
 
@@ -361,6 +392,74 @@ async function api(req, res, route, q) {
         throw e;
       }
     }
+    if (route === '/api/activity/upload' && req.method === 'POST') {
+      const form = await multipartFormData(req);
+
+      let ref;
+
+      try {
+        ref = JSON.parse(String(form.get('ref') || '{}'));
+      } catch {
+        return json(res, 400, {
+          ok: false,
+          error: 'Некорректная ссылка на activity.'
+        });
+      }
+
+      const file = form.get('file');
+
+      if (
+        !file ||
+        typeof file.arrayBuffer !== 'function' ||
+        !file.name
+      ) {
+        return json(res, 400, {
+          ok: false,
+          error: 'Файл не передан.'
+        });
+      }
+
+      if (!ref.courseId || (!ref.cmid && !ref.instance)) {
+        return json(res, 400, {
+          ok: false,
+          error: 'Не указан activity reference.'
+        });
+      }
+
+      await ensureActivityGraph(s);
+
+      try {
+        const result =
+          await s.campus.getAdapter().executeActivity(
+            ref,
+            'upload',
+            { file },
+            {
+              timeoutMs: 60000
+            }
+          );
+
+        return json(res, 200, {
+          ok: true,
+          activity: publicActivity(result.activity),
+          result: publicActivityResult(result)
+        });
+      } catch (e) {
+        if (
+          e?.code === 'UNVERIFIED_OPERATION' ||
+          e?.code === 'UNVERIFIED_CONTRACT'
+        ) {
+          return json(res, 409, {
+            ok: false,
+            error: e.message,
+            code: e.code
+          });
+        }
+
+        throw e;
+      }
+    }
+
     if (route === '/api/activity/action' && req.method === 'POST') {
       const b = await bodyJson(req); const ref = activityRefFromQuery(new URLSearchParams(), b?.ref || {}); const action = String(b?.action || 'open');
       if (!ref.courseId || (!ref.cmid && !ref.instance)) return json(res,400,{ok:false,error:'Не указан activity reference.'});

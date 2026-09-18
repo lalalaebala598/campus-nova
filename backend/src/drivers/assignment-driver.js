@@ -8,6 +8,83 @@ function detectSubmission(html) {
   return 'unknown';
 }
 
+function readNumericOption(html, keys = []) {
+  const source = String(html || '');
+
+  for (const key of keys) {
+    const patterns = [
+      new RegExp(`[\"']${key}[\"']\\s*[:=]\\s*[\"']?(\\d+)`, 'i'),
+      new RegExp(`\\b${key}\\b\\s*=\\s*[\"']?(\\d+)`, 'i'),
+      new RegExp(`data-${key.replace(/_/g, '-')}=[\"'](\\d+)[\"']`, 'i'),
+    ];
+
+    for (const pattern of patterns) {
+      const match = source.match(pattern);
+      if (match) return Number(match[1]);
+    }
+  }
+
+  return 0;
+}
+
+function parseFileManagerConfig(html, form, activity) {
+  const controls = form?.controls || [];
+
+  const manager = controls.find(control =>
+    /filemanager/i.test(control.name || '') &&
+    Number(control.value || 0) > 0
+  );
+
+  if (!manager) return null;
+
+  const itemid = Number(manager.value || 0);
+
+  const ctx_id =
+    readNumericOption(html, [
+      'ctx_id',
+      'contextid',
+      'context_id',
+      'contextId'
+    ]) ||
+    Number(activity?.ref?.contextId || 0);
+
+  const repo_id =
+    readNumericOption(html, [
+      'repo_id',
+      'repositoryid',
+      'repository_id'
+    ]) || 4;
+
+  const maxbytes =
+    readNumericOption(html, [
+      'maxbytes'
+    ]) || -1;
+
+  const areamaxbytes =
+    readNumericOption(html, [
+      'areamaxbytes'
+    ]) || -1;
+
+  const maxfiles =
+    readNumericOption(html, [
+      'maxfiles'
+    ]) || -1;
+
+  return {
+    fieldName: manager.name,
+    itemid,
+    ctx_id,
+    repo_id,
+    maxbytes,
+    areamaxbytes,
+    maxfiles,
+    savepath: '/',
+    env: 'filemanager',
+    client_id: `nova_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+  };
+}
+
+
 export class AssignmentDriver {
   constructor({ session, trace, formService, fileService } = {}) {
     this.session = session;
@@ -62,18 +139,99 @@ export class AssignmentDriver {
     const html = htmlMain(result.parsed);
     if (!html) throw activityError('Не удалось загрузить форму задания.', 'ASSIGNMENT_FORM_EMPTY', 'PARSER');
     const form = this.formService?.parse(html);
-    this.trace?.stage(options.parentTraceId, 'FORM_PARSED', { parser: 'moodle.html.assignment.form.v1', hasSesskey: form?.hasSesskey, hasFileManager: form?.hasFileManager, submitters: form?.submitters?.length || 0 });
+    const fileManager = parseFileManagerConfig(html, form, activity);
+
+    form.fileManager = fileManager;
+
+    this.trace?.stage(options.parentTraceId, 'FORM_PARSED', {
+      parser: 'moodle.html.assignment.form.v1',
+      hasSesskey: form?.hasSesskey,
+      hasFileManager: form?.hasFileManager,
+      fileManagerItemId: fileManager?.itemid || null,
+      fileManagerField: fileManager?.fieldName || null,
+      submitters: form?.submitters?.length || 0
+    });
+
     return {
-      kind: 'assignment-form', html, activityRef: activity.ref,
-      form, source: { transport: 'WEB_FORM', operation: 'assignment.edit' },
-      capabilities: this.getCapabilities(activity),
+      kind: 'assignment-form',
+      html,
+      activityRef: activity.ref,
+      form,
+      fileManager,
+      source: {
+        transport: 'WEB_FORM',
+        operation: 'assignment.edit'
+      },
+      capabilities: {
+        ...this.getCapabilities(activity),
+        canUpload: Boolean(fileManager?.itemid)
+      },
     };
   }
 
   async executeAction(activity, action, payload = {}, options = {}) {
     if (action === 'open') return this.load(activity, options);
     if (action === 'edit') return this.edit(activity, options);
-    if (action === 'upload') throw unverified('assignment.upload', 'В HAR нет подтверждённого multipart upload execution.');
+
+    if (action === 'upload') {
+      const file = payload?.file;
+
+      if (!file || typeof file.arrayBuffer !== 'function') {
+        throw activityError(
+          'Файл для загрузки не найден.',
+          'UPLOAD_FILE_MISSING',
+          'NORMALIZATION'
+        );
+      }
+
+      const edited = await this.edit(activity, options);
+      const fileManager = edited.form?.fileManager;
+
+      if (!fileManager?.itemid || !fileManager?.fieldName) {
+        throw activityError(
+          'Campus не передал параметры filemanager для задания.',
+          'UPLOAD_CONFIG_MISSING',
+          'NORMALIZATION'
+        );
+      }
+
+      const uploaded = await this.fileService.uploadDraftFile(
+        file,
+        fileManager,
+        {
+          timeoutMs: options.timeoutMs || 60000,
+          parentTraceId: options.parentTraceId
+        }
+      );
+
+      this.trace?.stage(
+        options.parentTraceId,
+        'FILE_UPLOADED_TO_DRAFT',
+        {
+          filename: uploaded.filename,
+          itemid: uploaded.itemid,
+          fieldName: fileManager.fieldName
+        }
+      );
+
+      return {
+        kind: 'assignment-upload',
+        action: 'upload',
+        activityRef: activity.ref,
+        confirmed: true,
+        file: uploaded,
+        fileManager,
+        source: {
+          transport: 'FILE',
+          operation: 'assignment.upload',
+          verification: 'RUNTIME_FILEMANAGER'
+        },
+        capabilities: {
+          ...this.getCapabilities(activity),
+          canUpload: true
+        },
+      };
+    }
     if (action === 'save' || action === 'submit') {
       const edited = await this.edit(activity, options);
       const preferred = action === 'submit'

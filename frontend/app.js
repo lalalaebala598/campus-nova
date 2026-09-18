@@ -463,6 +463,43 @@ function prepareCampusActivityHtml(html, title = '') {
     el.replaceWith(...el.childNodes);
   });
 
+  // Remove legacy Moodle template placeholders.
+  [...root.querySelectorAll('*')].forEach(el => {
+    const normalized = normalize(el.textContent);
+
+    if (
+      normalized.includes('__picture__') ||
+      normalized.includes('__name__') ||
+      normalized.includes('__time__') ||
+      normalized.includes('__content__')
+    ) {
+      el.remove();
+    }
+  });
+
+  // Remove legacy activity navigation.
+  root.querySelectorAll(
+    '.navfooter,' +
+    '.activity-navigation,' +
+    '.paging-bar,' +
+    '.navigation,' +
+    '.navbuttons,' +
+    '.mform .fitem_actionbuttons'
+  ).forEach(el => el.remove());
+
+  [...root.querySelectorAll('a')].forEach(a => {
+    const text = normalize(a.textContent);
+
+    if (
+      text === 'назад' ||
+      text === 'далее' ||
+      text.startsWith('назад ') ||
+      text.startsWith('далее ')
+    ) {
+      a.closest('p,div,li')?.remove();
+    }
+  });
+
   return root.innerHTML.trim();
 }
 
@@ -620,31 +657,97 @@ function activityPage(){
   } else if(kind === 'assignment'){
     body = `
       <div class="nova-assignment-head">
-        <div class="nova-assignment-icon">${icon('check-square',24)}</div>
-        <div>
+        <div class="nova-assignment-icon">
+          ${icon('check-square',24)}
+        </div>
+
+        <div class="nova-assignment-head-copy">
           <span class="eyebrow">ЗАДАНИЕ</span>
           <h2>${esc(title)}</h2>
-          <p>Ответ будет отправлен через реальную форму Campus.</p>
+          <p>
+            Здесь можно посмотреть условие, скачать исходные материалы
+            и затем отправить свою работу.
+          </p>
         </div>
       </div>
 
-      <div class="nova-activity-html">
-        ${cleanHtml || '<div class="inline-empty">Содержимое задания отсутствует.</div>'}
+      <div class="nova-assignment-overview">
+        <div class="nova-assignment-overview-icon">
+          ${icon('file',21)}
+        </div>
+
+        <div>
+          <b>Условие задания</b>
+          <span>
+            Изучи описание ниже и подготовь файл с решением.
+          </span>
+        </div>
+      </div>
+
+      <div class="nova-activity-html nova-assignment-source">
+        ${
+          cleanHtml ||
+          '<div class="inline-empty">Содержимое задания отсутствует.</div>'
+        }
       </div>`;
 
   } else if(kind === 'assignment-form'){
     body = `
       <div class="nova-assignment-head">
-        <div class="nova-assignment-icon">${icon('edit',24)}</div>
-        <div>
-          <span class="eyebrow">ОТВЕТ</span>
+        <div class="nova-assignment-icon">
+          ${icon('upload',24)}
+        </div>
+
+        <div class="nova-assignment-head-copy">
+          <span class="eyebrow">СДАЧА РАБОТЫ</span>
           <h2>${esc(title)}</h2>
-          <p>Заполни форму и отправь ответ в Campus.</p>
+          <p>
+            Добавь один или несколько файлов, сохрани черновик
+            или отправь работу преподавателю.
+          </p>
         </div>
       </div>
 
-      <div class="nova-activity-html">
-        ${cleanHtml || '<div class="inline-empty">Форма задания отсутствует.</div>'}
+      <div class="nova-upload-zone" id="assignment-upload-zone">
+        <input
+          id="assignment-file-input"
+          type="file"
+          multiple
+          hidden
+        />
+
+        <div class="nova-upload-icon">
+          ${icon('upload',25)}
+        </div>
+
+        <b>Загрузить файлы</b>
+
+        <span>
+          PDF, DOCX, XLSX, ZIP и другие форматы
+        </span>
+
+        <button
+          class="secondary"
+          type="button"
+          id="assignment-choose-files">
+          Выбрать файлы
+        </button>
+
+        <small id="assignment-upload-status">
+          Файлы загружаются в защищённый черновик Campus.
+        </small>
+      </div>
+
+      <div
+        class="nova-upload-list"
+        id="assignment-upload-list">
+      </div>
+
+      <div class="nova-activity-html nova-assignment-form">
+        ${
+          cleanHtml ||
+          '<div class="inline-empty">Форма задания отсутствует.</div>'
+        }
       </div>`;
 
   } else {
@@ -814,7 +917,36 @@ async function loadActivity(force=false,epoch=state.routeEpoch){
 async function executeActivityAction(action){
   const current=state.data.activity?.activity; if(!current?.ref)return;
   const form=$('#campus-content form'); const values={};
-  if(form){const fd=new FormData(form); for(const [k,v] of fd.entries()){ if(typeof v!=='string') continue; if(Object.prototype.hasOwnProperty.call(values,k)) values[k]=Array.isArray(values[k])?[...values[k],v]:[values[k],v]; else values[k]=v; }}
+  if(form){
+    const fd=new FormData(form);
+
+    for(const [k,v] of fd.entries()){
+      if(typeof v!=='string') continue;
+
+      if(Object.prototype.hasOwnProperty.call(values,k)){
+        values[k]=Array.isArray(values[k])
+          ? [...values[k],v]
+          : [values[k],v];
+      }else{
+        values[k]=v;
+      }
+    }
+  }
+
+  const fileManager =
+    state.data.activity?.result?.form?.fileManager ||
+    state.data.activity?.result?.fileManager ||
+    null;
+
+  if(
+    fileManager?.fieldName &&
+    fileManager?.itemid
+  ){
+    values[fileManager.fieldName]=String(
+      fileManager.itemid
+    );
+  }
+
   try{
     const d=await api('/api/activity/action',{method:'POST',body:JSON.stringify({ref:current.ref,action,payload:{values}})});
     state.data.activity={activity:d.activity,result:d.result}; state.status.activity='success'; state.errors.activity=null; render(); bindCampusContent();
@@ -865,6 +997,204 @@ async function loadView(force=false,epoch=state.routeEpoch){
     target.innerHTML=data.html||'<div class="inline-empty">Материал пуст.</div>';bindCampusContent();
   }catch(e){if(state.requests.view!==seq||!state.connected)return;if(epoch!==state.routeEpoch||state.route!=='view'||state.param!==p)return;state.errors.view=e.message;state.status.view='error';render();}
 }
+
+async function uploadAssignmentFiles(files) {
+  const list = $('#assignment-upload-list');
+  const status = $('#assignment-upload-status');
+
+  const ref = state.data.activity?.activity?.ref;
+
+  if (!ref?.courseId || (!ref.cmid && !ref.instance)) {
+    toast('Не удалось определить задание.', 'error');
+    return;
+  }
+
+  const selected = [...files || []];
+
+  if (!selected.length) return;
+
+  for (const file of selected) {
+    const row = document.createElement('div');
+
+    row.className = 'nova-upload-item nova-uploading';
+
+    row.innerHTML = `
+      <span class="nova-upload-item-icon">
+        ${icon('file',18)}
+      </span>
+
+      <span class="nova-upload-item-info">
+        <b>${esc(file.name)}</b>
+        <small>${formatFileSize(file.size)} · загрузка…</small>
+      </span>
+
+      <span class="nova-upload-item-state">
+        ${icon('spinner',16)}
+      </span>
+    `;
+
+    list?.appendChild(row);
+
+    try {
+      const body = new FormData();
+
+      body.set(
+        'ref',
+        JSON.stringify(ref)
+      );
+
+      body.set(
+        'file',
+        file,
+        file.name
+      );
+
+      const response = await fetch(
+        '/api/activity/upload',
+        {
+          method:'POST',
+          body,
+          credentials:'same-origin'
+        }
+      );
+
+      const data =
+        await response.json().catch(() => null);
+
+      if(!response.ok || !data?.ok){
+        throw new Error(
+          data?.error ||
+          `Не удалось загрузить ${file.name}.`
+        );
+      }
+
+      const result = data.result || {};
+
+      const manager =
+        result.fileManager ||
+        result.form?.fileManager ||
+        null;
+
+      if(manager){
+        state.data.activity.result ||= {};
+
+        state.data.activity.result.form ||= {};
+
+        state.data.activity.result.form.fileManager =
+          manager;
+
+        state.data.activity.result.fileManager =
+          manager;
+      }
+
+      state.data.activity.result ||= {};
+
+      state.data.activity.result.uploadedFiles ||= [];
+
+      state.data.activity.result.uploadedFiles.push(
+        result.file || {
+          filename:file.name,
+          filesize:file.size,
+          mimetype:file.type
+        }
+      );
+
+      row.classList.remove('nova-uploading');
+      row.classList.add('nova-uploaded');
+
+      row.querySelector('.nova-upload-item-info small')
+        .textContent =
+          `${formatFileSize(file.size)} · загружено`;
+
+      row.querySelector('.nova-upload-item-state')
+        .innerHTML =
+          icon('check',17);
+
+      status.textContent =
+        'Файл добавлен в черновик Campus.';
+
+      toast(
+        `${file.name} загружен.`,
+        'success'
+      );
+
+    } catch(error) {
+      row.classList.remove('nova-uploading');
+      row.classList.add('nova-upload-error');
+
+      row.querySelector('.nova-upload-item-info small')
+        .textContent =
+          error.message || 'Ошибка загрузки';
+
+      row.querySelector('.nova-upload-item-state')
+        .innerHTML =
+          icon('x',17);
+
+      toast(
+        error.message || 'Не удалось загрузить файл.',
+        'error'
+      );
+    }
+  }
+}
+
+function bindAssignmentUploader() {
+  const input = $('#assignment-file-input');
+  const choose = $('#assignment-choose-files');
+  const zone = $('#assignment-upload-zone');
+
+  if(!input || !choose || !zone) return;
+
+  if(!choose.dataset.bound){
+    choose.dataset.bound='1';
+
+    choose.addEventListener(
+      'click',
+      ()=>input.click()
+    );
+  }
+
+  if(!input.dataset.bound){
+    input.dataset.bound='1';
+
+    input.addEventListener(
+      'change',
+      ()=>{
+        uploadAssignmentFiles(input.files);
+        input.value='';
+      }
+    );
+  }
+
+  if(!zone.dataset.dropBound){
+    zone.dataset.dropBound='1';
+
+    zone.addEventListener(
+      'dragover',
+      e=>{
+        e.preventDefault();
+        zone.classList.add('dragover');
+      }
+    );
+
+    zone.addEventListener(
+      'dragleave',
+      ()=>{
+        zone.classList.remove('dragover');
+      }
+    );
+
+    zone.addEventListener(
+      'drop',
+      e=>{
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        uploadAssignmentFiles(e.dataTransfer.files);
+      }
+    );
+  }
+}
+
 function bindCampusContent(){
   const root = $('#campus-content');
   if(!root) return;
@@ -962,6 +1292,13 @@ function bindCampusContent(){
   });
 
   bindQuizStart();
+
+  if(
+    state.route==='activity' &&
+    state.data.activity?.result?.kind==='assignment-form'
+  ){
+    bindAssignmentUploader();
+  }
 }
 
 async function handleCampusForm(e){

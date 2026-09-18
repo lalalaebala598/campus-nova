@@ -1021,3 +1021,352 @@ body[data-theme="light"] .hero-overlay{
   }
 }
 
+
+
+/* =========================================================
+   NOVA PRACTICE / ASSIGNMENT WORKSPACE
+   ========================================================= */
+
+.nova-assignment-head{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:20px;
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 18%,
+    var(--line)
+  );
+  border-radius:19px;
+  background:
+    radial-gradient(
+      circle at 95% 0%,
+      rgba(24,183,255,.08),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      var(--surface),
+      var(--surface-2)
+    );
+}
+
+.nova-assignment-head-copy{
+  min-width:0;
+}
+
+.nova-assignment-head-copy h2{
+  margin:3px 0 6px;
+  font-size:17px;
+  letter-spacing:-.025em;
+}
+
+.nova-assignment-head-copy p{
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+}
+
+.nova-assignment-overview{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:15px 0;
+  padding:13px 15px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--surface-2);
+}
+
+.nova-assignment-overview-icon{
+  width:40px;
+  height:40px;
+  flex:0 0 40px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--surface-3);
+  color:var(--accent);
+}
+
+.nova-assignment-overview b,
+.nova-assignment-overview span{
+  display:block;
+}
+
+.nova-assignment-overview b{
+  font-size:11px;
+}
+
+.nova-assignment-overview span{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9.5px;
+}
+
+.nova-assignment-source{
+  margin-top:14px;
+}
+
+.nova-assignment-source a[href*="action=editsubmission"],
+.nova-assignment-source .submitbtns,
+.nova-assignment-source .activity-navigation,
+.nova-assignment-source .navfooter,
+.nova-assignment-source .paging-bar,
+.nova-assignment-source .navigation{
+  display:none !important;
+}
+
+.nova-assignment-source table{
+  width:100%;
+  margin:14px 0;
+  border-collapse:separate;
+  border-spacing:0;
+  border:1px solid var(--line);
+  border-radius:15px;
+  overflow:hidden;
+  background:var(--surface);
+}
+
+.nova-assignment-source th,
+.nova-assignment-source td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:10.5px;
+  line-height:1.5;
+  text-align:left;
+}
+
+.nova-assignment-source th{
+  color:var(--text);
+  background:var(--surface-3);
+}
+
+.nova-assignment-source td{
+  color:var(--muted);
+}
+
+.nova-assignment-source a{
+  color:var(--accent);
+  font-weight:700;
+  text-decoration:none;
+}
+
+.nova-assignment-source a:hover{
+  text-decoration:underline;
+}
+
+.nova-assignment-form{
+  margin-top:16px;
+}
+
+.nova-assignment-form .mform{
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--surface);
+}
+
+.nova-assignment-form .filemanager,
+.nova-assignment-form .filepicker,
+.nova-assignment-form .filemanager-container{
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--surface-2);
+}
+
+.nova-assignment-form .fitem{
+  margin:10px 0;
+}
+
+.nova-assignment-form label{
+  color:var(--text);
+  font-size:10.5px;
+  font-weight:700;
+}
+
+.nova-assignment-form textarea,
+.nova-assignment-form input[type="text"],
+.nova-assignment-form input[type="number"],
+.nova-assignment-form select{
+  width:100%;
+  min-height:42px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface-2);
+  color:var(--text);
+  font:500 12px inherit;
+}
+
+.nova-upload-zone{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:190px;
+  margin:16px 0;
+  padding:22px;
+  text-align:center;
+  border:1px dashed
+    color-mix(in srgb,var(--accent) 35%,var(--line));
+  border-radius:19px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(24,183,255,.06),
+      transparent 45%
+    ),
+    var(--surface-2);
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    transform .18s ease;
+}
+
+.nova-upload-zone.dragover{
+  border-color:var(--accent);
+  background:
+    rgba(24,183,255,.08);
+  transform:scale(1.005);
+}
+
+.nova-upload-icon{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  color:var(--accent);
+  background:var(--surface-3);
+  border:1px solid var(--line);
+  margin-bottom:2px;
+}
+
+.nova-upload-zone b{
+  color:var(--text);
+  font-size:13px;
+}
+
+.nova-upload-zone span{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.nova-upload-zone small{
+  color:var(--muted-2);
+  font-size:9px;
+}
+
+.nova-upload-zone .secondary{
+  margin-top:7px;
+}
+
+.nova-upload-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin:10px 0 15px;
+}
+
+.nova-upload-item{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 24px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--surface);
+}
+
+.nova-upload-item-icon{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:var(--surface-3);
+  color:var(--accent);
+}
+
+.nova-upload-item-info{
+  min-width:0;
+}
+
+.nova-upload-item-info b,
+.nova-upload-item-info small{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.nova-upload-item-info b{
+  color:var(--text);
+  font-size:10.5px;
+}
+
+.nova-upload-item-info small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.nova-upload-item-state{
+  display:grid;
+  place-items:center;
+  color:var(--accent);
+}
+
+.nova-uploaded{
+  border-color:
+    color-mix(in srgb,var(--good) 24%,var(--line));
+}
+
+.nova-uploaded .nova-upload-item-state{
+  color:var(--good);
+}
+
+.nova-upload-error{
+  border-color:
+    color-mix(in srgb,var(--danger) 30%,var(--line));
+}
+
+.nova-upload-error .nova-upload-item-state{
+  color:var(--danger);
+}
+
+.nova-assignment-form .fsubmit,
+.nova-assignment-form .fitem_actionbuttons{
+  display:none !important;
+}
+
+.activity-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+@media(max-width:760px){
+  .nova-assignment-head{
+    align-items:flex-start;
+  }
+
+  .nova-upload-zone{
+    min-height:165px;
+  }
+
+  .activity-actions{
+    width:100%;
+  }
+
+  .activity-actions .primary,
+  .activity-actions .secondary{
+    flex:1;
+  }
+}
+
