@@ -270,6 +270,125 @@ function materialsPage(){
   return `<section class="page">${PageHead({eyebrow:'МАТЕРИАЛЫ',title:'Материалы',sub:'Единые resource/page/folder и plugin activities',children:`<button class="secondary" data-retry="materials">${icon('refresh',16)} Обновить</button>`})}<div class="task-list">${items.map(a=>`<button class="task-card" data-activity="${activityRefAttr(a)}"><span class="task-kind resource">${icon(a.ref?.type==='folder'?'folder':'grid',18)}</span><span><b>${esc(a.identity?.name||'Материал')}</b><small>${esc(activityCourseName(a))} · ${esc(a.ref?.type||'activity')}</small></span>${icon('arrow',16)}</button>`).join('')||'<div class="inline-empty">Материалов сейчас нет.</div>'}</div></section>`;
 }
 function activityTypeLabel(a){const labels={resource:'Материал',file:'Файл',assign:'Задание',quiz:'Тест',page:'Страница',folder:'Папка',url:'Ссылка',forum:'Форум',glossary:'Глоссарий',lanebs:'Campus-активность',znaniumcombook:'Campus-активность'};return labels[a?.ref?.type]||a?.ref?.type||'Активность'}
+function prepareCampusActivityHtml(html, title = '') {
+  const source = String(html || '');
+  if (!source.trim()) return '';
+
+  const doc = new DOMParser().parseFromString(source, 'text/html');
+
+  const removeSelectors = [
+    'script',
+    'style',
+    'noscript',
+    'header',
+    'nav',
+    'footer',
+    '.navbar',
+    '.breadcrumb',
+    '.breadcrumbs',
+    '#page-header',
+    '#page-footer',
+    '#nav-drawer',
+    '#block-region-side-pre',
+    '#region-pre',
+    '.side-pre',
+    '.side-pre-only',
+    '.block_navigation',
+    '.block_settings',
+    '.usermenu',
+    '.logininfo',
+    '.paging-bar'
+  ];
+
+  doc.querySelectorAll(removeSelectors.join(',')).forEach(el => el.remove());
+
+  const normalize = value => String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+  const wanted = normalize(title);
+  let root = null;
+
+  const preferred = [
+    '[role="main"]',
+    '#region-main',
+    '#region-main-box',
+    '#page-content',
+    '.region-main',
+    '.activity-content',
+    '.box.generalbox',
+    'main'
+  ];
+
+  for (const selector of preferred) {
+    const candidate = doc.querySelector(selector);
+    if (candidate && candidate.textContent.trim().length > 80) {
+      root = candidate;
+      break;
+    }
+  }
+
+  if (wanted) {
+    const headings = [...doc.querySelectorAll('h1,h2,h3,h4')];
+
+    const heading = headings.find(el => {
+      const text = normalize(el.textContent);
+      return text && (
+        text === wanted ||
+        text.includes(wanted) ||
+        wanted.includes(text)
+      );
+    });
+
+    if (heading) {
+      let current = heading.parentElement;
+
+      while (current && current !== doc.body) {
+        const text = normalize(current.textContent);
+        const elementCount = current.querySelectorAll(
+          'a,form,table,p,li,img,input,button'
+        ).length;
+
+        if (
+          text.length >= 80 &&
+          text.length <= 18000 &&
+          elementCount >= 1
+        ) {
+          root = current;
+
+          if (
+            /activity|generalbox|region-main|content|box|page/i.test(
+              current.className || ''
+            ) ||
+            current.tagName === 'MAIN'
+          ) {
+            break;
+          }
+        }
+
+        current = current.parentElement;
+      }
+    }
+  }
+
+  if (!root) root = doc.body;
+
+  root.querySelectorAll(
+    '.navbar,.breadcrumb,.breadcrumbs,.block_navigation,.block_settings,.usermenu,#page-header,#page-footer'
+  ).forEach(el => el.remove());
+
+  root.querySelectorAll('[style]').forEach(el => {
+    el.removeAttribute('style');
+  });
+
+  root.querySelectorAll('font,center').forEach(el => {
+    el.replaceWith(...el.childNodes);
+  });
+
+  return root.innerHTML.trim();
+}
+
 function activityPage(){
   if(state.status.activity==='loading') return `<section class="page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="courses">${icon('back',17)} Назад</button></div>${statePanel('loading','activity',false)}</div></section>`;
   if(state.status.activity==='error') return `<section class="page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="courses">${icon('back',17)} Назад</button></div>${statePanel('error','activity')}</div></section>`;
@@ -282,7 +401,7 @@ function activityPage(){
   if(kind==='file'){
     const f=result.file||{}; body=`<div class="file-download"><span class="file-big">${icon('download',30)}</span><div><div class="eyebrow">ФАЙЛ</div><h2>${esc(f.filename||a.identity?.name||'Файл')}</h2><p>${esc(f.mimetype||'Файл')}${result.contentLength?` · ${esc(formatBytes(result.contentLength))}`:''}</p><button class="primary" data-activity-action="download">${icon('download',17)} Скачать файл</button></div></div>`;
   } else {
-    body=result.html?result.html:`<div class="inline-empty">У этой активности пока нет отображаемого содержимого.</div>`;
+    body=result.html?`<div class="nova-campus-content">${prepareCampusActivityHtml(result.html,title)}</div>`:`<div class="inline-empty">У этой активности пока нет отображаемого содержимого.</div>`;
     if(kind==='assignment') actions.push({name:'edit',label:'Добавить ответ'});
     if(kind==='assignment-form'){ actions.push({name:'save',label:'Сохранить'}); actions.push({name:'submit',label:'Отправить'}); if(result.form?.hasFileManager) body=`<div class="inline-warning">${icon('info',15)} Загрузка нового файла через этот интерфейс пока не подтверждена контрактом Campus. Сама форма и текстовый ответ работают через реальный Moodle form.</div>${body}`; }
     if(kind==='quiz' && result.capabilities?.canStart===true) actions.push({name:'start',label:'Начать тест'});
