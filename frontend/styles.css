@@ -2752,3 +2752,848 @@ tbody tr:hover td{
     transform:none;
   }
 }
+
+
+/* ============================================================
+   NOVA MOTION SYSTEM 2.0
+   Calm, precise micro-interactions
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   CORE
+   ------------------------------------------------------------ */
+
+.nav-item{
+  --motion-ease:cubic-bezier(.2,.8,.2,1);
+  position:relative;
+  transform:translateZ(0);
+  will-change:background,transform;
+}
+
+.nav-item .icon{
+  transform-box:fill-box;
+  transform-origin:center;
+  will-change:transform,opacity;
+}
+
+.nav-item span{
+  will-change:transform,color;
+}
+
+
+/* ------------------------------------------------------------
+   ACTIVE INDICATOR
+   ------------------------------------------------------------ */
+
+.nav-item.active:before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:9px;
+  bottom:9px;
+  width:3px;
+  border-radius:999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--accent),
+      #6d69ff
+    );
+
+  box-shadow:
+    0 0 10px rgba(24,183,255,.30),
+    0 0 22px rgba(24,183,255,.09);
+
+  transform-origin:center;
+  animation:novaIndicatorIn .42s var(--motion-ease) both;
+}
+
+@keyframes novaIndicatorIn{
+  from{
+    opacity:0;
+    transform:scaleY(.25);
+  }
+
+  55%{
+    opacity:1;
+    transform:scaleY(1.06);
+  }
+
+  to{
+    opacity:1;
+    transform:scaleY(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   BASE HOVER
+   ------------------------------------------------------------ */
+
+.nav-item:hover{
+  transform:translateX(2px);
+}
+
+.nav-item:hover span{
+  transform:translateX(1px);
+}
+
+.nav-item:hover .icon{
+  transform:scale(1.035);
+}
+
+.nav-item.active span{
+  font-weight:700;
+}
+
+
+/* ------------------------------------------------------------
+   01. ГЛАВНАЯ
+   House gently rises into place
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="dashboard"] .icon{
+  animation:novaHome .64s var(--motion-ease) both;
+}
+
+@keyframes novaHome{
+  0%{
+    opacity:.35;
+    transform:translateY(4px) scale(.89);
+  }
+
+  42%{
+    opacity:1;
+    transform:translateY(-2px) scale(1.055);
+  }
+
+  68%{
+    transform:translateY(1px) scale(.985);
+  }
+
+  100%{
+    transform:translateY(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   02. КУРСЫ
+   Four tiles appear in sequence
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="courses"] .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:novaCourseTile .46s var(--motion-ease) both;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(1){
+  animation-delay:.015s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(2){
+  animation-delay:.065s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(3){
+  animation-delay:.115s;
+}
+
+.nav-item.active[data-go="courses"] .icon rect:nth-child(4){
+  animation-delay:.165s;
+}
+
+@keyframes novaCourseTile{
+  0%{
+    opacity:0;
+    transform:scale(.45);
+  }
+
+  62%{
+    opacity:1;
+    transform:scale(1.09);
+  }
+
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   03. РАСПИСАНИЕ
+   Clock hand swings gently
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="schedule"] .icon path:last-child{
+  transform-box:fill-box;
+  transform-origin:50% 50%;
+  animation:novaClock .68s var(--motion-ease) both;
+}
+
+@keyframes novaClock{
+  from{
+    transform:rotate(-55deg);
+  }
+
+  65%{
+    transform:rotate(4deg);
+  }
+
+  to{
+    transform:rotate(0);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   04. ОЦЕНКИ
+   Graph line draws itself
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="grades"] .icon path:last-child{
+  stroke-dasharray:60;
+  stroke-dashoffset:60;
+  animation:novaGraph .58s ease-out both;
+}
+
+@keyframes novaGraph{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   05. ЗАДАНИЯ
+   Checkmark is drawn
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="tasks"] .icon path{
+  stroke-dasharray:32;
+  stroke-dashoffset:32;
+  animation:novaCheck .54s ease-out both;
+}
+
+@keyframes novaCheck{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   06. КАЛЕНДАРЬ
+   Tiny page tilt
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="calendar"] .icon{
+  animation:novaCalendar .62s var(--motion-ease) both;
+}
+
+@keyframes novaCalendar{
+  0%{
+    opacity:.45;
+    transform:rotate(-7deg) scale(.92);
+  }
+
+  45%{
+    opacity:1;
+    transform:rotate(3.5deg) scale(1.04);
+  }
+
+  72%{
+    transform:rotate(-1deg) scale(.995);
+  }
+
+  100%{
+    transform:rotate(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   07. СООБЩЕНИЯ
+   Bubble softly pops up
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="messages"] .icon{
+  animation:novaMessage .64s var(--motion-ease) both;
+}
+
+@keyframes novaMessage{
+  0%{
+    opacity:.3;
+    transform:translateY(3px) scale(.9);
+  }
+
+  45%{
+    opacity:1;
+    transform:translateY(-2px) scale(1.045);
+  }
+
+  70%{
+    transform:translateY(1px) scale(.99);
+  }
+
+  100%{
+    transform:translateY(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   08. ФАЙЛЫ
+   Folder opens slightly
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="files"] .icon{
+  animation:novaFolder .62s var(--motion-ease) both;
+}
+
+@keyframes novaFolder{
+  0%{
+    transform:translateY(2px) scaleY(.92);
+  }
+
+  45%{
+    transform:translateY(-1px) scaleY(1.045);
+  }
+
+  72%{
+    transform:translateY(.5px) scaleY(.99);
+  }
+
+  100%{
+    transform:translateY(0) scaleY(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   09. МАТЕРИАЛЫ
+   Slides in from the left
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="materials"] .icon{
+  animation:novaMaterials .64s var(--motion-ease) both;
+}
+
+@keyframes novaMaterials{
+  0%{
+    opacity:.3;
+    transform:translateX(-5px) rotate(-3deg);
+  }
+
+  48%{
+    opacity:1;
+    transform:translateX(1px) rotate(.7deg);
+  }
+
+  100%{
+    transform:translateX(0) rotate(0);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   10. ТЕСТЫ
+   Card turns on
+   ------------------------------------------------------------ */
+
+.nav-item.active[data-go="tests"] .icon{
+  animation:novaTests .68s var(--motion-ease) both;
+}
+
+@keyframes novaTests{
+  0%{
+    opacity:.3;
+    transform:perspective(90px) rotateX(-16deg) translateY(3px) scale(.92);
+  }
+
+  48%{
+    opacity:1;
+    transform:perspective(90px) rotateX(3deg) translateY(-1px) scale(1.045);
+  }
+
+  100%{
+    transform:perspective(90px) rotateX(0) translateY(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   PROFILE
+   ------------------------------------------------------------ */
+
+.profile-chip .avatar{
+  transition:
+    transform .28s var(--motion-ease),
+    box-shadow .28s ease;
+}
+
+.profile-chip:hover .avatar{
+  transform:scale(1.045) rotate(-2deg);
+  box-shadow:
+    0 8px 24px rgba(24,183,255,.16);
+}
+
+
+/* ------------------------------------------------------------
+   THEME SWITCH
+   ------------------------------------------------------------ */
+
+#theme-top .icon,
+#theme-sidebar .icon{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+#theme-top:hover .icon,
+#theme-sidebar:hover .icon{
+  animation:novaTheme .58s var(--motion-ease);
+}
+
+@keyframes novaTheme{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+
+  55%{
+    transform:rotate(55deg) scale(1.08);
+  }
+
+  100%{
+    transform:rotate(90deg) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   NOTIFICATIONS
+   ------------------------------------------------------------ */
+
+#notifications:hover .icon{
+  transform-origin:50% 20%;
+  animation:novaBell .64s var(--motion-ease);
+}
+
+@keyframes novaBell{
+  0%{
+    transform:rotate(0);
+  }
+
+  18%{
+    transform:rotate(9deg);
+  }
+
+  34%{
+    transform:rotate(-8deg);
+  }
+
+  50%{
+    transform:rotate(6deg);
+  }
+
+  66%{
+    transform:rotate(-3deg);
+  }
+
+  100%{
+    transform:rotate(0);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   SEARCH
+   ------------------------------------------------------------ */
+
+.search{
+  transition:
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background .22s ease;
+}
+
+.search:focus-within{
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 38%,
+      var(--line)
+    );
+
+  box-shadow:
+    0 0 0 4px rgba(24,183,255,.055),
+    0 12px 34px rgba(0,0,0,.065);
+}
+
+.search:focus-within .icon{
+  animation:novaSearch .5s var(--motion-ease);
+}
+
+@keyframes novaSearch{
+  0%{
+    opacity:.6;
+    transform:scale(.9);
+  }
+
+  65%{
+    opacity:1;
+    transform:scale(1.08);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   BUTTON MICRO-INTERACTIONS
+   ------------------------------------------------------------ */
+
+.primary,
+.secondary,
+.icon-btn{
+  transition:
+    transform .18s var(--motion-ease),
+    border-color .18s ease,
+    box-shadow .22s ease,
+    background .22s ease,
+    filter .22s ease;
+}
+
+.primary:hover{
+  transform:translateY(-1px);
+}
+
+.secondary:hover,
+.icon-btn:hover{
+  transform:translateY(-1px);
+}
+
+.primary:active,
+.secondary:active,
+.icon-btn:active{
+  transform:scale(.975);
+}
+
+
+/* ------------------------------------------------------------
+   CARD HOVER
+   ------------------------------------------------------------ */
+
+.course-card,
+.task-card,
+.test-card,
+.schedule-card,
+.activity,
+.metric,
+.panel,
+.side-card,
+.profile-card,
+.files-card,
+.table-card{
+  transform:translateZ(0);
+  transition:
+    transform .24s var(--motion-ease),
+    border-color .24s ease,
+    box-shadow .28s ease;
+}
+
+.course-card:hover,
+.task-card:hover,
+.test-card:hover,
+.schedule-card:hover,
+.activity:hover{
+  transform:translateY(-2px);
+}
+
+
+/* ------------------------------------------------------------
+   FILE DOWNLOAD
+   ------------------------------------------------------------ */
+
+.nova-practice-file,
+.nova-source-file{
+  transition:
+    transform .2s var(--motion-ease),
+    border-color .22s ease,
+    background .22s ease;
+}
+
+.nova-practice-file:hover,
+.nova-source-file:hover{
+  transform:translateX(2px);
+}
+
+.nova-practice-file:hover .nova-practice-file-action,
+.nova-source-file:hover .nova-source-download{
+  animation:novaDownload .46s var(--motion-ease);
+}
+
+@keyframes novaDownload{
+  0%{
+    transform:translateY(0);
+  }
+
+  45%{
+    transform:translateY(2px);
+  }
+
+  100%{
+    transform:translateY(0);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   ADD ANSWER CTA
+   ------------------------------------------------------------ */
+
+.nova-bottom-cta{
+  transition:
+    border-color .25s ease,
+    box-shadow .28s ease,
+    transform .25s var(--motion-ease);
+}
+
+.nova-bottom-cta:hover{
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 25%,
+      var(--line)
+    );
+
+  transform:translateY(-1px);
+
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.09),
+    0 0 35px rgba(24,183,255,.045);
+}
+
+
+/* ------------------------------------------------------------
+   UPLOAD AREA
+   ------------------------------------------------------------ */
+
+.nova-upload-zone{
+  transition:
+    border-color .25s ease,
+    background .25s ease,
+    transform .25s var(--motion-ease),
+    box-shadow .25s ease;
+}
+
+.nova-upload-zone:hover{
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 42%,
+      var(--line)
+    );
+
+  box-shadow:
+    0 12px 36px rgba(24,183,255,.055);
+}
+
+.nova-upload-zone.dragover{
+  transform:scale(1.006);
+}
+
+
+/* ------------------------------------------------------------
+   FILE UPLOAD SUCCESS
+   ------------------------------------------------------------ */
+
+.nova-upload-item.nova-uploaded
+  .nova-upload-item-state{
+  animation:novaSuccess .48s var(--motion-ease) both;
+}
+
+@keyframes novaSuccess{
+  0%{
+    opacity:0;
+    transform:scale(.65);
+  }
+
+  65%{
+    opacity:1;
+    transform:scale(1.12);
+  }
+
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   TOAST
+   ------------------------------------------------------------ */
+
+.toast{
+  animation:
+    novaToast .38s
+    var(--motion-ease)
+    both;
+
+  backdrop-filter:
+    blur(20px)
+    saturate(130%);
+}
+
+@keyframes novaToast{
+  from{
+    opacity:0;
+    transform:translateY(8px) scale(.985);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   MODAL
+   ------------------------------------------------------------ */
+
+.modal-backdrop{
+  animation:novaBackdrop .2s ease both;
+}
+
+.modal{
+  animation:novaModal .32s var(--motion-ease) both;
+}
+
+@keyframes novaBackdrop{
+  from{
+    opacity:0;
+  }
+
+  to{
+    opacity:1;
+  }
+}
+
+@keyframes novaModal{
+  from{
+    opacity:0;
+    transform:translateY(10px) scale(.985);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   LOADING
+   ------------------------------------------------------------ */
+
+.skeleton-card{
+  position:relative;
+  overflow:hidden;
+}
+
+.skeleton-card:after{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      105deg,
+      transparent 25%,
+      rgba(255,255,255,.055) 45%,
+      transparent 65%
+    );
+
+  transform:translateX(-100%);
+  animation:novaShimmer 1.55s ease-in-out infinite;
+}
+
+@keyframes novaShimmer{
+  to{
+    transform:translateX(100%);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   PAGE ENTRY
+   ------------------------------------------------------------ */
+
+#page{
+  opacity:0;
+  transform:translateY(6px);
+}
+
+#page.page-entered{
+  opacity:1;
+  transform:translateY(0);
+
+  transition:
+    opacity .32s ease,
+    transform .38s var(--motion-ease);
+}
+
+
+/* ------------------------------------------------------------
+   REDUCED MOTION
+   ------------------------------------------------------------ */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *::before,
+  *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+
+  #page{
+    opacity:1 !important;
+    transform:none !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE
+   ------------------------------------------------------------ */
+
+@media(max-width:680px){
+
+  .nav-item.active:before{
+    top:8px;
+    bottom:8px;
+  }
+
+  .nav-item:hover{
+    transform:none;
+  }
+
+  .page-entered .panel,
+  .page-entered .side-card,
+  .page-entered .course-card,
+  .page-entered .metric,
+  .page-entered .task-card,
+  .page-entered .test-card,
+  .page-entered .activity{
+    animation-duration:.38s;
+  }
+}
+
