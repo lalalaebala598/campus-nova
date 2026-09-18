@@ -1283,7 +1283,32 @@ function viewPage(){
 }
 function login(){const remembered=state.campusUrl||'https://campus.fa.ru';return `<div class="auth"><div class="auth-left"><div class="auth-inner"><div class="auth-wordmark"><span class="auth-wordmark-mark">${icon('university',22)}</span><span class="auth-wordmark-copy"><small>Новый интерфейс Campus</small><b><span>Ваш</span> <strong>Campus Nova</strong></b></span></div><div class="eyebrow">ПОДКЛЮЧЕНИЕ УЧЕБНОГО КАБИНЕТА</div><h1>Всё для учёбы.<br><span>В одном месте.</span></h1><p>Укажи адрес своего Campus. Nova возьмёт реальные курсы, задания, оценки, файлы и расписание из него и покажет их в новом интерфейсе.</p><form id="login-form"><label>Ссылка на Campus<input name="campusUrl" value="${esc(remembered)}" inputmode="url" autocomplete="url" required placeholder="https://campus.example.ru"></label><label>Логин<input name="username" autocomplete="username" required placeholder="Логин"></label><label>Пароль<div class="password"><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Пароль"><button type="button" id="toggle-pass" aria-label="Показать пароль">${icon('eye',15)}</button></div></label><button class="primary wide" type="submit">Подключить Campus ${icon('arrow',17)}</button><button class="secondary wide" type="button" id="demo-mode">Посмотреть демо</button><div class="security">${icon('check',16)} Nova не сохраняет пароль Campus в профиле.</div><div class="connect-note">Можно указать адрес любого доступного Campus на базе Moodle. После подключения все данные привязаны к этой Campus-сессии.</div><div id="login-error"></div></form></div></div><div class="auth-visual"><img class="auth-photo" src="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400" srcset="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x, https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x" sizes="50vw" alt="Университетский кампус" width="2400" height="1600" fetchpriority="high" decoding="async"><div class="auth-visual-overlay"></div><div class="auth-copy"><span>Campus Nova</span><b>Учёба без лишнего шума.</b><small>Твой Campus. Новый интерфейс.</small></div></div></div>`}
 
-function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready')})}
+
+function playNavMotion(){
+  const active = document.querySelector('.nav-item.active');
+
+  if(!active) return;
+
+  const route =
+    active.dataset.go ||
+    'default';
+
+  active.classList.remove('nova-nav-motion');
+  active.dataset.motion = route;
+
+  /*
+   * Force browser reflow.
+   * This guarantees that the same animation
+   * can be started again after every navigation.
+   */
+  void active.offsetWidth;
+
+  requestAnimationFrame(()=>{
+    active.classList.add('nova-nav-motion');
+  });
+}
+
+function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready');playNavMotion()})}
 function bind(){
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
     if(event.defaultPrevented) return;

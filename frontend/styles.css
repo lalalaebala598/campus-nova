@@ -4281,3 +4281,507 @@ tbody tr:hover td{
   }
 }
 
+
+
+/* ============================================================
+   NOVA GUARANTEED NAV MOTION
+   ============================================================ */
+
+.nav-item .icon{
+  transform-box:fill-box;
+  transform-origin:center;
+  will-change:transform,opacity,filter;
+}
+
+
+/* ------------------------------------------------------------
+   Главное правило
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion .icon{
+  animation-duration:.58s !important;
+  animation-timing-function:
+    cubic-bezier(.2,.82,.2,1) !important;
+  animation-fill-mode:both !important;
+}
+
+
+/* ------------------------------------------------------------
+   Главная
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="dashboard"] .icon{
+  animation:novaGuaranteedHome .58s !important;
+}
+
+@keyframes novaGuaranteedHome{
+  0%{
+    opacity:.45;
+    transform:
+      translateY(5px)
+      scale(.84);
+  }
+
+  42%{
+    opacity:1;
+    transform:
+      translateY(-2px)
+      scale(1.09);
+  }
+
+  72%{
+    transform:
+      translateY(1px)
+      scale(.985);
+  }
+
+  100%{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Курсы
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon{
+  animation:novaGuaranteedCourses .52s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:novaCoursePiece .42s
+    cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon rect:nth-child(1){
+  animation-delay:.02s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon rect:nth-child(2){
+  animation-delay:.07s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon rect:nth-child(3){
+  animation-delay:.12s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="courses"] .icon rect:nth-child(4){
+  animation-delay:.17s !important;
+}
+
+@keyframes novaGuaranteedCourses{
+  0%{
+    transform:scale(.92);
+  }
+
+  55%{
+    transform:scale(1.045);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+@keyframes novaCoursePiece{
+  from{
+    opacity:0;
+    transform:scale(.3);
+  }
+
+  65%{
+    opacity:1;
+    transform:scale(1.12);
+  }
+
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Расписание
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="schedule"] .icon{
+  animation:novaGuaranteedSchedule .62s !important;
+}
+
+@keyframes novaGuaranteedSchedule{
+  0%{
+    opacity:.35;
+    transform:
+      rotate(-18deg)
+      scale(.88);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      rotate(6deg)
+      scale(1.06);
+  }
+
+  72%{
+    transform:
+      rotate(-1deg)
+      scale(.99);
+  }
+
+  to{
+    transform:
+      rotate(0)
+      scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Оценки
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="grades"] .icon{
+  animation:novaGuaranteedGrades .58s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="grades"] .icon path:last-child{
+  stroke-dasharray:48;
+  stroke-dashoffset:48;
+  animation:novaGuaranteedGraph .52s
+    ease-out .04s both !important;
+}
+
+@keyframes novaGuaranteedGrades{
+  from{
+    transform:translateY(3px) scale(.91);
+    opacity:.4;
+  }
+
+  48%{
+    transform:translateY(-1px) scale(1.05);
+    opacity:1;
+  }
+
+  to{
+    transform:none;
+    opacity:1;
+  }
+}
+
+@keyframes novaGuaranteedGraph{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Задания
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="tasks"] .icon{
+  animation:novaGuaranteedTasks .58s !important;
+}
+
+.nav-item.nova-nav-motion[data-motion="tasks"] .icon path{
+  stroke-dasharray:30;
+  stroke-dashoffset:30;
+  animation:novaGuaranteedCheck .44s
+    ease-out .10s both !important;
+}
+
+@keyframes novaGuaranteedTasks{
+  0%{
+    opacity:.4;
+    transform:scale(.87);
+  }
+
+  55%{
+    opacity:1;
+    transform:scale(1.06);
+  }
+
+  to{
+    transform:scale(1);
+  }
+}
+
+@keyframes novaGuaranteedCheck{
+  to{
+    stroke-dashoffset:0;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Календарь
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="calendar"] .icon{
+  animation:novaGuaranteedCalendar .58s !important;
+}
+
+@keyframes novaGuaranteedCalendar{
+  0%{
+    opacity:.4;
+    transform:
+      rotate(-8deg)
+      translateY(3px)
+      scale(.9);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      rotate(4deg)
+      translateY(-1px)
+      scale(1.06);
+  }
+
+  72%{
+    transform:
+      rotate(-1deg)
+      scale(.99);
+  }
+
+  to{
+    transform:
+      rotate(0)
+      scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Сообщения
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="messages"] .icon{
+  animation:novaGuaranteedMessages .62s !important;
+}
+
+@keyframes novaGuaranteedMessages{
+  0%{
+    opacity:.35;
+    transform:
+      translateY(4px)
+      scale(.87);
+  }
+
+  46%{
+    opacity:1;
+    transform:
+      translateY(-3px)
+      scale(1.06);
+  }
+
+  70%{
+    transform:
+      translateY(1px)
+      scale(.99);
+  }
+
+  to{
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Файлы
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="files"] .icon{
+  animation:novaGuaranteedFiles .58s !important;
+}
+
+@keyframes novaGuaranteedFiles{
+  0%{
+    opacity:.35;
+    transform:
+      translateY(3px)
+      scaleY(.87);
+  }
+
+  45%{
+    opacity:1;
+    transform:
+      translateY(-1px)
+      scaleY(1.055);
+  }
+
+  72%{
+    transform:scaleY(.99);
+  }
+
+  to{
+    transform:scaleY(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Материалы
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="materials"] .icon{
+  animation:novaGuaranteedMaterials .60s !important;
+}
+
+@keyframes novaGuaranteedMaterials{
+  0%{
+    opacity:.3;
+    transform:
+      translateX(-6px)
+      rotate(-3deg);
+  }
+
+  50%{
+    opacity:1;
+    transform:
+      translateX(1px)
+      rotate(.8deg);
+  }
+
+  to{
+    transform:
+      translateX(0)
+      rotate(0);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Тесты
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="tests"] .icon{
+  animation:novaGuaranteedTests .64s !important;
+}
+
+@keyframes novaGuaranteedTests{
+  0%{
+    opacity:.3;
+    transform:
+      perspective(90px)
+      rotateX(-15deg)
+      translateY(3px)
+      scale(.90);
+  }
+
+  46%{
+    opacity:1;
+    transform:
+      perspective(90px)
+      rotateX(4deg)
+      translateY(-1px)
+      scale(1.06);
+  }
+
+  72%{
+    transform:
+      perspective(90px)
+      rotateX(-1deg)
+      scale(.995);
+  }
+
+  to{
+    transform:
+      perspective(90px)
+      rotateX(0)
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Профиль
+   ------------------------------------------------------------ */
+
+.nav-item.nova-nav-motion[data-motion="profile"] .icon{
+  animation:novaGuaranteedProfile .58s !important;
+}
+
+@keyframes novaGuaranteedProfile{
+  0%{
+    opacity:.35;
+    transform:scale(.82);
+  }
+
+  52%{
+    opacity:1;
+    transform:scale(1.09);
+  }
+
+  to{
+    transform:scale(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Active indicator follows the same rhythm
+   ------------------------------------------------------------ */
+
+.nav-item.active:before{
+  transform-origin:center;
+}
+
+.nav-item.nova-nav-motion.active:before{
+  animation:novaIndicatorMotion .42s
+    cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes novaIndicatorMotion{
+  from{
+    opacity:0;
+    transform:scaleY(.25);
+  }
+
+  58%{
+    opacity:1;
+    transform:scaleY(1.08);
+  }
+
+  to{
+    opacity:1;
+    transform:scaleY(1);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   Hover
+   ------------------------------------------------------------ */
+
+.nav-item:hover .icon{
+  transition:
+    transform .22s
+    cubic-bezier(.2,.82,.2,1),
+    opacity .22s ease;
+}
+
+
+/* ------------------------------------------------------------
+   Reduced motion
+   ------------------------------------------------------------ */
+
+@media(prefers-reduced-motion:reduce){
+  .nav-item.nova-nav-motion .icon,
+  .nav-item.nova-nav-motion .icon *,
+  .nav-item.nova-nav-motion.active:before{
+    animation:none!important;
+  }
+}
+
