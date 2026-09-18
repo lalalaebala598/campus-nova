@@ -116,7 +116,32 @@ function back(fallback='dashboard'){ if(history.state?.nova){history.back();retu
 function formatDate(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
 function formatLong(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}
 function formatTime(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
-function firstName(){return (state.user?.fullname||'Студент').split(/\s+/)[0]||'Студент'}
+function firstName(){
+  const user=state.user||{};
+
+  const direct=[
+    user.firstname,
+    user.firstName,
+    user.givenname,
+    user.givenName
+  ].find(value=>String(value||'').trim());
+
+  if(direct){
+    return String(direct).trim().split(/\s+/)[0];
+  }
+
+  const full=String(
+    user.fullname||
+    user.name||
+    'Студент'
+  ).trim();
+
+  if(!full){
+    return 'Студент';
+  }
+
+  return full.split(/\s+/)[0]||'Студент';
+}
 function campusOrigin(){try{return new URL(state.campusUrl||'').origin}catch{return ''}}
 function campusHost(){try{return new URL(state.campusUrl||'').host}catch{return 'вашего Campus'}}
 function avatar(){return firstName().slice(0,1).toUpperCase()}
@@ -158,7 +183,133 @@ function statePanel(kind,service,retry=true){
   const cfg={loading:['Загружаем данные…','Секунду, получаем актуальную информацию из Campus.'],error:[errorTitles[service]||'Не удалось загрузить данные Campus.',state.errors?.[service]||'Проверьте соединение и попробуйте ещё раз.'],empty:['Пока ничего нет','Campus успешно ответил, но для этого раздела данных сейчас нет.']}[kind];
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
-function hero(){return `<section class="hero"><img class="hero-photo" src="https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400" srcset="https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x, https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x" sizes="(min-width: 1600px) 1180px, (min-width: 1200px) 82vw, 100vw" alt="Кампус университета" width="2400" height="1200" fetchpriority="high" decoding="async"><div class="hero-overlay"></div><div class="hero-brand">${icon('university',23)}<span><b>Финансовый университет</b><small>Краснодарский филиал</small></span></div><div class="hero-copy"><div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h2>Доброе утро, ${esc(firstName())}!</h2><p>Успехов в учёбе сегодня <span>🚀</span></p></div><div class="hero-quote">Знания сегодня<br><strong>возможности завтра.</strong></div></section>`}
+function hero(){
+  const calendar=state.data.calendar||{};
+  const events=flattenCalendar(calendar);
+
+  const now=new Date();
+
+  const todayKey=
+    `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+
+  const todayEvents=
+    events.filter(event=>{
+      return dateKey(event.timestart)===todayKey;
+    });
+
+  const tasks=
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : [];
+
+  const hour=now.getHours();
+
+  const greeting=
+    hour<12
+      ? 'Доброе утро'
+      : hour<18
+        ? 'Добрый день'
+        : 'Добрый вечер';
+
+  const photos=[
+    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=82&w=2000',
+    'https://images.unsplash.com/photo-1769284008279-46e4c97959db?auto=format&fit=crop&fm=jpg&q=80&w=2000',
+    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=80&w=2000'
+  ];
+
+  const dateText=
+    now.toLocaleDateString(
+      'ru-RU',
+      {
+        weekday:'long',
+        day:'numeric',
+        month:'long'
+      }
+    );
+
+  return `
+    <section class="hero dashboard-hero">
+
+      <div class="hero-media">
+        ${photos.map((src,index)=>`
+          <img
+            class="hero-photo hero-photo-${index}"
+            src="${src}"
+            alt="Университетский кампус"
+            loading="${index===0?'eager':'lazy'}"
+            decoding="async"
+          >
+        `).join('')}
+      </div>
+
+      <div class="hero-overlay"></div>
+
+      <div class="hero-brand">
+        ${icon('university',23)}
+
+        <span>
+          <b>Финансовый университет</b>
+          <small>Краснодарский филиал</small>
+        </span>
+      </div>
+
+      <div class="hero-date">
+        ${icon('calendar',15)}
+        <span>${esc(dateText)}</span>
+      </div>
+
+      <div class="hero-copy">
+
+        <div class="eyebrow">
+          ЛИЧНЫЙ КАБИНЕТ
+        </div>
+
+        <h2>
+          ${greeting}, ${esc(firstName())}.
+        </h2>
+
+        <p>
+          Всё необходимое для учёбы уже здесь.
+        </p>
+
+      </div>
+
+      <div class="hero-stats">
+
+        <div class="hero-stat">
+          <strong>${todayEvents.length}</strong>
+          <span>
+            ${
+              todayEvents.length===1
+                ? 'событие сегодня'
+                : 'событий сегодня'
+            }
+          </span>
+        </div>
+
+        <div class="hero-stat-divider"></div>
+
+        <div class="hero-stat">
+          <strong>${tasks.length}</strong>
+          <span>
+            ${
+              tasks.length===1
+                ? 'активное задание'
+                : 'активных заданий'
+            }
+          </span>
+        </div>
+
+      </div>
+
+      <div class="hero-quote">
+        Знания сегодня<br>
+        <strong>возможности завтра.</strong>
+      </div>
+
+    </section>
+  `;
+}
 function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
 function dashboard(){
   const courses=Array.isArray(state.data.courses)?state.data.courses:[];
@@ -260,8 +411,260 @@ function calendarPage(){
   if(state.status.calendar==='error') return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:'Календарь',sub:'Не удалось получить календарь.'})}${statePanel('error','calendar')}</section>`;
   return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:monthLabel(),sub:'Выбери день, чтобы увидеть события.',children:`<div class="calendar-actions"><button class="icon-btn" data-month="-1">${icon('back',17)}</button><button class="secondary" id="calendar-today">Сегодня</button><button class="icon-btn" data-month="1">${icon('next',17)}</button></div>`})}<div class="calendar-layout"><div class="calendar-card"><div class="weekday">${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span>${x}</span>`).join('')}</div>${calendarGrid()}</div><aside class="events-card"><div class="panel-head"><div><h2>${icon('calendar',16)} События</h2><small>${esc(formatLong(new Date(state.year,state.month-1,state.selectedDay).getTime()/1000))}</small></div></div><div class="events-list">${eventsForSelected().map(e=>`<button class="event-card" data-view="${esc(e.url||'')}" data-route-url><span class="event-time">${formatTime(e.timestart)}</span><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.location||e.course?.fullname||'')}</small></span>${icon('arrow',14)}</button>`).join('')||'<div class="inline-empty">Событий на выбранную дату нет.</div>'}</div></aside></div></section>`;
 }
-function CalendarWidget(){return `<section class="side-card calendar-mini"><div class="panel-title"><span>${icon('calendar',16)} Календарь</span><button data-go="calendar">Все</button></div><div class="mini-month-head"><button class="icon-btn tiny" data-month="-1">${icon('back',14)}</button><b>${esc(monthLabel())}</b><button class="icon-btn tiny" data-month="1">${icon('next',14)}</button></div><div class="mini-grid">${calendarGrid(true)}</div></section>`}
-function calendarGrid(mini=false){const first=new Date(state.year,state.month-1,1);let offset=(first.getDay()+6)%7;const days=new Date(state.year,state.month,0).getDate();const prevDays=new Date(state.year,state.month-1,0).getDate();const events=flattenCalendar(state.data.calendar||{});let html='';for(let i=0;i<42;i++){const n=i-offset+1;let day=n,month=state.month,year=state.year,other=false;if(n<1){day=prevDays+n;month--;if(month===0){month=12;year--}other=true}else if(n>days){day=n-days;month++;if(month===13){month=1;year++}other=true}const key=`${year}-${month}-${day}`;const has=events.some(e=>dateKey(e.timestart)===key);const selected=year===state.year&&month===state.month&&day===state.selectedDay&&!other;const today=new Date();const istoday=year===today.getFullYear()&&month===today.getMonth()+1&&day===today.getDate();if(mini&&i>=35&&!other)continue;html+=`<button class="day ${other?'other':''} ${selected?'selected':''} ${istoday?'today':''} ${has?'has-event':''}" data-day="${year}-${month}-${day}"><span>${day}</span>${has?'<i></i>':''}</button>`}return html}
+function calendarEventKind(event){
+  const value=[
+    event?.modulename,
+    event?.eventtype,
+    event?.name,
+    event?.description
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if(
+    /assign|задани|практик|deadline|срок сдач|домаш/.test(value)
+  ){
+    return 'task';
+  }
+
+  if(
+    /quiz|test|тест|контроль|exam|экзамен|зачет|зачёт/.test(value)
+  ){
+    return 'quiz';
+  }
+
+  return 'study';
+}
+
+function calendarLegend(){
+  return `
+    <div class="calendar-legend">
+
+      <span>
+        <i class="task"></i>
+        Задание
+      </span>
+
+      <span>
+        <i class="quiz"></i>
+        Тест
+      </span>
+
+      <span>
+        <i class="study"></i>
+        Событие
+      </span>
+
+    </div>
+  `;
+}
+
+function CalendarWidget(){
+  return `
+    <section class="side-card calendar-mini">
+
+      <div class="panel-title">
+        <span>
+          ${icon('calendar',16)}
+          Календарь
+        </span>
+
+        <button data-go="calendar">
+          Все
+        </button>
+      </div>
+
+      <div class="mini-month-head">
+
+        <button
+          class="icon-btn tiny"
+          data-month="-1"
+          aria-label="Предыдущий месяц"
+        >
+          ${icon('back',14)}
+        </button>
+
+        <b>${esc(monthLabel())}</b>
+
+        <button
+          class="icon-btn tiny"
+          data-month="1"
+          aria-label="Следующий месяц"
+        >
+          ${icon('next',14)}
+        </button>
+
+      </div>
+
+      <div class="mini-weekdays">
+        <span>Пн</span>
+        <span>Вт</span>
+        <span>Ср</span>
+        <span>Чт</span>
+        <span>Пт</span>
+        <span>Сб</span>
+        <span>Вс</span>
+      </div>
+
+      <div class="mini-grid">
+        ${calendarGrid(true)}
+      </div>
+
+      ${calendarLegend()}
+
+    </section>
+  `;
+}
+
+function calendarGrid(mini=false){
+  const first=
+    new Date(
+      state.year,
+      state.month-1,
+      1
+    );
+
+  const offset=
+    (first.getDay()+6)%7;
+
+  const days=
+    new Date(
+      state.year,
+      state.month,
+      0
+    ).getDate();
+
+  const totalCells=
+    Math.ceil((offset+days)/7)*7;
+
+  const prevDays=
+    new Date(
+      state.year,
+      state.month-1,
+      0
+    ).getDate();
+
+  const events=
+    flattenCalendar(
+      state.data.calendar||{}
+    );
+
+  const today=
+    new Date();
+
+  const todayKey=
+    `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+
+  let html='';
+
+  for(let i=0;i<totalCells;i++){
+
+    const n=i-offset+1;
+
+    let day=n;
+    let month=state.month;
+    let year=state.year;
+    let other=false;
+
+    if(n<1){
+
+      day=prevDays+n;
+      month=state.month-1;
+
+      if(month<1){
+        month=12;
+        year=state.year-1;
+      }
+
+      other=true;
+    }
+
+    else if(n>days){
+
+      day=n-days;
+      month=state.month+1;
+
+      if(month>12){
+        month=1;
+        year=state.year+1;
+      }
+
+      other=true;
+    }
+
+    const key=
+      `${year}-${month}-${day}`;
+
+    const dayEvents=
+      events.filter(
+        event=>dateKey(event.timestart)===key
+      );
+
+    const kinds=[
+      ...new Set(
+        dayEvents
+          .map(calendarEventKind)
+          .filter(Boolean)
+      )
+    ].slice(0,3);
+
+    const selected=
+      !other &&
+      year===state.year &&
+      month===state.month &&
+      day===state.selectedDay;
+
+    const istoday=
+      key===todayKey;
+
+    const eventNames=
+      dayEvents
+        .slice(0,4)
+        .map(
+          event=>String(
+            event.name||
+            event.modulename||
+            'Событие'
+          )
+        );
+
+    const label=
+      eventNames.length
+        ? eventNames.join(' • ')
+        : `Дата ${day}`;
+
+    html+=`
+      <button
+        class="day ${other?'other':''} ${selected?'selected':''} ${istoday?'today':''} ${dayEvents.length?'has-event':''}"
+        data-day="${key}"
+        aria-label="${esc(label)}"
+        title="${esc(label)}"
+      >
+
+        <span class="day-number">
+          ${day}
+        </span>
+
+        ${
+          kinds.length
+            ? `
+              <span class="day-dots">
+                ${kinds.map(kind=>`
+                  <i class="day-marker ${kind}"></i>
+                `).join('')}
+              </span>
+            `
+            : ''
+        }
+
+      </button>
+    `;
+  }
+
+  return html;
+}
+
 function eventsForSelected(){const events=flattenCalendar(state.data.calendar||{}).filter(e=>dateKey(e.timestart)===selectedKey()).sort((a,b)=>Number(a.timestart)-Number(b.timestart));return events}
 function messagesPage(){
   if(state.status.messages==='loading') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Загружаем диалоги Campus…'})}${skeletonGrid(2)}</section>`;
