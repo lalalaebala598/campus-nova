@@ -58,6 +58,17 @@ function icon(name,size=18){
     check:'<path d="m5 12 4 4L19 6"/>',
     info:'<circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/>',
     eye:'<path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/>',
+    file:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+    upload:'<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>',
+    edit:'<path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="m13.5 6.5 4 4"/>',
+    save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-6h8v6"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    x:'<path d="m6 6 12 12M18 6 6 18"/>',
+    spinner:'<path d="M12 3a9 9 0 1 0 9 9"/>',
+    play:'<path d="m9 6 10 6-10 6z"/>',
+    pause:'<path d="M8 6v12M16 6v12"/>',
+    link:'<path d="M10 13.5 8.5 15a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0"/><path d="m14 10.5 1.5-1.5a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0"/><path d="m8 16 8-8"/>',
+    filter:'<path d="M4 6h16M7 12h10M10 18h4"/>',
   };
   return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.info}</svg>`;
 }
@@ -1272,7 +1283,7 @@ function viewPage(){
 }
 function login(){const remembered=state.campusUrl||'https://campus.fa.ru';return `<div class="auth"><div class="auth-left"><div class="auth-inner"><div class="auth-wordmark"><span class="auth-wordmark-mark">${icon('university',22)}</span><span class="auth-wordmark-copy"><small>Новый интерфейс Campus</small><b><span>Ваш</span> <strong>Campus Nova</strong></b></span></div><div class="eyebrow">ПОДКЛЮЧЕНИЕ УЧЕБНОГО КАБИНЕТА</div><h1>Всё для учёбы.<br><span>В одном месте.</span></h1><p>Укажи адрес своего Campus. Nova возьмёт реальные курсы, задания, оценки, файлы и расписание из него и покажет их в новом интерфейсе.</p><form id="login-form"><label>Ссылка на Campus<input name="campusUrl" value="${esc(remembered)}" inputmode="url" autocomplete="url" required placeholder="https://campus.example.ru"></label><label>Логин<input name="username" autocomplete="username" required placeholder="Логин"></label><label>Пароль<div class="password"><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Пароль"><button type="button" id="toggle-pass" aria-label="Показать пароль">${icon('eye',15)}</button></div></label><button class="primary wide" type="submit">Подключить Campus ${icon('arrow',17)}</button><button class="secondary wide" type="button" id="demo-mode">Посмотреть демо</button><div class="security">${icon('check',16)} Nova не сохраняет пароль Campus в профиле.</div><div class="connect-note">Можно указать адрес любого доступного Campus на базе Moodle. После подключения все данные привязаны к этой Campus-сессии.</div><div id="login-error"></div></form></div></div><div class="auth-visual"><img class="auth-photo" src="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400" srcset="https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x, https://images.unsplash.com/photo-1777651860852-89059b3f0901?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x" sizes="50vw" alt="Университетский кампус" width="2400" height="1600" fetchpriority="high" decoding="async"><div class="auth-visual-overlay"></div><div class="auth-copy"><span>Campus Nova</span><b>Учёба без лишнего шума.</b><small>Твой Campus. Новый интерфейс.</small></div></div></div>`}
 
-function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind()}
+function render(){setTheme();const app=$('#app');if(!state.connected){app.innerHTML=login();bind();requestAnimationFrame(()=>document.body.classList.add('nova-ready'));return}let body='';switch(state.route){case 'courses':body=coursesPage();break;case 'course':body=coursePage();break;case 'schedule':body=schedulePage();break;case 'grades':body=gradePage();break;case 'tasks':body=tasksPage();break;case 'calendar':body=calendarPage();break;case 'messages':body=messagesPage();break;case 'files':body=filesPage();break;case 'tests':body=testsPage();break;case 'materials':body=materialsPage();break;case 'activity':body=activityPage();break;case 'profile':body=profilePage();break;case 'view':body=viewPage();break;default:body=dashboard()}app.innerHTML=shell(body);bind();requestAnimationFrame(()=>{$('#page')?.classList.add('page-entered');document.body.classList.add('nova-ready')})}
 function bind(){
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
     if(event.defaultPrevented) return;
@@ -1933,5 +1944,25 @@ document.addEventListener('click',e=>{
   e.preventDefault();
   try{ navigate(route==='course'?'course':route,param); }
   catch(error){ console.error('[Nova][NavigationFallback]',{route,param,error}); const href=target.getAttribute('href'); if(href) window.location.assign(href); }
+});
+
+document.addEventListener('pointerdown',e=>{
+  const target=e.target?.closest?.(
+    'button,.primary,.secondary,.nav-item,.metric,.course-card,.task-card,.test-card,.activity,.mini-course,.file-row,.panel-action,.quick-actions button'
+  );
+
+  if(!target || target.disabled) return;
+
+  target.classList.remove('nova-press');
+
+  requestAnimationFrame(()=>{
+    target.classList.add('nova-press');
+  });
+});
+
+document.addEventListener('animationend',e=>{
+  if(e.animationName==='novaPress'){
+    e.target.classList.remove('nova-press');
+  }
 });
 (async function boot(){setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
