@@ -116,210 +116,26 @@ function back(fallback='dashboard'){ if(history.state?.nova){history.back();retu
 function formatDate(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
 function formatLong(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}
 function formatTime(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
-function firstName(){
-  const user=state.user||{};
-
-  const direct=[
-    user.firstname,
-    user.firstName,
-    user.givenname,
-    user.givenName
-  ].find(value=>String(value||'').trim());
-
-  if(direct){
-    return String(direct).trim().split(/\s+/)[0];
-  }
-
-  const full=String(user.fullname||user.name||'Студент').trim();
-
-  if(!full){
-    return 'Студент';
-  }
-
-  return full.split(/\s+/)[0]||'Студент';
-}
-
-function campusOrigin(){
-  try{
-    return new URL(state.campusUrl||'').origin;
-  }catch{
-    return '';
-  }
-}
-
-function campusHost(){
-  try{
-    return new URL(state.campusUrl||'').host;
-  }catch{
-    return 'вашего Campus';
-  }
-}
-
-function avatar(){
-  return firstName().slice(0,1).toUpperCase();
-}
-
-function flattenCalendar(c){
-  const a=[];
-
-  for(const w of c?.weeks||[]){
-    for(const d of w.days||[]){
-      for(const e of d.events||[]){
-        a.push({
-          ...e,
-          timestart:e.timestart??d.timestamp
-        });
-      }
-    }
-  }
-
-  return a;
-}
-
-function dateKey(ts){
-  const value=Number(ts);
-
-  if(Number.isFinite(value) && value>0){
-    const d=new Date(value*1000);
-
-    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-  }
-
-  const d=new Date(ts);
-
-  if(!Number.isNaN(d.getTime())){
-    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-  }
-
-  return '';
-}
-
-function selectedKey(){
-  return `${state.year}-${state.month}-${state.selectedDay}`;
-}
-
-function monthLabel(){
-  return new Date(
-    state.year,
-    state.month-1,
-    1
-  )
-    .toLocaleDateString(
-      'ru-RU',
-      {
-        month:'long',
-        year:'numeric'
-      }
-    )
-    .replace(/^./,c=>c.toUpperCase());
-}
-
-function themeToggle(){
-  state.theme=
-    state.theme==='dark'
-      ? 'light'
-      : 'dark';
-
-  setTheme();
-
-  localStorage.setItem(
-    'nova-theme',
-    state.theme
-  );
-
-  render();
-}
-
-function setTheme(){
-  document.body.dataset.theme=state.theme;
-
-  const root=document.documentElement;
-
-  if(root){
-    root.dataset.theme=state.theme;
-    root.style.colorScheme=state.theme;
-  }
-}
-
-function brand(){
-  return `
-    <div class="brand">
-      <span class="brand-mark">
-        ${icon('university',22)}
-      </span>
-
-      <span>
-        <b>Campus <em>FA</em></b>
-        <small>Nova</small>
-      </span>
-    </div>
-  `;
-}
-
+function firstName(){return (state.user?.fullname||'Студент').split(/\s+/)[0]||'Студент'}
+function campusOrigin(){try{return new URL(state.campusUrl||'').origin}catch{return ''}}
+function campusHost(){try{return new URL(state.campusUrl||'').host}catch{return 'вашего Campus'}}
+function avatar(){return firstName().slice(0,1).toUpperCase()}
+function flattenCalendar(c){const a=[];for(const w of c?.weeks||[])for(const d of w.days||[])for(const e of d.events||[])a.push({...e,timestart:e.timestart??d.timestamp});return a}
+function dateKey(ts){const d=new Date(Number(ts)*1000);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
+function selectedKey(){return `${state.year}-${state.month}-${state.selectedDay}`}
+function monthLabel(){return new Date(state.year,state.month-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase())}
+function themeToggle(){state.theme=state.theme==='dark'?'light':'dark';setTheme();localStorage.setItem('nova-theme',state.theme);render()}
+function setTheme(){document.body.dataset.theme=state.theme;const root=document.documentElement;if(root){root.dataset.theme=state.theme;root.style.colorScheme=state.theme}}
+function brand(){return `<div class="brand"><span class="brand-mark">${icon('university',22)}</span><span><b>Campus <em>FA</em></b><small>Nova</small></span></div>`}
 function notificationItems(){
   const items=[];
-
-  const tasks=
-    Array.isArray(state.data.tasks)
-      ? state.data.tasks
-      : [];
-
-  for(
-    const t of tasks.slice(0,5)
-  ){
-    items.push({
-      type:'task',
-      title:t.name||'Задание',
-      meta:t.course||'Campus',
-      action:()=>navigate(
-        'view',
-        t.url||'/my/'
-      )
-    });
-  }
-
-  const msgs=
-    state.data.messages||{};
-
-  for(
-    const c of (msgs.conversations||[])
-      .filter(
-        x=>Number(
-          x.unreadcount||
-          x.unreadCount||
-          0
-        )>0
-      )
-      .slice(0,5)
-  ){
-    items.push({
-      type:'message',
-      title:c.name||'Новое сообщение',
-      meta:'Сообщения',
-      action:()=>navigate('messages')
-    });
-  }
-
-  for(
-    const e of flattenCalendar(
-      state.data.calendar||{}
-    )
-      .filter(
-        x=>Number(x.timestart||0)*1000>=Date.now()
-      )
-      .slice(0,4)
-  ){
-    items.push({
-      type:'event',
-      title:e.name||'Событие',
-      meta:e.course?.fullname||'Расписание',
-      action:()=>navigate('calendar')
-    });
-  }
-
+  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
+  for(const t of tasks.slice(0,5)) items.push({type:'task',title:t.name||'Задание',meta:t.course||'Campus',action:()=>navigate('view',t.url||'/my/')});
+  const msgs=state.data.messages||{};
+  for(const c of (msgs.conversations||[]).filter(x=>Number(x.unreadcount||x.unreadCount||0)>0).slice(0,5)) items.push({type:'message',title:c.name||'Новое сообщение',meta:'Сообщения',action:()=>navigate('messages')});
+  for(const e of flattenCalendar(state.data.calendar||{}).filter(x=>Number(x.timestart||0)*1000>=Date.now()).slice(0,4)) items.push({type:'event',title:e.name||'Событие',meta:e.course?.fullname||'Расписание',action:()=>navigate('calendar')});
   return items.slice(0,8);
 }
-
 function showNotifications(){
   const existing=$('#notification-modal'); if(existing){existing.remove();return;}
   const items=notificationItems();
@@ -342,117 +158,26 @@ function statePanel(kind,service,retry=true){
   const cfg={loading:['Загружаем данные…','Секунду, получаем актуальную информацию из Campus.'],error:[errorTitles[service]||'Не удалось загрузить данные Campus.',state.errors?.[service]||'Проверьте соединение и попробуйте ещё раз.'],empty:['Пока ничего нет','Campus успешно ответил, но для этого раздела данных сейчас нет.']}[kind];
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
-function hero(){
+function hero(){return `<section class="hero"><img class="hero-photo" src="https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400" srcset="https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=2400 1x, https://images.unsplash.com/photo-1635496294742-ec5811d2f7fc?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=92&w=3840 2x" sizes="(min-width: 1600px) 1180px, (min-width: 1200px) 82vw, 100vw" alt="Кампус университета" width="2400" height="1200" fetchpriority="high" decoding="async"><div class="hero-overlay"></div><div class="hero-brand">${icon('university',23)}<span><b>Финансовый университет</b><small>Краснодарский филиал</small></span></div><div class="hero-copy"><div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h2>Доброе утро, ${esc(firstName())}!</h2><p>Успехов в учёбе сегодня <span>🚀</span></p></div><div class="hero-quote">Знания сегодня<br><strong>возможности завтра.</strong></div></section>`}
+function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
+function dashboard(){
+  const courses=Array.isArray(state.data.courses)?state.data.courses:[];
   const calendar=state.data.calendar||{};
-  const events=flattenCalendar(calendar);
-
-  const today=new Date();
-  const todayKeyValue=
-    `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-
-  const todayEvents=events.filter(event=>{
-    return dateKey(event.timestart)===todayKeyValue;
-  });
-
-  const tasks=(state.data.tasks||[]).filter(task=>{
-    const status=String(
-      task.status||task.state||''
-    ).toLowerCase();
-
-    return ![
-      'done',
-      'completed',
-      'complete',
-      'finished'
-    ].includes(status);
-  });
-
-  const photos=[
-    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=78&w=1800',
-    'https://images.unsplash.com/photo-1769284008279-46e4c97959db?auto=format&fit=crop&fm=jpg&q=76&w=1800',
-    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=76&w=1800'
-  ];
-
-  const dateText=today.toLocaleDateString(
-    'ru-RU',
-    {
-      weekday:'long',
-      day:'numeric',
-      month:'long'
-    }
-  );
-
-  return `
-    <section class="hero dashboard-hero">
-
-      <div class="hero-media">
-        ${photos.map((src,index)=>`
-          <img
-            class="hero-photo hero-photo-${index}"
-            src="${src}"
-            alt="Современный университетский кампус"
-            loading="${index===0?'eager':'lazy'}"
-          >
-        `).join('')}
-      </div>
-
-      <div class="hero-overlay"></div>
-      <div class="hero-glow"></div>
-
-      <div class="hero-brand">
-        <span class="hero-brand-mark">
-          ${icon('spark',18)}
-        </span>
-        <span>Nova</span>
-      </div>
-
-      <div class="hero-date">
-        <span class="hero-date-icon">
-          ${icon('calendar',15)}
-        </span>
-
-        <span>${esc(dateText)}</span>
-      </div>
-
-      <div class="hero-copy">
-
-        <div class="eyebrow">
-          ЛИЧНЫЙ КАБИНЕТ
-        </div>
-
-        <h2>
-          Доброе утро, ${esc(firstName())}.
-        </h2>
-
-        <p>
-          Всё необходимое для учёбы уже здесь.
-        </p>
-
-      </div>
-
-      <div class="hero-stats">
-
-        <div class="hero-stat">
-          <strong>${todayEvents.length}</strong>
-          <span>событий сегодня</span>
-        </div>
-
-        <div class="hero-stat-divider"></div>
-
-        <div class="hero-stat">
-          <strong>${tasks.length}</strong>
-          <span>активных заданий</span>
-        </div>
-
-      </div>
-
-      <div class="hero-quote">
-        Знания сегодня<br>
-        <strong>возможности завтра.</strong>
-      </div>
-
-    </section>
-  `;
+  const events=flattenCalendar(calendar).sort((a,b)=>Number(a.timestart)-Number(b.timestart));
+  const today=new Date(); const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`; const todayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
+  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[]; const grades=Array.isArray(state.data.grades)?state.data.grades:[];
+  const nums=grades.map(x=>parseFloat(String(x.grade||'').replace(',','.'))).filter(Number.isFinite); const avg=nums.length?(nums.reduce((x,y)=>x+y,0)/nums.length).toFixed(1).replace('.',','):'—';
+  const block=(service,html)=>state.status[service]==='loading'?'<div class="block-loading">Загружаем…</div>':state.status[service]==='error'?`<div class="block-error">${icon('info',14)}<span>${esc(state.errors?.[service]||'Не удалось загрузить блок.')}</span></div>`:html;
+  if(state.status.dashboard==='loading') return `<section class="page dashboard-page">${hero()}<div class="dashboard-surface">${skeletonGrid(4)}</div></section>`;
+  return `<section class="page dashboard-page">${hero()}
+    <div class="metrics">${metric('calendar','Занятий сегодня',['loading','error'].includes(state.status.calendar)?'—':todayEvents.length,'Посмотреть','schedule','blue')}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
+    <div class="dashboard-layout"><div class="dash-main">
+      ${Panel({title:'Расписание на сегодня',iconName:'calendar',action:'Все занятия',go:'schedule',children:block('calendar',todayEvents.length?`<div class="timeline">${todayEvents.slice(0,6).map((e,i)=>`<button class="timeline-row" data-view="${esc(e.url||'')}" data-route-url><span class="timeline-line"><i class="dot dot-${i%4}"></i></span><time>${formatTime(e.timestart)}</time><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.course?.fullname||e.course?.shortname||'Campus')}</small></span>${icon('arrow',14)}</button>`).join('')}</div>`:'<div class="inline-empty">На сегодня занятий нет.</div>')})}
+      ${Panel({title:'Последние курсы',iconName:'grid',action:'Все курсы',go:'courses',children:block('courses',`<div class="mini-courses">${courses.slice(0,4).map(miniCourse).join('')||'<div class="inline-empty">Курсов сейчас нет.</div>'}</div>`)})}
+      ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
+      ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
+      ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
+    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions"><button data-go="files">${icon('download',19)}<b>Файлы</b><small>Скачать</small></button><button data-go="messages">${icon('message',19)}<b>Сообщения</b><small>Открыть</small></button><button data-go="tasks">${icon('check-square',19)}<b>Задания</b><small>Открыть</small></button><button data-go="tests">${icon('quiz',19)}<b>Тесты</b><small>Открыть</small></button></div></section><section class="quote-card"><div><b>Всё необходимое<br>для учёбы. В одном месте.</b><small>Campus Nova сохраняет данные Campus и меняет только опыт.</small></div>${icon('arrow',20)}</section></aside></div></section>`;
 }
 
 function Panel({title,iconName='grid',action='',go='',wide=false,children}){return `<section class="panel ${wide?'wide':''}"><div class="panel-head"><div><h2>${icon(iconName,16)} ${esc(title)}</h2><small>Актуальные данные</small></div>${action?`<button class="panel-action" data-go="${go}">${esc(action)} ${icon('arrow',13)}</button>`:''}</div>${children}</section>`}
@@ -535,231 +260,14 @@ function calendarPage(){
   if(state.status.calendar==='error') return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:'Календарь',sub:'Не удалось получить календарь.'})}${statePanel('error','calendar')}</section>`;
   return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:monthLabel(),sub:'Выбери день, чтобы увидеть события.',children:`<div class="calendar-actions"><button class="icon-btn" data-month="-1">${icon('back',17)}</button><button class="secondary" id="calendar-today">Сегодня</button><button class="icon-btn" data-month="1">${icon('next',17)}</button></div>`})}<div class="calendar-layout"><div class="calendar-card"><div class="weekday">${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span>${x}</span>`).join('')}</div>${calendarGrid()}</div><aside class="events-card"><div class="panel-head"><div><h2>${icon('calendar',16)} События</h2><small>${esc(formatLong(new Date(state.year,state.month-1,state.selectedDay).getTime()/1000))}</small></div></div><div class="events-list">${eventsForSelected().map(e=>`<button class="event-card" data-view="${esc(e.url||'')}" data-route-url><span class="event-time">${formatTime(e.timestart)}</span><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.location||e.course?.fullname||'')}</small></span>${icon('arrow',14)}</button>`).join('')||'<div class="inline-empty">Событий на выбранную дату нет.</div>'}</div></aside></div></section>`;
 }
-
-function calendarLegend(){
-  return `
-    <div class="calendar-legend">
-
-      <span>
-        <i class="task"></i>
-        Задание
-      </span>
-
-      <span>
-        <i class="quiz"></i>
-        Тест
-      </span>
-
-      <span>
-        <i class="study"></i>
-        Событие
-      </span>
-
-    </div>
-  `;
-}
-
-function CalendarWidget(){
-  return `
-    <section class="side-card calendar-mini">
-
-      <div class="panel-title">
-
-        <span>
-          ${icon('calendar',16)}
-          Календарь
-        </span>
-
-        <button data-go="calendar">
-          Все
-        </button>
-
-      </div>
-
-      <div class="mini-month-head">
-
-        <button
-          class="icon-btn tiny"
-          data-month="-1"
-          aria-label="Предыдущий месяц"
-        >
-          ${icon('back',14)}
-        </button>
-
-        <b>${esc(monthLabel())}</b>
-
-        <button
-          class="icon-btn tiny"
-          data-month="1"
-          aria-label="Следующий месяц"
-        >
-          ${icon('next',14)}
-        </button>
-
-      </div>
-
-      <div class="mini-weekdays">
-        <span>Пн</span>
-        <span>Вт</span>
-        <span>Ср</span>
-        <span>Чт</span>
-        <span>Пт</span>
-        <span>Сб</span>
-        <span>Вс</span>
-      </div>
-
-      <div class="mini-grid">
-        ${calendarGrid(true)}
-      </div>
-
-      ${calendarLegend()}
-
-    </section>
-  `;
-}
-
-function calendarGrid(mini=false){
-  const first=new Date(
-    state.year,
-    state.month-1,
-    1
-  );
-
-  const offset=
-    (first.getDay()+6)%7;
-
-  const days=
-    new Date(
-      state.year,
-      state.month,
-      0
-    ).getDate();
-
-  const totalCells=
-    Math.ceil((offset+days)/7)*7;
-
-  const prevDays=
-    new Date(
-      state.year,
-      state.month-1,
-      0
-    ).getDate();
-
-  const events=
-    flattenCalendar(
-      state.data.calendar||{}
-    );
-
-  const today=new Date();
-
-  const todayKeyValue=
-    `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-
-  let html='';
-
-  for(let i=0;i<totalCells;i++){
-
-    const n=i-offset+1;
-
-    let day=n;
-    let month=state.month;
-    let year=state.year;
-    let other=false;
-
-    if(n<1){
-
-      day=prevDays+n;
-      month=state.month-1;
-
-      if(month<1){
-        month=12;
-        year=state.year-1;
-      }
-
-      other=true;
-    }
-
-    if(n>days){
-
-      day=n-days;
-      month=state.month+1;
-
-      if(month>12){
-        month=1;
-        year=state.year+1;
-      }
-
-      other=true;
-    }
-
-    const key=
-      `${year}-${month}-${day}`;
-
-    const dayEvents=
-      events.filter(event=>{
-        return dateKey(event.timestart)===key;
-      });
-
-    const kinds=[
-      ...new Set(
-        dayEvents
-          .map(calendarEventKind)
-          .filter(Boolean)
-      )
-    ].slice(0,3);
-
-    const selected=
-      !other &&
-      year===state.year &&
-      month===state.month &&
-      day===state.selectedDay;
-
-    const istoday=
-      key===todayKeyValue;
-
-    const title=
-      dayEvents
-        .slice(0,4)
-        .map(event=>{
-          return String(
-            event.name||
-            event.modulename||
-            'Событие'
-          );
-        })
-        .join(' • ');
-
-    html+=`
-      <button
-        class="day ${other?'other':''} ${selected?'selected':''} ${istoday?'today':''} ${dayEvents.length?'has-event':''}"
-        data-day="${key}"
-        ${title?`title="${esc(title)}"`:''}
-        aria-label="${esc(title||`Дата ${day}`)}"
-      >
-
-        <span class="day-number">
-          ${day}
-        </span>
-
-        ${
-          kinds.length
-          ? `
-            <span class="day-dots">
-              ${kinds.map(kind=>`
-                <span
-                  class="day-marker ${kind}"
-                ></span>
-              `).join('')}
-            </span>
-          `
-          : ''
-        }
-
-      </button>
-    `;
-  }
-
-  return html;
+function CalendarWidget(){return `<section class="side-card calendar-mini"><div class="panel-title"><span>${icon('calendar',16)} Календарь</span><button data-go="calendar">Все</button></div><div class="mini-month-head"><button class="icon-btn tiny" data-month="-1">${icon('back',14)}</button><b>${esc(monthLabel())}</b><button class="icon-btn tiny" data-month="1">${icon('next',14)}</button></div><div class="mini-grid">${calendarGrid(true)}</div></section>`}
+function calendarGrid(mini=false){const first=new Date(state.year,state.month-1,1);let offset=(first.getDay()+6)%7;const days=new Date(state.year,state.month,0).getDate();const prevDays=new Date(state.year,state.month-1,0).getDate();const events=flattenCalendar(state.data.calendar||{});let html='';for(let i=0;i<42;i++){const n=i-offset+1;let day=n,month=state.month,year=state.year,other=false;if(n<1){day=prevDays+n;month--;if(month===0){month=12;year--}other=true}else if(n>days){day=n-days;month++;if(month===13){month=1;year++}other=true}const key=`${year}-${month}-${day}`;const has=events.some(e=>dateKey(e.timestart)===key);const selected=year===state.year&&month===state.month&&day===state.selectedDay&&!other;const today=new Date();const istoday=year===today.getFullYear()&&month===today.getMonth()+1&&day===today.getDate();if(mini&&i>=35&&!other)continue;html+=`<button class="day ${other?'other':''} ${selected?'selected':''} ${istoday?'today':''} ${has?'has-event':''}" data-day="${year}-${month}-${day}"><span>${day}</span>${has?'<i></i>':''}</button>`}return html}
+function eventsForSelected(){const events=flattenCalendar(state.data.calendar||{}).filter(e=>dateKey(e.timestart)===selectedKey()).sort((a,b)=>Number(a.timestart)-Number(b.timestart));return events}
+function messagesPage(){
+  if(state.status.messages==='loading') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Загружаем диалоги Campus…'})}${skeletonGrid(2)}</section>`;
+  if(state.status.messages==='error') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Не удалось получить диалоги.'})}${statePanel('error','messages')}</section>`;
+  const m=state.data.messages||{}; const conv=m.conversations||[];
+  return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Переписка остаётся внутри Nova.',children:`<button class="secondary" data-retry="messages">${icon('refresh',16)} Обновить</button>`})}<div class="messages-shell"><div class="conversation-list">${conv.map(c=>`<button class="conversation-item ${String(c.id)===String(state.selectedConversation)?'active':''}" data-conversation="${esc(c.id)}"><span class="avatar">${esc((c.name||'Д').slice(0,1))}</span><span><b>${esc(c.name||'Диалог')}</b><small>${esc(text(c.messages?.[0]?.text||'Нет сообщений').slice(0,70))}</small></span></button>`).join('')||'<div class="inline-empty">Новых сообщений нет.</div>'}</div><div class="conversation-view" id="conversation-view">${state.selectedConversation?'<div class="loading-center"><span class="spinner"></span><p>Открываем переписку…</p></div>':'<div class="conversation-empty">'+icon('message',28)+'<h2>Выберите диалог</h2><p>История переписки и отправка сообщений доступны внутри Nova.</p></div>'}</div></div></section>`;
 }
 function filesPage(){
   if(state.status.files==='loading') return `<section class="page">${PageHead({eyebrow:'ХРАНИЛИЩЕ',title:'Файлы',sub:'Собираем файлы через Activity Index…'})}${skeletonGrid(5)}</section>`;
