@@ -207,7 +207,7 @@ function activity(a){
   const labels={resource:'Материал',file:'Файл',folder:'Папка',page:'Страница',url:'Ссылка',assign:'Задание',quiz:'Тест',lesson:'Урок',book:'Книга',forum:'Форум',label:'Блок',feedback:'Опрос',workshop:'Семинар',choice:'Выбор',glossary:'Глоссарий'};
   const label=labels[a.type]||text(a.type||'Активность');
   const glyph=a.type==='assign'||a.type==='feedback'?'check-square':a.type==='quiz'?'quiz':a.type==='resource'||a.type==='file'||canDownload?'download':a.type==='forum'?'message':'grid';
-  const ref={courseId:a.courseId||a.ref?.courseId,cmid:a.cmid||a.id,instance:a.instance||null,contextId:a.contextId||null,type:a.type||a.modname||'unknown'};
+  const ref={courseId:a.courseId||a.ref?.courseId||state.data.course?.id,cmid:a.cmid||a.id,instance:a.instance||null,contextId:a.contextId||null,type:a.type||a.modname||'unknown'};
   const activityAttr=esc(encodeURIComponent(JSON.stringify(ref)));
   const inner=`<span class="activity-icon ${esc(a.type||'activity')}">${icon(glyph,19)}</span><span><b>${esc(a.name||'Без названия')}</b><small>${esc(label)}${a.description?` · ${esc(text(a.description).slice(0,90))}`:''}${a.availabilityinfo?` · ${esc(text(a.availabilityinfo).slice(0,90))}`:''}${canDownload&&a.type!=='file'?` · ${esc(file.filename||'Файл доступен')}`:''}</small></span><em>${directFile?icon('download',16):canOpen?icon('arrow',16):''}</em>`;
   if(!canOpen && !directFile) return `<div class="activity activity-static">${inner}</div>`;
