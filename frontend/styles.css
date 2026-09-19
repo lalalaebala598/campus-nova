@@ -7947,3 +7947,284 @@ body[data-theme="light"] .dashboard-hero .hero-overlay{
     transform:none;
   }
 }
+
+/* =========================================================
+   NOVA LIGHT THEME 2026
+   ========================================================= */
+
+body[data-theme="light"]{
+  --bg:#f3f7fb;
+  --surface:#ffffff;
+  --surface-2:#f8fbff;
+  --surface-3:#edf4fa;
+  --line:#dce6f0;
+  --text:#12243b;
+  --muted:#65768c;
+  --muted-2:#8a99aa;
+  --accent:#087ff0;
+  --accent-2:#18b98e;
+  --good:#24bd82;
+  --warn:#e7a12b;
+  --danger:#e85f76;
+  --purple:#8d68e8;
+  --shadow:0 22px 58px rgba(44,76,111,.12);
+  --control:rgba(20,58,92,.045);
+
+  background:
+    radial-gradient(circle at 78% -10%,rgba(24,153,255,.085),transparent 30%),
+    radial-gradient(circle at 10% 100%,rgba(100,130,255,.035),transparent 32%),
+    var(--bg);
+}
+
+body[data-theme="light"] .sidebar{
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(247,251,255,.96));
+  border-right:1px solid #dce6f0;
+  box-shadow:8px 0 32px rgba(41,70,103,.035);
+}
+
+body[data-theme="light"] .brand b,
+body[data-theme="light"] .profile-chip b,
+body[data-theme="light"] .panel-title,
+body[data-theme="light"] .panel-head h2,
+body[data-theme="light"] .metric strong,
+body[data-theme="light"] .course-card h3,
+body[data-theme="light"] .profile-card h2,
+body[data-theme="light"] .course-hero-copy h1,
+body[data-theme="light"] .content-card h1{
+  color:#17304d;
+}
+
+body[data-theme="light"] .nav-item,
+body[data-theme="light"] .theme-row{
+  color:#60728a;
+}
+
+body[data-theme="light"] .nav-item:hover,
+body[data-theme="light"] .theme-row:hover{
+  color:#18304c;
+  background:rgba(8,127,240,.055);
+}
+
+body[data-theme="light"] .nav-item.active{
+  color:#16304d;
+  background:linear-gradient(100deg,rgba(8,127,240,.115),rgba(8,127,240,.035));
+  box-shadow:inset 2px 0 0 var(--accent);
+}
+
+body[data-theme="light"] .topbar{
+  background:rgba(255,255,255,.88);
+  border-bottom-color:rgba(210,222,235,.82);
+  box-shadow:0 5px 24px rgba(44,76,111,.035);
+}
+
+body[data-theme="light"] .search,
+body[data-theme="light"] .icon-btn,
+body[data-theme="light"] .secondary,
+body[data-theme="light"] .profile-chip{
+  background:#fff;
+  border-color:#d9e4ef;
+  box-shadow:0 5px 18px rgba(46,77,109,.035);
+}
+
+body[data-theme="light"] .search input{
+  color:#17304d;
+}
+
+body[data-theme="light"] .search input::placeholder{
+  color:#8c9bad;
+}
+
+body[data-theme="light"] .panel,
+body[data-theme="light"] .side-card,
+body[data-theme="light"] .files-card,
+body[data-theme="light"] .table-card,
+body[data-theme="light"] .content-card,
+body[data-theme="light"] .profile-card,
+body[data-theme="light"] .course-section,
+body[data-theme="light"] .calendar-card,
+body[data-theme="light"] .events-card,
+body[data-theme="light"] .messages-shell,
+body[data-theme="light"] .course-group{
+  background:#fff;
+  border-color:#dce6f0;
+  box-shadow:
+    0 12px 34px rgba(43,74,107,.065),
+    inset 0 1px 0 rgba(255,255,255,.88);
+}
+
+body[data-theme="light"] .metric,
+body[data-theme="light"] .course-card{
+  background:#fff;
+  border-color:#dbe6f0;
+  color:#17304d;
+  box-shadow:
+    0 10px 30px rgba(43,75,108,.065),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+body[data-theme="light"] .task-card,
+body[data-theme="light"] .test-card,
+body[data-theme="light"] .schedule-card,
+body[data-theme="light"] .activity,
+body[data-theme="light"] .event-card,
+body[data-theme="light"] .material-card,
+body[data-theme="light"] .nova-file-main{
+  background:#f9fbfd;
+  border-color:#dbe6ef;
+  color:#19334f;
+}
+
+body[data-theme="light"] .task-card:hover,
+body[data-theme="light"] .test-card:hover,
+body[data-theme="light"] .schedule-card:hover,
+body[data-theme="light"] .activity:hover,
+body[data-theme="light"] .event-card:hover,
+body[data-theme="light"] .material-card:hover,
+body[data-theme="light"] .nova-file-main:hover,
+body[data-theme="light"] .course-card:hover,
+body[data-theme="light"] .metric:hover{
+  background:#fff;
+  border-color:color-mix(in srgb,var(--accent) 24%,#dbe6ef);
+  box-shadow:0 17px 38px rgba(43,75,108,.10);
+}
+
+body[data-theme="light"] .task-kind,
+body[data-theme="light"] .test-icon,
+body[data-theme="light"] .activity-icon,
+body[data-theme="light"] .material-card-icon,
+body[data-theme="light"] .nova-file-icon,
+body[data-theme="light"] .file-type{
+  background:#edf4fa;
+  border-color:#dce6ef;
+}
+
+body[data-theme="light"] .calendar-mini .mini-weekdays span{
+  color:#8a99aa !important;
+}
+
+body[data-theme="light"] .calendar-mini .mini-month-head b,
+body[data-theme="light"] .calendar-mini .mini-grid .day-number{
+  color:#27415c !important;
+}
+
+body[data-theme="light"] .calendar-mini .mini-grid .day:hover{
+  background:rgba(8,127,240,.055) !important;
+}
+
+body[data-theme="light"] .calendar-mini .mini-grid .day.today:not(.selected) .day-number{
+  color:#087ff0 !important;
+  background:rgba(8,127,240,.075) !important;
+  box-shadow:inset 0 0 0 1px rgba(8,127,240,.28) !important;
+}
+
+body[data-theme="light"] .calendar-mini .mini-grid .day.selected .day-number,
+body[data-theme="light"] .calendar-mini .mini-grid .day.today.selected .day-number{
+  color:#fff !important;
+  background:#087ff0 !important;
+  box-shadow:
+    0 8px 18px rgba(8,127,240,.20),
+    inset 0 0 0 1px rgba(255,255,255,.20) !important;
+}
+
+body[data-theme="light"] .conversation-item:hover,
+body[data-theme="light"] .conversation-item.active{
+  background:#f5f9fd;
+}
+
+body[data-theme="light"] .bubble{
+  background:#f5f9fc;
+  border-color:#dce6ef;
+  color:#1b3550;
+}
+
+body[data-theme="light"] .bubble.mine{
+  background:linear-gradient(135deg,rgba(8,127,240,.10),rgba(92,112,255,.075));
+  border-color:rgba(8,127,240,.18);
+}
+
+body[data-theme="light"] .message-form textarea{
+  background:#f8fbfd;
+  border-color:#dce6ef;
+  color:#17304d;
+}
+
+body[data-theme="light"] .profile-info{
+  border-top-color:#e3ebf2;
+}
+
+body[data-theme="light"] .table-card th,
+body[data-theme="light"] .table-card td{
+  border-bottom-color:#e3ebf2;
+}
+
+body[data-theme="light"] .content-card #campus-content{
+  color:#263f59;
+}
+
+body[data-theme="light"] .state-card,
+body[data-theme="light"] .skeleton-card{
+  background:#fff;
+  border-color:#dce6f0;
+  box-shadow:0 12px 32px rgba(43,75,108,.055);
+}
+
+body[data-theme="light"] .nova-interactive-surface > .nova-cursor-glow{
+  background:
+    radial-gradient(
+      circle,
+      rgba(8,127,240,.12) 0%,
+      rgba(8,127,240,.055) 32%,
+      transparent 72%
+    );
+}
+
+body[data-theme="light"] .nova-interactive-surface > .nova-sheen{
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,.82) 49%,
+      transparent
+    );
+  mix-blend-mode:normal;
+}
+
+body[data-theme="light"] .quote-card{
+  border-color:rgba(27,70,105,.12) !important;
+  box-shadow:
+    0 20px 48px rgba(43,75,108,.16),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+body[data-theme="light"] .quote-card:hover{
+  border-color:rgba(8,127,240,.38) !important;
+  box-shadow:
+    0 28px 62px rgba(43,75,108,.22),
+    0 0 42px rgba(8,127,240,.09) !important;
+}
+
+body[data-theme="light"] .dashboard-hero{
+  box-shadow:
+    0 24px 60px rgba(35,66,99,.18),
+    inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+body[data-theme="light"] .auth{
+  background:
+    radial-gradient(circle at 72% 10%,rgba(8,127,240,.07),transparent 32%),
+    var(--bg);
+}
+
+body[data-theme="light"] .auth input{
+  background:#fff;
+  border-color:#d9e4ef;
+  color:#17304d;
+  box-shadow:0 5px 18px rgba(43,75,108,.035);
+}
+
+body[data-theme="light"] .auth input:focus{
+  border-color:var(--accent);
+  box-shadow:
+    0 0 0 4px rgba(8,127,240,.09),
+    0 7px 21px rgba(43,75,108,.055);
+}
