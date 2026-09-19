@@ -299,48 +299,78 @@ function dashboard(){
       ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
     </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions">
-  <button data-go="files">
+  <button class="quick-action" data-go="files" aria-label="Открыть файлы">
     <span class="quick-action-icon">${icon('download',19)}</span>
-    <span class="quick-action-copy"><b>Файлы</b><small>Скачать</small></span>
-    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+    <span class="quick-action-copy">
+      <b>Файлы</b>
+      <small>Материалы курса</small>
+    </span>
+    <span class="quick-action-arrow">${icon('arrow',14)}</span>
   </button>
 
-  <button data-go="messages">
+  <button class="quick-action" data-go="messages" aria-label="Открыть сообщения">
     <span class="quick-action-icon">${icon('message',19)}</span>
-    <span class="quick-action-copy"><b>Сообщения</b><small>Открыть</small></span>
-    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+    <span class="quick-action-copy">
+      <b>Сообщения</b>
+      <small>Переписка Campus</small>
+    </span>
+    <span class="quick-action-arrow">${icon('arrow',14)}</span>
   </button>
 
-  <button data-go="tasks">
+  <button class="quick-action" data-go="tasks" aria-label="Открыть задания">
     <span class="quick-action-icon">${icon('check-square',19)}</span>
-    <span class="quick-action-copy"><b>Задания</b><small>Открыть</small></span>
-    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+    <span class="quick-action-copy">
+      <b>Задания</b>
+      <small>Что нужно сдать</small>
+    </span>
+    <span class="quick-action-arrow">${icon('arrow',14)}</span>
   </button>
 
-  <button data-go="tests">
+  <button class="quick-action" data-go="tests" aria-label="Открыть тесты">
     <span class="quick-action-icon">${icon('quiz',19)}</span>
-    <span class="quick-action-copy"><b>Тесты</b><small>Пройти</small></span>
-    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+    <span class="quick-action-copy">
+      <b>Тесты</b>
+      <small>Пройти проверку</small>
+    </span>
+    <span class="quick-action-arrow">${icon('arrow',14)}</span>
   </button>
 </div></section><button
   type="button"
   class="quote-card"
   data-go="courses"
+  aria-label="Открыть мои курсы"
 >
+  <span class="quote-card-orb quote-card-orb-a" aria-hidden="true"></span>
+  <span class="quote-card-orb quote-card-orb-b" aria-hidden="true"></span>
+
+  <span class="quote-card-head">
+    <span class="quote-card-kicker">
+      ${icon('university',12)}
+      NOVA · CAMPUS
+    </span>
+
+    <span class="quote-card-status">
+      Готово к учёбе
+    </span>
+  </span>
+
   <span class="quote-card-copy">
     <b>
-      Всё необходимое<br>
-      для учёбы. В одном месте.
+      Всё для учёбы.<br>
+      <em>В одном месте.</em>
     </b>
 
     <small>
-      Campus Nova сохраняет данные Campus
-      и меняет только опыт.
+      Данные остаются в Campus. Nova меняет только опыт.
     </small>
   </span>
 
-  <span class="quote-card-action">
-    ${icon('arrow',20)}
+  <span class="quote-card-footer">
+    <span>Открыть мои курсы</span>
+
+    <span class="quote-card-action">
+      ${icon('arrow',18)}
+    </span>
   </span>
 </button></aside></div></section>`;
 }
@@ -947,14 +977,14 @@ function CalendarWidget(){
 
       </div>
 
-      <div class="mini-weekdays">
-        <span>Пн</span>
-        <span>Вт</span>
-        <span>Ср</span>
-        <span>Чт</span>
-        <span>Пт</span>
-        <span>Сб</span>
-        <span>Вс</span>
+      <div class="mini-weekdays" aria-label="Дни недели">
+        <span title="Понедельник" aria-label="Понедельник">ПН</span>
+        <span title="Вторник" aria-label="Вторник">ВТ</span>
+        <span title="Среда" aria-label="Среда">СР</span>
+        <span title="Четверг" aria-label="Четверг">ЧТ</span>
+        <span title="Пятница" aria-label="Пятница">ПТ</span>
+        <span title="Суббота" aria-label="Суббота">СБ</span>
+        <span title="Воскресенье" aria-label="Воскресенье">ВС</span>
       </div>
 
       <div class="mini-grid">
