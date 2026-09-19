@@ -3643,7 +3643,19 @@ document.addEventListener('animationend',e=>{
 
 /* NOVA_FORCE_DASHBOARD_HOME_OVERRIDES START */
 function injectDashboardHomeOverrides(){
-  if(document.getElementById('nova-force-dashboard-home')) return;
+  if(
+    typeof document.getElementById!=='function'
+  ){
+    return;
+  }
+
+  if(
+    document.getElementById(
+      'nova-force-dashboard-home'
+    )
+  ){
+    return;
+  }
 
   const style=document.createElement('style');
   style.id='nova-force-dashboard-home';
