@@ -10261,3 +10261,1296 @@ body[data-theme="light"] .calendar-page .calendar-event-item:hover{
 }
 
 /* NOVA_CALENDAR_2026_FINAL END */
+
+
+/* NOVA_MOBILE_OPTIMIZATION_20260919 START */
+
+/*
+   Mobile layer.
+   Nothing here affects desktop widths above 900px.
+*/
+
+/* ---------------------------------------------------------
+   GLOBAL MOBILE FOUNDATIONS
+   --------------------------------------------------------- */
+
+@media(max-width:900px){
+
+  html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    overflow-x:hidden;
+  }
+
+  body{
+    overflow-x:hidden;
+    overscroll-behavior-x:none;
+  }
+
+  body:has(.sidebar.mobile-open){
+    overflow:hidden;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select{
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  button,
+  a{
+    touch-action:manipulation;
+  }
+
+  /* -------------------------------------------------------
+     SHELL
+     ------------------------------------------------------- */
+
+  .app-shell{
+    display:block !important;
+    min-height:100dvh !important;
+  }
+
+  .main{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  /* -------------------------------------------------------
+     SIDEBAR / MOBILE DRAWER
+     ------------------------------------------------------- */
+
+  .sidebar{
+    position:fixed !important;
+    top:0 !important;
+    left:0 !important;
+
+    width:min(300px,86vw) !important;
+    height:100dvh !important;
+    min-height:100dvh !important;
+
+    padding:
+      calc(18px + env(safe-area-inset-top))
+      13px
+      calc(14px + env(safe-area-inset-bottom)) !important;
+
+    box-sizing:border-box !important;
+
+    transform:translateX(-105%) !important;
+
+    transition:
+      transform .34s cubic-bezier(.2,.78,.22,1),
+      box-shadow .34s ease !important;
+
+    z-index:1000 !important;
+
+    box-shadow:none !important;
+
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .sidebar.mobile-open{
+    left:0 !important;
+    transform:translateX(0) !important;
+
+    box-shadow:
+      18px 0 60px rgba(0,0,0,.34),
+      4px 0 20px rgba(0,0,0,.13) !important;
+  }
+
+  /* Dim the page behind the drawer.
+     :has keeps this CSS-only on mobile. */
+
+  body:has(.sidebar.mobile-open)::before{
+    content:"";
+    position:fixed;
+    inset:0;
+
+    background:rgba(2,7,14,.58);
+
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+
+    z-index:999;
+    pointer-events:none;
+
+    animation:novaMobileBackdropIn .22s ease both;
+  }
+
+  @keyframes novaMobileBackdropIn{
+    from{opacity:0}
+    to{opacity:1}
+  }
+
+  .sidebar-top{
+    flex:0 0 auto !important;
+  }
+
+  .brand{
+    gap:10px !important;
+  }
+
+  .brand-mark{
+    width:40px !important;
+    height:40px !important;
+    border-radius:13px !important;
+  }
+
+  .brand b{
+    font-size:18px !important;
+  }
+
+  .uni{
+    margin:
+      20px 7px
+      22px !important;
+  }
+
+  .nav-caption{
+    margin-inline:9px !important;
+    font-size:8px !important;
+  }
+
+  .nav{
+    gap:4px !important;
+  }
+
+  .nav-item,
+  .theme-row{
+    min-height:46px !important;
+    height:46px !important;
+
+    border-radius:13px !important;
+
+    padding-inline:12px !important;
+
+    font-size:13px !important;
+  }
+
+  .sidebar-bottom{
+    padding-top:14px !important;
+    margin-top:auto !important;
+  }
+
+  /* -------------------------------------------------------
+     TOPBAR
+     ------------------------------------------------------- */
+
+  .topbar{
+    position:sticky !important;
+    top:0 !important;
+
+    min-height:66px !important;
+    height:66px !important;
+
+    padding:
+      0
+      12px !important;
+
+    gap:8px !important;
+
+    z-index:50 !important;
+
+    box-sizing:border-box !important;
+  }
+
+  .crumb{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+    gap:7px !important;
+  }
+
+  .crumb > span{
+    display:none !important;
+  }
+
+  .crumb > b{
+    display:none !important;
+  }
+
+  .crumb strong{
+    max-width:100% !important;
+
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+
+    font-size:12px !important;
+  }
+
+  .mobile-menu{
+    width:40px !important;
+    height:40px !important;
+    min-width:40px !important;
+
+    display:inline-flex !important;
+
+    align-items:center !important;
+    justify-content:center !important;
+
+    border:1px solid var(--line) !important;
+    border-radius:12px !important;
+
+    background:var(--control) !important;
+  }
+
+  .top-actions{
+    min-width:0 !important;
+
+    flex:0 0 auto !important;
+
+    display:flex !important;
+    align-items:center !important;
+    gap:6px !important;
+  }
+
+  /* Search remains available without destroying header width. */
+
+  .top-actions .search{
+    width:104px !important;
+    min-width:104px !important;
+    max-width:104px !important;
+
+    height:40px !important;
+
+    padding:
+      0 9px !important;
+
+    gap:6px !important;
+
+    border-radius:12px !important;
+  }
+
+  .top-actions .search input{
+    min-width:0 !important;
+    width:100% !important;
+
+    font-size:10px !important;
+  }
+
+  .top-actions .search input::placeholder{
+    font-size:9px !important;
+  }
+
+  .top-actions .search kbd{
+    display:none !important;
+  }
+
+  .top-actions > #theme-top,
+  .top-actions > #notifications{
+    width:40px !important;
+    min-width:40px !important;
+    max-width:40px !important;
+
+    height:40px !important;
+    min-height:40px !important;
+
+    flex:0 0 40px !important;
+
+    padding:0 !important;
+    margin:0 !important;
+  }
+
+  .top-actions > #theme-top .icon,
+  .top-actions > #notifications .icon{
+    width:17px !important;
+    height:17px !important;
+  }
+
+  .profile-menu{
+    flex:0 0 auto !important;
+  }
+
+  .profile-menu .profile-chip{
+    width:40px !important;
+    min-width:40px !important;
+
+    height:40px !important;
+    min-height:40px !important;
+
+    padding:4px !important;
+
+    justify-content:center !important;
+    border-radius:12px !important;
+  }
+
+  .profile-menu .profile-chip > span:not(.avatar),
+  .profile-menu .profile-chip > .icon{
+    display:none !important;
+  }
+
+  .profile-menu .profile-chip .avatar{
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+    border-radius:10px !important;
+  }
+
+  .profile-popover{
+    top:49px !important;
+    right:-2px !important;
+
+    width:min(320px,calc(100vw - 24px)) !important;
+
+    border-radius:18px !important;
+  }
+
+  /* -------------------------------------------------------
+     PAGE
+     ------------------------------------------------------- */
+
+  .page{
+    width:100% !important;
+    max-width:none !important;
+
+    padding:
+      20px
+      14px
+      calc(34px + env(safe-area-inset-bottom)) !important;
+
+    box-sizing:border-box !important;
+  }
+
+  .page-head{
+    align-items:flex-start !important;
+    flex-direction:column !important;
+
+    gap:13px !important;
+
+    margin-bottom:19px !important;
+  }
+
+  .page-head h1{
+    max-width:100% !important;
+
+    font-size:
+      clamp(28px,8.3vw,36px) !important;
+
+    line-height:1.02 !important;
+
+    letter-spacing:-.055em !important;
+
+    overflow-wrap:anywhere !important;
+  }
+
+  .page-head p{
+    max-width:100% !important;
+
+    font-size:11px !important;
+    line-height:1.5 !important;
+  }
+
+  .page-head > div:last-child{
+    width:100% !important;
+  }
+
+  /* -------------------------------------------------------
+     BUTTONS
+     ------------------------------------------------------- */
+
+  .primary,
+  .secondary,
+  .icon-btn{
+    min-height:42px !important;
+  }
+
+  .primary,
+  .secondary{
+    border-radius:12px !important;
+  }
+
+  /* -------------------------------------------------------
+     DASHBOARD
+     ------------------------------------------------------- */
+
+  .hero{
+    height:238px !important;
+    min-height:238px !important;
+
+    border-radius:21px !important;
+    margin-bottom:12px !important;
+  }
+
+  .hero-brand{
+    left:16px !important;
+    top:16px !important;
+  }
+
+  .hero-copy{
+    left:16px !important;
+    right:16px !important;
+    bottom:17px !important;
+  }
+
+  .hero-copy h2{
+    max-width:100% !important;
+
+    font-size:
+      clamp(29px,8.6vw,38px) !important;
+
+    line-height:1 !important;
+  }
+
+  .hero-copy p{
+    max-width:270px !important;
+
+    margin-top:7px !important;
+
+    font-size:10px !important;
+    line-height:1.4 !important;
+  }
+
+  .metrics{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+
+    margin-bottom:10px !important;
+  }
+
+  .metric{
+    min-width:0 !important;
+
+    padding:10px !important;
+
+    gap:8px !important;
+
+    border-radius:15px !important;
+  }
+
+  .metric-icon{
+    width:36px !important;
+    height:36px !important;
+
+    flex:0 0 36px !important;
+
+    border-radius:11px !important;
+  }
+
+  .metric small{
+    font-size:8px !important;
+  }
+
+  .metric strong{
+    font-size:21px !important;
+    margin:2px 0 !important;
+  }
+
+  .metric em{
+    font-size:8px !important;
+  }
+
+  .dashboard-layout{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .dash-main{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .dash-main .panel.wide{
+    grid-column:span 1 !important;
+  }
+
+  .dash-side{
+    gap:10px !important;
+  }
+
+  .panel,
+  .side-card,
+  .files-card,
+  .table-card,
+  .content-card{
+    border-radius:17px !important;
+  }
+
+  .panel{
+    padding:14px !important;
+  }
+
+  /* -------------------------------------------------------
+     COURSE LIST / CARDS
+     ------------------------------------------------------- */
+
+  .course-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .course-card{
+    border-radius:17px !important;
+  }
+
+  .course-cover{
+    height:138px !important;
+  }
+
+  .course-card-body{
+    padding:13px !important;
+  }
+
+  .course-card h3{
+    font-size:14px !important;
+  }
+
+  .course-card p{
+    font-size:9.5px !important;
+  }
+
+  .course-toolbar{
+    flex-wrap:wrap !important;
+    gap:9px !important;
+
+    margin:
+      14px 0 10px !important;
+  }
+
+  .course-toolbar > div{
+    width:100% !important;
+  }
+
+  .course-toolbar > div:last-child{
+    justify-content:flex-start !important;
+  }
+
+  /* -------------------------------------------------------
+     COURSE HERO
+     ------------------------------------------------------- */
+
+  .course-hero-small{
+    grid-template-columns:1fr !important;
+
+    min-height:0 !important;
+
+    border-radius:19px !important;
+  }
+
+  .course-hero-copy{
+    padding:19px !important;
+  }
+
+  .course-hero-copy h1{
+    font-size:
+      clamp(26px,8vw,36px) !important;
+  }
+
+  .course-hero-copy p{
+    font-size:10px !important;
+    line-height:1.5 !important;
+  }
+
+  .course-hero-img{
+    min-height:135px !important;
+    max-height:170px !important;
+  }
+
+  .progress-wide{
+    margin-top:15px !important;
+  }
+
+  /* -------------------------------------------------------
+     TASKS / TESTS / SCHEDULE
+     ------------------------------------------------------- */
+
+  .task-list,
+  .test-grid,
+  .schedule-list{
+    gap:7px !important;
+  }
+
+  .task-card,
+  .test-card,
+  .schedule-card{
+    min-width:0 !important;
+
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      auto !important;
+
+    gap:9px !important;
+
+    padding:10px !important;
+
+    border-radius:14px !important;
+  }
+
+  .task-card > .icon:last-child,
+  .test-card > .icon:last-child,
+  .schedule-card > .icon:last-child{
+    display:none !important;
+  }
+
+  .task-kind,
+  .test-icon{
+    width:36px !important;
+    height:36px !important;
+
+    border-radius:10px !important;
+  }
+
+  .task-card b,
+  .test-card b,
+  .schedule-card b{
+    font-size:10px !important;
+  }
+
+  .task-card small,
+  .test-card small,
+  .schedule-card small{
+    font-size:8.5px !important;
+  }
+
+  .task-card time{
+    font-size:8px !important;
+  }
+
+  /* -------------------------------------------------------
+     CALENDAR
+     ------------------------------------------------------- */
+
+  .calendar-page .calendar-actions{
+    width:100% !important;
+
+    display:grid !important;
+
+    grid-template-columns:
+      42px
+      minmax(0,1fr)
+      42px !important;
+
+    gap:6px !important;
+  }
+
+  .calendar-page .calendar-today-btn{
+    width:100% !important;
+    min-width:0 !important;
+
+    padding:
+      0 10px !important;
+  }
+
+  .calendar-page .calendar-overview{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+
+    gap:11px !important;
+
+    padding:12px !important;
+    border-radius:16px !important;
+  }
+
+  .calendar-page .calendar-overview-date{
+    width:100% !important;
+  }
+
+  .calendar-page .calendar-overview-stats{
+    width:100% !important;
+
+    display:grid !important;
+
+    grid-template-columns:
+      repeat(3,minmax(0,1fr)) !important;
+
+    gap:6px !important;
+  }
+
+  .calendar-page .calendar-stat{
+    min-width:0 !important;
+    padding:8px !important;
+  }
+
+  .calendar-page .calendar-layout{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .calendar-page .calendar-events{
+    position:static !important;
+  }
+
+  .calendar-page .calendar-card-head{
+    flex-direction:column !important;
+    gap:9px !important;
+
+    padding:14px !important;
+  }
+
+  .calendar-page .calendar-card-head .calendar-legend{
+    justify-content:flex-start !important;
+  }
+
+  .calendar-page .calendar-weekdays{
+    padding:
+      8px 6px 5px !important;
+
+    font-size:6.5px !important;
+  }
+
+  .calendar-page .calendar-month-grid{
+    grid-template-columns:
+      repeat(7,minmax(0,1fr)) !important;
+
+    grid-template-rows:
+      repeat(5,minmax(58px,1fr)) !important;
+
+    gap:4px !important;
+
+    padding:
+      4px 6px 7px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day{
+    min-height:58px !important;
+
+    padding:5px !important;
+
+    border-radius:10px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day-number{
+    width:23px !important;
+    height:23px !important;
+    min-width:23px !important;
+
+    border-radius:8px !important;
+
+    font-size:9px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day-dots{
+    min-height:5px !important;
+    gap:3px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day-dots .day-marker{
+    width:4px !important;
+    height:4px !important;
+    min-width:4px !important;
+  }
+
+  .calendar-page .calendar-events-head{
+    padding:14px !important;
+  }
+
+  .calendar-page .calendar-events-list{
+    padding:8px !important;
+  }
+
+  .calendar-page .calendar-event-item{
+    grid-template-columns:
+      38px
+      4px
+      minmax(0,1fr)
+      14px !important;
+
+    gap:7px !important;
+
+    padding:8px !important;
+
+    border-radius:12px !important;
+  }
+
+  .calendar-page .calendar-event-copy b{
+    font-size:9px !important;
+  }
+
+  /* -------------------------------------------------------
+     MESSAGES
+     ------------------------------------------------------- */
+
+  .messages-shell{
+    height:auto !important;
+    min-height:0 !important;
+
+    grid-template-columns:1fr !important;
+
+    border-radius:18px !important;
+  }
+
+  .conversation-list{
+    max-height:250px !important;
+
+    border-right:0 !important;
+    border-bottom:1px solid var(--line) !important;
+
+    padding:6px !important;
+
+    overflow:auto !important;
+  }
+
+  .conversation-item{
+    min-height:54px !important;
+    padding:9px !important;
+  }
+
+  .conversation-view{
+    min-height:440px !important;
+  }
+
+  .conversation-head{
+    padding:13px !important;
+  }
+
+  .conversation-body{
+    padding:13px !important;
+  }
+
+  .bubble{
+    max-width:86% !important;
+  }
+
+  .message-form{
+    padding:
+      8px
+      9px
+      calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* -------------------------------------------------------
+     PROFILE
+     ------------------------------------------------------- */
+
+  .profile-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .profile-page .profile-card{
+    padding:17px !important;
+    border-radius:18px !important;
+  }
+
+  .profile-page .main-profile{
+    min-height:0 !important;
+
+    padding:18px !important;
+
+    align-items:center !important;
+  }
+
+  .profile-page .profile-avatar{
+    width:68px !important;
+    height:68px !important;
+    min-width:68px !important;
+
+    border-radius:19px !important;
+
+    font-size:23px !important;
+  }
+
+  .profile-page .profile-card h2{
+    font-size:20px !important;
+    overflow-wrap:anywhere !important;
+  }
+
+  .profile-page .profile-info{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+
+  /* -------------------------------------------------------
+     FILES / TABLES
+     ------------------------------------------------------- */
+
+  .files-card{
+    overflow-x:hidden !important;
+  }
+
+  .file-list-head{
+    display:none !important;
+  }
+
+  .file-row{
+    grid-template-columns:
+      minmax(0,1fr)
+      auto !important;
+
+    gap:9px !important;
+
+    padding:
+      10px 11px !important;
+  }
+
+  .file-row > *:last-child{
+    white-space:nowrap !important;
+  }
+
+  .file-name{
+    min-width:0 !important;
+    gap:8px !important;
+  }
+
+  .file-type{
+    width:32px !important;
+    height:32px !important;
+    min-width:32px !important;
+  }
+
+  .file-name b{
+    max-width:100% !important;
+    font-size:9.5px !important;
+  }
+
+  .file-name small{
+    font-size:8px !important;
+  }
+
+  .table-card{
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  .table-card table{
+    min-width:560px !important;
+  }
+
+  /* -------------------------------------------------------
+     CONTENT / CAMPUS HTML
+     ------------------------------------------------------- */
+
+  .content-card{
+    padding:12px !important;
+  }
+
+  .content-toolbar{
+    gap:7px !important;
+
+    flex-wrap:wrap !important;
+  }
+
+  .content-toolbar > *{
+    min-height:40px !important;
+  }
+
+  .content-card h1{
+    font-size:
+      clamp(23px,7vw,30px) !important;
+
+    overflow-wrap:anywhere !important;
+  }
+
+  .content-card #campus-content{
+    font-size:10.5px !important;
+    line-height:1.6 !important;
+  }
+
+  .content-card #campus-content form{
+    padding:12px !important;
+    border-radius:13px !important;
+  }
+
+  .content-card #campus-content table{
+    width:100% !important;
+    display:block !important;
+
+    overflow-x:auto !important;
+
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  .file-download{
+    min-height:240px !important;
+
+    flex-direction:column !important;
+
+    text-align:center !important;
+    gap:12px !important;
+  }
+
+  .file-download h2{
+    font-size:20px !important;
+  }
+
+  /* -------------------------------------------------------
+     ACTIVITY / PRACTICE
+     ------------------------------------------------------- */
+
+  .activity-page #campus-content{
+    padding:
+      0
+      10px
+      12px !important;
+  }
+
+  .activity-page .content-toolbar{
+    padding:
+      12px
+      10px
+      4px !important;
+  }
+
+  .activity-page h1{
+    padding-inline:10px !important;
+
+    font-size:
+      clamp(24px,7vw,30px) !important;
+  }
+
+  .nova-practice-source,
+  .nova-answer-panel{
+    padding:12px !important;
+    border-radius:15px !important;
+  }
+
+  .nova-practice-source-head,
+  .nova-practice-files-head,
+  .nova-answer-panel-head{
+    gap:8px !important;
+    flex-wrap:wrap !important;
+  }
+
+  .nova-practice-badge,
+  .nova-secure-badge{
+    white-space:normal !important;
+  }
+
+  .nova-upload-zone{
+    min-height:145px !important;
+    padding:15px !important;
+  }
+
+  .nova-bottom-cta{
+    padding:14px !important;
+    border-radius:17px !important;
+  }
+
+  .nova-bottom-cta .primary{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  /* -------------------------------------------------------
+     NOTIFICATIONS / MODALS
+     ------------------------------------------------------- */
+
+  #notification-modal{
+    align-items:flex-start !important;
+    justify-content:center !important;
+
+    padding:
+      calc(70px + env(safe-area-inset-top))
+      10px
+      10px !important;
+  }
+
+  #notification-modal .notification-modal{
+    width:100% !important;
+    max-width:420px !important;
+
+    max-height:
+      calc(100dvh - 90px) !important;
+
+    border-radius:18px !important;
+  }
+
+  .nova-confirm-backdrop{
+    padding:
+      16px
+      12px
+      calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .nova-confirm-modal{
+    width:100% !important;
+    max-width:420px !important;
+
+    border-radius:20px !important;
+  }
+
+  .nova-confirm-actions{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .nova-confirm-actions button{
+    width:100% !important;
+  }
+
+  /* -------------------------------------------------------
+     INTERACTION SYSTEM
+     ------------------------------------------------------- */
+
+  .nova-interactive-surface > .nova-cursor-glow,
+  .nova-interactive-surface > .nova-sheen{
+    display:none !important;
+  }
+
+  .nova-interactive-surface:hover{
+    transform:none !important;
+  }
+
+  .nova-interactive-surface:is(
+    .course-card,
+    .task-card,
+    .test-card,
+    .schedule-card,
+    .activity,
+    .event-card,
+    .material-card,
+    .metric
+  ):hover{
+    transform:none !important;
+    box-shadow:none !important;
+  }
+
+  /* -------------------------------------------------------
+     TOUCH PRESS
+     ------------------------------------------------------- */
+
+  .nova-press{
+    animation:novaMobilePress .16s ease both !important;
+  }
+
+  @keyframes novaMobilePress{
+    0%{transform:scale(1)}
+    50%{transform:scale(.985)}
+    100%{transform:scale(1)}
+  }
+
+}
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media(max-width:420px){
+
+  .topbar{
+    padding-inline:9px !important;
+    gap:5px !important;
+  }
+
+  .top-actions{
+    gap:4px !important;
+  }
+
+  .top-actions .search{
+    width:92px !important;
+    min-width:92px !important;
+    max-width:92px !important;
+  }
+
+  .top-actions > #theme-top,
+  .top-actions > #notifications{
+    width:38px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+  }
+
+  .profile-menu .profile-chip{
+    width:38px !important;
+    min-width:38px !important;
+  }
+
+  .mobile-menu{
+    width:38px !important;
+    min-width:38px !important;
+  }
+
+  .page{
+    padding-left:11px !important;
+    padding-right:11px !important;
+  }
+
+  .metrics{
+    gap:7px !important;
+  }
+
+  .metric{
+    padding:9px !important;
+  }
+
+  .metric-icon{
+    width:33px !important;
+    height:33px !important;
+    min-width:33px !important;
+  }
+
+  .metric strong{
+    font-size:19px !important;
+  }
+
+  .calendar-page .calendar-month-grid{
+    grid-template-rows:
+      repeat(5,minmax(51px,1fr)) !important;
+
+    gap:3px !important;
+
+    padding-inline:5px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day{
+    min-height:51px !important;
+    padding:4px !important;
+    border-radius:9px !important;
+  }
+
+  .calendar-page .calendar-month-grid > .day-number{
+    width:21px !important;
+    height:21px !important;
+    min-width:21px !important;
+    font-size:8px !important;
+  }
+
+  .calendar-page .calendar-weekdays{
+    padding-inline:4px !important;
+    font-size:6px !important;
+  }
+
+  .profile-page .profile-info{
+    grid-template-columns:1fr !important;
+  }
+
+}
+
+/* =========================================================
+   MOBILE LIGHT THEME
+   ========================================================= */
+
+@media(max-width:900px){
+
+  body[data-theme="light"]::before{
+    background:rgba(26,55,84,.18);
+  }
+
+  body[data-theme="light"] .sidebar{
+    box-shadow:
+      18px 0 60px rgba(38,65,95,.18) !important;
+  }
+
+  body[data-theme="light"] .topbar{
+    box-shadow:
+      0 6px 24px rgba(38,65,95,.055) !important;
+  }
+
+}
+
+/* =========================================================
+   SAFE-AREA
+   ========================================================= */
+
+@supports(padding:max(0px)){
+
+  @media(max-width:900px){
+
+    .topbar{
+      padding-top:
+        max(
+          0px,
+          env(safe-area-inset-top)
+        ) !important;
+    }
+
+  }
+
+}
+
+/* NOVA_MOBILE_OPTIMIZATION_20260919 END */

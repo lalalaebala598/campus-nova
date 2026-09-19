@@ -4430,6 +4430,16 @@ window.addEventListener('popstate',()=>{
 });window.addEventListener('error',e=>console.error('[Nova]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[Nova]',e.reason));
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#global-search')?.focus()}});
 document.addEventListener('click',e=>{
+  const mobileSidebar=document.querySelector('.sidebar.mobile-open');
+
+  if(
+    mobileSidebar &&
+    !mobileSidebar.contains(e.target) &&
+    !e.target?.closest?.('#mobile-menu')
+  ){
+    mobileSidebar.classList.remove('mobile-open');
+  }
+
   const openProfile=document.querySelector('.profile-menu.open');
 
   if(openProfile && !openProfile.contains(e.target)){
@@ -4465,6 +4475,16 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('animationend',e=>{
   if(e.animationName==='novaPress'){
     e.target.classList.remove('nova-press');
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+
+  const sidebar=document.querySelector('.sidebar.mobile-open');
+
+  if(sidebar){
+    sidebar.classList.remove('mobile-open');
   }
 });
 
