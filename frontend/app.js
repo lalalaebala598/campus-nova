@@ -570,6 +570,48 @@ function injectNovaAccountInlineStyles(){
       gap:8px !important;
     }
 
+    /* HEADER ICON ALIGNMENT FINAL */
+
+    .top-actions > #theme-top,
+    .top-actions > #notifications{
+      width:40px !important;
+      min-width:40px !important;
+      max-width:40px !important;
+      height:40px !important;
+      min-height:40px !important;
+
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+
+      padding:0 !important;
+      margin:0 !important;
+
+      line-height:0 !important;
+      text-align:center !important;
+      vertical-align:middle !important;
+
+      flex:0 0 40px !important;
+      box-sizing:border-box !important;
+    }
+
+    .top-actions > #theme-top > .icon,
+    .top-actions > #notifications > .icon{
+      width:17px !important;
+      height:17px !important;
+      display:block !important;
+      flex:0 0 17px !important;
+      margin:0 !important;
+      transform-origin:center center !important;
+    }
+
+    .top-actions > #notifications > i{
+      position:absolute !important;
+      right:8px !important;
+      top:8px !important;
+      margin:0 !important;
+    }
+
     @media(max-width:760px){
       .profile-menu .profile-chip{
         width:44px !important;
