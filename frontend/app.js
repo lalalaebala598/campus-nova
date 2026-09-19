@@ -355,44 +355,314 @@ function hero(){
   `;
 }
 function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
+function dashboardDueLabel(ts){
+  if(!ts) return 'Срок не указан';
+  const now = new Date();
+  const due = new Date(Number(ts) * 1000);
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const diff = Math.round((startDue - startToday) / 86400000);
+  if(diff < 0) return `Просрочено на ${Math.abs(diff)} ${Math.abs(diff)===1?'день':'дн.'}`;
+  if(diff === 0) return 'Сегодня';
+  if(diff === 1) return 'Завтра';
+  if(diff < 7) return `Через ${diff} дн.`;
+  return formatDate(ts);
+}
+
+function dashboardTaskTone(task){
+  if(!task?.due) return 'normal';
+  const now = Date.now();
+  const due = Number(task.due) * 1000;
+  if(due < now) return 'overdue';
+  const delta = due - now;
+  if(delta <= 86400000) return 'today';
+  if(delta <= 3 * 86400000) return 'soon';
+  return 'normal';
+}
+
+function dashboardCourseProgress(course){
+  const raw = Number(course?.progress);
+  if(!Number.isFinite(raw)) return null;
+  return Math.max(0, Math.min(100, raw));
+}
+
+function dashboardUpcomingTasks(tasks){
+  return [...(tasks||[])]
+    .filter(Boolean)
+    .sort((a,b)=>{
+      const ad = Number(a?.due||0);
+      const bd = Number(b?.due||0);
+      if(!ad && !bd) return String(a?.name||'').localeCompare(String(b?.name||''),'ru');
+      if(!ad) return 1;
+      if(!bd) return -1;
+      return ad-bd;
+    })
+    .slice(0,6);
+}
+
+function dashboardFocus(tasks,todayEvents){
+  const sorted = dashboardUpcomingTasks(tasks);
+  const urgent = sorted.find(task => task?.due && dashboardTaskTone(task) !== 'normal');
+  if(urgent){
+    return {
+      kind:'task',
+      eyebrow:dashboardTaskTone(urgent)==='overdue'?'Требует внимания':'Ближайший дедлайн',
+      title:urgent.name||'Учебное задание',
+      meta:[urgent.course||'Campus', dashboardDueLabel(urgent.due)].filter(Boolean).join(' · '),
+      action:urgent.url||'',
+      tone:dashboardTaskTone(urgent)
+    };
+  }
+  const nextEvent = [...(todayEvents||[])]
+    .sort((a,b)=>Number(a?.timestart||0)-Number(b?.timestart||0))
+    .find(event=>Number(event?.timestart||0)*1000 >= Date.now());
+  if(nextEvent){
+    return {
+      kind:'event',
+      eyebrow:'Следующее занятие',
+      title:nextEvent.name||'Событие',
+      meta:[formatTime(nextEvent.timestart), nextEvent.course?.fullname||nextEvent.course?.shortname||'Campus'].filter(Boolean).join(' · '),
+      action:nextEvent.url||'',
+      tone:'normal'
+    };
+  }
+  return {
+    kind:'empty',
+    eyebrow:'На сегодня всё спокойно',
+    title:'Можно заняться тем, что давно откладывал',
+    meta:'Проверь курсы, материалы или календарь',
+    action:'',
+    tone:'normal'
+  };
+}
+
+function dashboardFocusCard(focus){
+  const iconName=focus.kind==='event'?'clock':focus.kind==='task'?'check-square':'sparkle';
+  const clickable=focus.action
+    ? `<button class="dashboard-focus-open" data-view="${esc(focus.action)}" data-route-url>${icon('arrow',16)}</button>`
+    : '';
+  return `
+    <section class="dashboard-focus dashboard-focus-${focus.tone||'normal'}">
+      <div class="dashboard-focus-glow"></div>
+      <div class="dashboard-focus-copy">
+        <span class="dashboard-overline">${icon(iconName,14)} ${esc(focus.eyebrow)}</span>
+        <h2>${esc(focus.title)}</h2>
+        <p>${esc(focus.meta)}</p>
+      </div>
+      <div class="dashboard-focus-art" aria-hidden="true">
+        <span>${icon(iconName,34)}</span>
+      </div>
+      ${clickable}
+    </section>
+  `;
+}
+
+function dashboardTaskCard(task){
+  const tone=dashboardTaskTone(task);
+  return `
+    <button class="dashboard-task-row dashboard-task-${tone}" data-view="${esc(task.url||'')}" data-route-url>
+      <span class="dashboard-task-icon">${icon(task.type==='quiz'?'quiz':'check-square',17)}</span>
+      <span class="dashboard-task-copy">
+        <b>${esc(task.name||'Задание')}</b>
+        <small>${esc(task.course||'Campus')}</small>
+      </span>
+      <span class="dashboard-task-due">${esc(dashboardDueLabel(task.due))}</span>
+      ${icon('arrow',14)}
+    </button>
+  `;
+}
+
+function dashboardCourseCard(course){
+  const progress=dashboardCourseProgress(course);
+  return `
+    <button class="dashboard-course-card" data-go="course" data-param="${esc(course.id)}">
+      <span class="dashboard-course-cover" style="${course.courseimage?`background-image:url('${String(course.courseimage).replace(/'/g,'%27')}')`:''}">
+        ${course.courseimage?'':icon('grid',20)}
+      </span>
+      <span class="dashboard-course-body">
+        <small>${esc(course.shortname||'Курс')}</small>
+        <b>${esc(course.fullnamedisplay||course.fullname||'Учебный курс')}</b>
+        ${progress!==null
+          ? `<span class="dashboard-course-progress"><i style="width:${progress}%"></i></span>`
+          : `<em>Прогресс не указан</em>`
+        }
+      </span>
+      ${progress!==null?`<strong>${progress}%</strong>`:''}
+    </button>
+  `;
+}
+
+function dashboardMetric(iconName,label,value,sub,route,tone){
+  return `<button class="dashboard-metric dashboard-metric-${tone||'default'}" data-go="${route}">
+    <span class="dashboard-metric-icon">${icon(iconName,19)}</span>
+    <span class="dashboard-metric-copy">
+      <small>${esc(label)}</small>
+      <strong>${esc(String(value))}</strong>
+      <em>${esc(sub)} ${icon('arrow',12)}</em>
+    </span>
+  </button>`;
+}
+
 function dashboard(){
   const courses=Array.isArray(state.data.courses)?state.data.courses:[];
   const calendar=state.data.calendar||{};
-  const events=flattenCalendar(calendar).sort((a,b)=>Number(a.timestart)-Number(b.timestart));
-  const today=new Date(); const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`; const todayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
-  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[]; const grades=Array.isArray(state.data.grades)?state.data.grades:[];
-  const nums=grades.map(x=>parseFloat(String(x.grade||'').replace(',','.'))).filter(Number.isFinite); const avg=nums.length?(nums.reduce((x,y)=>x+y,0)/nums.length).toFixed(1).replace('.',','):'—';
-  const block=(service,html)=>state.status[service]==='loading'?'<div class="block-loading">Загружаем…</div>':state.status[service]==='error'?`<div class="block-error">${icon('info',14)}<span>${esc(state.errors?.[service]||'Не удалось загрузить блок.')}</span></div>`:html;
-  if(state.status.dashboard==='loading') return `<section class="page dashboard-page">${hero()}<div class="dashboard-surface">${skeletonGrid(4)}</div></section>`;
-  return `<section class="page dashboard-page">${hero()}
-    <div class="metrics">${metric('calendar','Занятий сегодня',['loading','error'].includes(state.status.calendar)?'—':todayEvents.length,'Посмотреть','schedule','blue')}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
-    <div class="dashboard-layout"><div class="dash-main">
-      ${Panel({title:'Расписание на сегодня',iconName:'calendar',action:'Все занятия',go:'schedule',children:block('calendar',todayEvents.length?`<div class="timeline">${todayEvents.slice(0,6).map((e,i)=>`<button class="timeline-row" data-view="${esc(e.url||'')}" data-route-url><span class="timeline-line"><i class="dot dot-${i%4}"></i></span><time>${formatTime(e.timestart)}</time><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.course?.fullname||e.course?.shortname||'Campus')}</small></span>${icon('arrow',14)}</button>`).join('')}</div>`:'<div class="inline-empty">На сегодня занятий нет.</div>')})}
-      ${Panel({title:'Последние курсы',iconName:'grid',action:'Все курсы',go:'courses',children:block('courses',`<div class="mini-courses">${courses.slice(0,4).map(miniCourse).join('')||'<div class="inline-empty">Курсов сейчас нет.</div>'}</div>`)})}
-      ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
-      ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
-      ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
-    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions"><button data-go="files">${icon('download',19)}<b>Файлы</b><small>Скачать</small></button><button data-go="messages">${icon('message',19)}<b>Сообщения</b><small>Открыть</small></button><button data-go="tasks">${icon('check-square',19)}<b>Задания</b><small>Открыть</small></button><button data-go="tests">${icon('quiz',19)}<b>Тесты</b><small>Открыть</small></button></div></section><button
-  type="button"
-  class="quote-card"
-  data-go="courses"
->
-  <span class="quote-card-copy">
-    <b>
-      Всё необходимое<br>
-      для учёбы. В одном месте.
-    </b>
+  const events=flattenCalendar(calendar).sort((a,b)=>Number(a?.timestart||0)-Number(b?.timestart||0));
+  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
+  const grades=Array.isArray(state.data.grades)?state.data.grades:[];
+  const nums=grades.map(x=>parseFloat(String(x?.grade||'').replace(',','.'))).filter(Number.isFinite);
+  const avg=nums.length ? (nums.reduce((sum,n)=>sum+n,0)/nums.length).toFixed(1).replace('.',',') : '—';
+  const today=new Date();
+  const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+  const todayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
+  const upcoming=dashboardUpcomingTasks(tasks);
+  const focus=dashboardFocus(tasks,todayEvents);
+  const progressCourses=courses.filter(course=>dashboardCourseProgress(course)!==null).slice(0,5);
+  const showLoading = service => state.status[service]==='loading';
+  const showError = service => state.status[service]==='error';
+  const first=esc(firstName());
 
-    <small>
-      Campus Nova сохраняет данные Campus
-      и меняет только опыт.
-    </small>
-  </span>
+  if(state.status.dashboard==='loading'){
+    return `<section class="page dashboard-page dashboard-v14"><div class="dashboard-v14-head"><span class="dashboard-v14-kicker">CAMPUS NOVA</span><h1>Готовим твой день, ${first}</h1><p>Собираем актуальные данные из Campus…</p></div><div class="dashboard-v14-skeleton">${skeletonGrid(6)}</div></section>`;
+  }
 
-  <span class="quote-card-action">
-    ${icon('arrow',20)}
-  </span>
-</button></aside></div></section>`;
+  return `
+    <section class="page dashboard-page dashboard-v14">
+      <header class="dashboard-v14-header">
+        <div class="dashboard-v14-heading">
+          <span class="dashboard-v14-kicker">CAMPUS NOVA · ${esc(today.toLocaleDateString('ru-RU',{day:'numeric',month:'long'}))}</span>
+          <h1>${esc(today.getHours()<12?'Доброе утро':today.getHours()<18?'Добрый день':'Добрый вечер')}, ${first}</h1>
+          <p>Вся учебная нагрузка на сегодня собрана в одном месте.</p>
+        </div>
+        <div class="dashboard-v14-header-actions">
+          <button class="dashboard-head-button" data-go="calendar">${icon('calendar',16)} Календарь</button>
+          <button class="dashboard-head-button dashboard-head-primary" data-go="tasks">${icon('check-square',16)} Задания</button>
+        </div>
+      </header>
+
+      <div class="dashboard-v14-metrics">
+        ${dashboardMetric('calendar','Сегодня',showLoading('calendar')||showError('calendar')?'—':todayEvents.length,todayEvents.length===1?'занятие':'занятий','schedule','blue')}
+        ${dashboardMetric('check-square','Активные задания',showLoading('tasks')||showError('tasks')?'—':tasks.length,tasks.length===1?'задание':'заданий','tasks','orange')}
+        ${dashboardMetric('chart','Средний балл',showLoading('grades')||showError('grades')?'—':avg,grades.length?'по доступным оценкам':'оценок пока нет','grades','green')}
+        ${dashboardMetric('grid','Мои курсы',showLoading('courses')||showError('courses')?'—':courses.length,courses.length===1?'курс':'курсов','courses','purple')}
+      </div>
+
+      <div class="dashboard-v14-hero-grid">
+        ${dashboardFocusCard(focus)}
+
+        <section class="dashboard-v14-today">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="dashboard-v14-kicker">СЕЙЧАС</span>
+              <h2>Сегодня</h2>
+            </div>
+            <button class="dashboard-link" data-go="schedule">Все занятия ${icon('arrow',13)}</button>
+          </div>
+          ${todayEvents.length
+            ? `<div class="dashboard-timeline">${todayEvents.slice(0,4).map((event,index)=>`
+                <button class="dashboard-time-row" data-view="${esc(event.url||'')}" data-route-url>
+                  <time>${formatTime(event.timestart)}</time>
+                  <span class="dashboard-time-dot dashboard-time-dot-${index%4}"></span>
+                  <span class="dashboard-time-copy"><b>${esc(event.name||'Событие')}</b><small>${esc(event.course?.fullname||event.course?.shortname||'Campus')}</small></span>
+                  ${icon('arrow',13)}
+                </button>`).join('')}</div>`
+            : `<div class="dashboard-empty-state">${icon('clock',22)}<b>На сегодня занятий нет</b><span>Свободное окно для задач, материалов или отдыха.</span></div>`
+          }
+        </section>
+      </div>
+
+      <div class="dashboard-v14-main-grid">
+        <section class="dashboard-panel dashboard-progress-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="dashboard-v14-kicker">КУРСЫ</span>
+              <h2>Твой прогресс</h2>
+            </div>
+            <button class="dashboard-link" data-go="courses">Все курсы ${icon('arrow',13)}</button>
+          </div>
+          ${progressCourses.length
+            ? `<div class="dashboard-course-list">${progressCourses.map(dashboardCourseCard).join('')}</div>`
+            : `<div class="dashboard-empty-state compact">${icon('grid',22)}<b>Прогресс пока не доступен</b><span>Показатель появится, когда Campus вернёт прогресс по курсам.</span></div>`
+          }
+        </section>
+
+        <section class="dashboard-panel dashboard-deadlines-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="dashboard-v14-kicker">ФОКУС</span>
+              <h2>Ближайшие дедлайны</h2>
+            </div>
+            <button class="dashboard-link" data-go="tasks">Все задания ${icon('arrow',13)}</button>
+          </div>
+          ${showLoading('tasks')
+            ? '<div class="dashboard-panel-loading">Загружаем задания…</div>'
+            : showError('tasks')
+              ? `<div class="dashboard-error">${icon('info',15)} Не удалось загрузить задания.</div>`
+              : upcoming.length
+                ? `<div class="dashboard-task-list">${upcoming.map(dashboardTaskCard).join('')}</div>`
+                : `<div class="dashboard-empty-state compact">${icon('check-square',22)}<b>Дедлайнов пока нет</b><span>Новых заданий с указанным сроком нет.</span></div>`
+          }
+        </section>
+      </div>
+
+      <div class="dashboard-v14-bottom-grid">
+        <section class="dashboard-panel dashboard-courses-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="dashboard-v14-kicker">БЫСТРЫЙ ДОСТУП</span>
+              <h2>Последние курсы</h2>
+            </div>
+            <button class="dashboard-link" data-go="courses">Открыть все ${icon('arrow',13)}</button>
+          </div>
+          ${showLoading('courses')
+            ? '<div class="dashboard-panel-loading">Загружаем курсы…</div>'
+            : `<div class="dashboard-mini-courses">${courses.slice(0,4).map(dashboardCourseCard).join('')||'<div class="dashboard-empty-state compact">Курсов сейчас нет.</div>'}</div>`
+          }
+        </section>
+
+        <section class="dashboard-panel dashboard-grades-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="dashboard-v14-kicker">ОЦЕНКИ</span>
+              <h2>Последние результаты</h2>
+            </div>
+            <button class="dashboard-link" data-go="grades">Все оценки ${icon('arrow',13)}</button>
+          </div>
+          ${showLoading('grades')
+            ? '<div class="dashboard-panel-loading">Загружаем оценки…</div>'
+            : grades.length
+              ? `<div class="dashboard-grade-list">${grades.slice(0,5).map(gradeRow).join('')}</div>`
+              : `<div class="dashboard-empty-state compact">${icon('chart',22)}<b>Оценок пока нет</b><span>Когда Campus вернёт результаты, они появятся здесь.</span></div>`
+          }
+        </section>
+
+        <aside class="dashboard-v14-side">
+          ${CalendarWidget()}
+          <section class="dashboard-quick-panel">
+            <div class="dashboard-section-head">
+              <div>
+                <span class="dashboard-v14-kicker">НАВИГАЦИЯ</span>
+                <h2>Быстрые действия</h2>
+              </div>
+            </div>
+            <div class="dashboard-quick-grid">
+              <button data-go="files">${icon('download',18)}<b>Файлы</b><small>Скачать</small></button>
+              <button data-go="materials">${icon('folder',18)}<b>Материалы</b><small>Открыть</small></button>
+              <button data-go="tests">${icon('quiz',18)}<b>Тесты</b><small>Пройти</small></button>
+              <button data-go="messages">${icon('message',18)}<b>Сообщения</b><small>Проверить</small></button>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <button class="dashboard-v14-footer-cta" data-go="courses">
+        <span>
+          <b>Всё необходимое для учёбы. В одном месте.</b>
+          <small>Nova сохраняет рабочие данные Campus и меняет только интерфейс.</small>
+        </span>
+        <span class="dashboard-v14-footer-arrow">${icon('arrow',20)}</span>
+      </button>
+    </section>
+  `;
 }
 
 function Panel({title,iconName='grid',action='',go='',wide=false,children}){return `<section class="panel ${wide?'wide':''}"><div class="panel-head"><div><h2>${icon(iconName,16)} ${esc(title)}</h2><small>Актуальные данные</small></div>${action?`<button class="panel-action" data-go="${go}">${esc(action)} ${icon('arrow',13)}</button>`:''}</div>${children}</section>`}
