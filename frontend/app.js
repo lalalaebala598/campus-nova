@@ -4267,4 +4267,106 @@ function injectDashboardHomeOverrides(){
 
 /* NOVA_FORCE_DASHBOARD_HOME_OVERRIDES END */
 
+
+/* NOVA_INTERACTION_SYSTEM_2026 START */
+
+function enhanceNovaInteractions(root=document){
+
+  const selectors=[
+    '.nav-item',
+    '.theme-row',
+    '.primary',
+    '.secondary',
+    '.icon-btn',
+    '.metric',
+    '.course-card',
+    '.task-card',
+    '.test-card',
+    '.schedule-card',
+    '.activity',
+    '.event-card',
+    '.material-card',
+    '.mini-course',
+    '.compact-row',
+    '.conversation-item',
+    '.course-group',
+    '.file-row-main',
+    '.nova-file-main',
+    '.nova-file-open',
+    '.nova-practice-file-action',
+    '.nova-source-file',
+    '.panel-action',
+    '.quick-action',
+    '.quote-card',
+    '.back-button',
+    '.view-toggle button'
+  ];
+
+  root.querySelectorAll(selectors.join(',')).forEach(el=>{
+
+    if(
+      el.classList.contains('nova-interactive-surface') &&
+      el.querySelector(':scope > .nova-sheen')
+    ){
+      return;
+    }
+
+    el.classList.add('nova-interactive-surface');
+
+    const glow=document.createElement('span');
+    glow.className='nova-cursor-glow';
+    glow.setAttribute('aria-hidden','true');
+
+    const sheen=document.createElement('span');
+    sheen.className='nova-sheen';
+    sheen.setAttribute('aria-hidden','true');
+
+    el.append(glow,sheen);
+  });
+}
+
+/*
+ * Track the pointer inside Nova interactive surfaces.
+ * This is intentionally delegated so dynamically rendered
+ * pages get the same behavior without extra binding logic.
+ */
+document.addEventListener('pointermove',e=>{
+  const surface=e.target?.closest?.('.nova-interactive-surface');
+  if(!surface) return;
+
+  const r=surface.getBoundingClientRect();
+
+  if(!r.width || !r.height) return;
+
+  const x=((e.clientX-r.left)/r.width)*100;
+  const y=((e.clientY-r.top)/r.height)*100;
+
+  surface.style.setProperty('--nova-mx',`${x}%`);
+  surface.style.setProperty('--nova-my',`${y}%`);
+});
+
+/*
+ * Automatically decorate every newly rendered Nova page.
+ */
+if(!window.__novaInteractionObserver){
+  window.__novaInteractionObserver=new MutationObserver(()=>{
+    requestAnimationFrame(()=>{
+      enhanceNovaInteractions(document);
+    });
+  });
+
+  window.__novaInteractionObserver.observe(
+    document.body,
+    {
+      childList:true,
+      subtree:true
+    }
+  );
+}
+
+/* Initial pass */
+enhanceNovaInteractions(document);
+
+/* NOVA_INTERACTION_SYSTEM_2026 END */
+
 (async function boot(){injectDashboardHomeOverrides();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();

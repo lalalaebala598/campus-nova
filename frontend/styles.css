@@ -7734,3 +7734,216 @@ body[data-theme="light"] .dashboard-hero .hero-overlay{
     transform:none!important;
   }
 }
+
+
+/* =========================================================
+   NOVA INTERACTION SYSTEM 2026
+   Unified hover language for the entire interface.
+   ========================================================= */
+
+.nova-interactive-surface{
+  position:relative !important;
+  isolation:isolate;
+}
+
+.nova-interactive-surface > .nova-cursor-glow{
+  position:absolute !important;
+  z-index:0 !important;
+  width:170px;
+  height:170px;
+  left:calc(var(--nova-mx,50%) - 85px);
+  top:calc(var(--nova-my,50%) - 85px);
+  border-radius:50%;
+  pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(
+      circle,
+      color-mix(
+        in srgb,
+        var(--accent) 11%,
+        transparent
+      ) 0%,
+      color-mix(
+        in srgb,
+        var(--accent) 5%,
+        transparent
+      ) 32%,
+      transparent 72%
+    );
+  filter:blur(3px);
+  transition:opacity .24s ease;
+}
+
+.nova-interactive-surface:hover > .nova-cursor-glow{
+  opacity:1;
+}
+
+.nova-interactive-surface > .nova-sheen{
+  position:absolute !important;
+  z-index:8 !important;
+  top:-80%;
+  bottom:-80%;
+  left:-42%;
+  width:31%;
+  pointer-events:none;
+  opacity:0;
+  transform:translateX(-230%) rotate(14deg);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,.015) 30%,
+      rgba(255,255,255,.10) 49%,
+      rgba(255,255,255,.015) 68%,
+      transparent 100%
+    );
+  filter:blur(1px);
+  mix-blend-mode:screen;
+}
+
+.nova-interactive-surface:hover > .nova-sheen{
+  opacity:1;
+  transform:translateX(560%) rotate(14deg);
+  transition:
+    transform .72s cubic-bezier(.22,.7,.18,1),
+    opacity .12s ease;
+}
+
+.nova-interactive-surface > *:not(.nova-sheen):not(.nova-cursor-glow){
+  position:relative;
+  z-index:2;
+}
+
+/* Consistent visual lift without replacing each component's
+   existing transform animation. */
+.nova-interactive-surface:hover{
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 22%,
+      var(--line)
+    );
+}
+
+.nova-interactive-surface:focus-visible{
+  outline:2px solid
+    color-mix(
+      in srgb,
+      var(--accent) 43%,
+      transparent
+    );
+  outline-offset:2px;
+}
+
+/* The controls get a slightly stronger tactile response. */
+.nova-interactive-surface:is(
+  .primary,
+  .secondary,
+  .icon-btn,
+  .nav-item,
+  .theme-row,
+  .panel-action
+) > .nova-sheen{
+  width:38%;
+}
+
+.nova-interactive-surface:is(
+  .quick-action,
+  .quote-card,
+  .course-card,
+  .task-card,
+  .test-card,
+  .schedule-card,
+  .activity,
+  .event-card,
+  .material-card,
+  .nova-file-main,
+  .metric
+){
+  transition:
+    transform .22s cubic-bezier(.2,.75,.25,1),
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background-color .22s ease;
+}
+
+/* Cards that did not previously have a pronounced lift. */
+.nova-interactive-surface:is(
+  .course-card,
+  .task-card,
+  .test-card,
+  .schedule-card,
+  .activity,
+  .event-card,
+  .material-card,
+  .metric
+):hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 17px 38px rgba(0,0,0,.105),
+    0 0 0 1px
+      color-mix(
+        in srgb,
+        var(--accent) 4%,
+        transparent
+      );
+}
+
+/* Small elements stay deliberately restrained. */
+.nova-interactive-surface:is(
+  .conversation-item,
+  .compact-row,
+  .mini-course,
+  .panel-action,
+  .back-button
+):hover{
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 18%,
+      var(--line)
+    );
+}
+
+/* Arrow / chevron hint across interactive navigation. */
+.nova-interactive-surface .icon:last-child{
+  transition:
+    transform .23s cubic-bezier(.2,.75,.25,1),
+    color .23s ease;
+}
+
+.nova-interactive-surface:hover .icon:last-child{
+  color:var(--accent);
+}
+
+/* Touch devices do not need desktop hover effects. */
+@media(hover:none){
+  .nova-interactive-surface > .nova-cursor-glow{
+    display:none;
+  }
+
+  .nova-interactive-surface > .nova-sheen{
+    display:none;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nova-interactive-surface > .nova-sheen,
+  .nova-interactive-surface > .nova-cursor-glow{
+    display:none !important;
+  }
+
+  .nova-interactive-surface:is(
+    .course-card,
+    .task-card,
+    .test-card,
+    .schedule-card,
+    .activity,
+    .event-card,
+    .material-card,
+    .metric
+  ):hover{
+    transform:none;
+  }
+}
