@@ -3640,4 +3640,631 @@ document.addEventListener('animationend',e=>{
     e.target.classList.remove('nova-press');
   }
 });
-(async function boot(){setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
+
+/* NOVA_FORCE_DASHBOARD_HOME_OVERRIDES START */
+function injectDashboardHomeOverrides(){
+  if(document.getElementById('nova-force-dashboard-home')) return;
+
+  const style=document.createElement('style');
+  style.id='nova-force-dashboard-home';
+
+  style.textContent=`
+    /* =====================================================
+       NOVA HOME / CALENDAR
+       ===================================================== */
+
+    .calendar-mini .mini-grid .day,
+    .calendar-mini .mini-grid .day.today,
+    .calendar-mini .mini-grid .day.selected,
+    .calendar-mini .mini-grid .day.today.selected{
+      border:0 !important;
+      outline:0 !important;
+      box-shadow:none !important;
+      background:transparent !important;
+      transform:none !important;
+      padding:0 !important;
+    }
+
+    .calendar-mini .mini-grid .day:hover,
+    .calendar-mini .mini-grid .day.today:hover,
+    .calendar-mini .mini-grid .day.selected:hover,
+    .calendar-mini .mini-grid .day.today.selected:hover{
+      border:0 !important;
+      outline:0 !important;
+      box-shadow:none !important;
+      background:color-mix(in srgb,var(--accent) 6%,var(--surface-2)) !important;
+    }
+
+    .calendar-mini .mini-grid .day:focus,
+    .calendar-mini .mini-grid .day:focus-visible{
+      border:0 !important;
+      outline:0 !important;
+      box-shadow:none !important;
+    }
+
+    .calendar-mini .mini-grid .day:focus-visible .day-number,
+    .calendar-mini .mini-grid .day:focus .day-number{
+      outline:0 !important;
+    }
+
+    .calendar-mini .mini-grid .day-number{
+      width:28px !important;
+      height:28px !important;
+      margin:0 !important;
+      padding:0 !important;
+      display:grid !important;
+      place-items:center !important;
+      box-sizing:border-box !important;
+      border:0 !important;
+      outline:0 !important;
+      border-radius:10px !important;
+      line-height:1 !important;
+      font-size:10px !important;
+      font-weight:850 !important;
+      font-variant-numeric:tabular-nums !important;
+      text-align:center !important;
+      transform:none !important;
+      background:transparent !important;
+      box-shadow:none !important;
+    }
+
+    .calendar-mini .mini-grid .day.today:not(.selected) .day-number{
+      color:var(--accent) !important;
+      background:color-mix(in srgb,var(--accent) 9%,transparent) !important;
+      box-shadow:
+        inset 0 0 0 1px color-mix(
+          in srgb,
+          var(--accent) 32%,
+          transparent
+        ) !important;
+    }
+
+    .calendar-mini .mini-grid .day.selected .day-number,
+    .calendar-mini .mini-grid .day.today.selected .day-number{
+      color:#fff !important;
+      background:var(--accent) !important;
+      box-shadow:
+        0 7px 18px color-mix(
+          in srgb,
+          var(--accent) 25%,
+          transparent
+        ),
+        inset 0 0 0 1px rgba(255,255,255,.16) !important;
+    }
+
+    .calendar-mini .mini-grid .day-dots{
+      bottom:2px !important;
+      z-index:4 !important;
+    }
+
+    .calendar-mini .mini-grid .day-empty{
+      visibility:hidden !important;
+      border:0 !important;
+      background:transparent !important;
+    }
+
+    .calendar-mini .mini-weekdays{
+      display:grid !important;
+      grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+      gap:3px !important;
+      margin:0 0 6px !important;
+      padding:0 1px !important;
+    }
+
+    .calendar-mini .mini-weekdays span{
+      height:20px !important;
+      display:grid !important;
+      place-items:center !important;
+      text-align:center !important;
+      font-size:8px !important;
+      line-height:1 !important;
+      font-weight:850 !important;
+      letter-spacing:.05em !important;
+      white-space:nowrap !important;
+    }
+
+    /* =====================================================
+       NOVA HOME / QUICK ACTIONS
+       ===================================================== */
+
+    .quick-actions{
+      display:grid !important;
+      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      gap:9px !important;
+      margin-top:5px !important;
+    }
+
+    .quick-action{
+      position:relative !important;
+      min-width:0 !important;
+      min-height:86px !important;
+      padding:12px 34px 12px 12px !important;
+      display:grid !important;
+      grid-template-columns:38px minmax(0,1fr) !important;
+      align-items:center !important;
+      gap:10px !important;
+
+      border:1px solid var(--line) !important;
+      border-radius:17px !important;
+
+      background:
+        radial-gradient(
+          circle at 100% 100%,
+          color-mix(in srgb,var(--accent) 9%,transparent),
+          transparent 38%
+        ),
+        linear-gradient(
+          145deg,
+          var(--surface),
+          var(--surface-2)
+        ) !important;
+
+      color:var(--text) !important;
+      text-align:left !important;
+      cursor:pointer !important;
+      overflow:hidden !important;
+
+      box-shadow:
+        0 8px 24px rgba(0,0,0,.055),
+        inset 0 1px 0 rgba(255,255,255,.025) !important;
+
+      transition:
+        transform .24s cubic-bezier(.2,.75,.25,1),
+        border-color .24s ease,
+        box-shadow .24s ease,
+        background .24s ease !important;
+    }
+
+    .quick-action:before{
+      content:"" !important;
+      position:absolute !important;
+      inset:-1px !important;
+      pointer-events:none !important;
+      background:
+        linear-gradient(
+          120deg,
+          transparent 20%,
+          rgba(255,255,255,.055) 48%,
+          transparent 72%
+        );
+      transform:translateX(-120%) !important;
+      transition:transform .7s ease !important;
+    }
+
+    .quick-action:hover{
+      transform:translateY(-4px) scale(1.012) !important;
+      border-color:color-mix(
+        in srgb,
+        var(--accent) 34%,
+        var(--line)
+      ) !important;
+
+      background:
+        radial-gradient(
+          circle at 75% 25%,
+          color-mix(in srgb,var(--accent) 8%,transparent),
+          transparent 40%
+        ),
+        var(--surface) !important;
+
+      box-shadow:
+        0 17px 35px rgba(0,0,0,.12),
+        0 0 0 1px color-mix(
+          in srgb,
+          var(--accent) 5%,
+          transparent
+        ) !important;
+    }
+
+    .quick-action:hover:before{
+      transform:translateX(120%) !important;
+    }
+
+    .quick-action:active{
+      transform:translateY(-1px) scale(.985) !important;
+    }
+
+    .quick-action-icon{
+      width:38px !important;
+      height:38px !important;
+      display:grid !important;
+      place-items:center !important;
+      border-radius:12px !important;
+
+      background:color-mix(
+        in srgb,
+        var(--accent) 10%,
+        var(--surface-3)
+      ) !important;
+
+      border:1px solid color-mix(
+        in srgb,
+        var(--accent) 19%,
+        var(--line)
+      ) !important;
+
+      color:var(--accent) !important;
+
+      transition:
+        transform .22s ease,
+        background .22s ease,
+        box-shadow .22s ease !important;
+    }
+
+    .quick-action:hover .quick-action-icon{
+      transform:scale(1.07) rotate(-3deg) !important;
+
+      background:color-mix(
+        in srgb,
+        var(--accent) 16%,
+        var(--surface-3)
+      ) !important;
+
+      box-shadow:
+        0 8px 20px color-mix(
+          in srgb,
+          var(--accent) 16%,
+          transparent
+        ) !important;
+    }
+
+    .quick-action-copy{
+      min-width:0 !important;
+      display:grid !important;
+      gap:4px !important;
+      z-index:2 !important;
+    }
+
+    .quick-action-copy b{
+      font-size:11.5px !important;
+      line-height:1.05 !important;
+      font-weight:850 !important;
+      color:var(--text) !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    .quick-action-copy small{
+      font-size:8.5px !important;
+      line-height:1.2 !important;
+      color:var(--muted) !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    .quick-action-arrow{
+      position:absolute !important;
+      top:10px !important;
+      right:10px !important;
+      width:24px !important;
+      height:24px !important;
+
+      display:grid !important;
+      place-items:center !important;
+
+      border:1px solid var(--line) !important;
+      border-radius:8px !important;
+
+      background:var(--surface-2) !important;
+      color:var(--muted) !important;
+
+      transition:
+        transform .23s ease,
+        color .23s ease,
+        border-color .23s ease,
+        background .23s ease !important;
+    }
+
+    .quick-action:hover .quick-action-arrow{
+      transform:translate(3px,-3px) !important;
+      color:var(--accent) !important;
+
+      border-color:color-mix(
+        in srgb,
+        var(--accent) 30%,
+        var(--line)
+      ) !important;
+
+      background:color-mix(
+        in srgb,
+        var(--accent) 8%,
+        var(--surface)
+      ) !important;
+    }
+
+    /* =====================================================
+       NOVA HOME / MAIN CTA
+       ===================================================== */
+
+    .quote-card{
+      position:relative !important;
+      width:100% !important;
+      min-height:190px !important;
+
+      padding:17px 18px 16px !important;
+
+      display:grid !important;
+      grid-template-rows:auto 1fr auto !important;
+      gap:10px !important;
+
+      border:1px solid rgba(255,255,255,.12) !important;
+      border-radius:22px !important;
+
+      background:
+        radial-gradient(
+          circle at 90% 8%,
+          rgba(24,183,255,.25),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 5% 105%,
+          rgba(101,111,255,.16),
+          transparent 31%
+        ),
+        linear-gradient(
+          145deg,
+          #09121d 0%,
+          #0c1d2b 55%,
+          #08141f 100%
+        ) !important;
+
+      color:#fff !important;
+      text-align:left !important;
+      cursor:pointer !important;
+
+      overflow:hidden !important;
+      isolation:isolate !important;
+
+      box-shadow:
+        0 18px 46px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.075) !important;
+
+      transition:
+        transform .28s cubic-bezier(.2,.75,.25,1),
+        border-color .28s ease,
+        box-shadow .28s ease,
+        filter .28s ease !important;
+    }
+
+    .quote-card:before{
+      content:"" !important;
+      position:absolute !important;
+      inset:0 !important;
+      pointer-events:none !important;
+      z-index:0 !important;
+
+      background:
+        linear-gradient(
+          115deg,
+          transparent 20%,
+          rgba(255,255,255,.055) 48%,
+          transparent 72%
+        );
+
+      transform:translateX(-125%) !important;
+      transition:transform .8s ease !important;
+    }
+
+    .quote-card:hover{
+      transform:translateY(-6px) !important;
+
+      border-color:rgba(42,198,255,.44) !important;
+
+      box-shadow:
+        0 29px 66px rgba(0,0,0,.29),
+        0 0 0 1px rgba(42,198,255,.06),
+        0 0 46px rgba(24,183,255,.09) !important;
+
+      filter:saturate(1.04) !important;
+    }
+
+    .quote-card:hover:before{
+      transform:translateX(125%) !important;
+    }
+
+    .quote-card:active{
+      transform:translateY(-2px) scale(.993) !important;
+    }
+
+    .quote-card:focus-visible{
+      outline:2px solid rgba(42,198,255,.62) !important;
+      outline-offset:3px !important;
+    }
+
+    .quote-card-glow{
+      position:absolute !important;
+      width:180px !important;
+      height:180px !important;
+      right:-75px !important;
+      top:-80px !important;
+      border-radius:50% !important;
+      pointer-events:none !important;
+      z-index:0 !important;
+
+      background:rgba(24,183,255,.10) !important;
+      filter:blur(2px) !important;
+    }
+
+    .quote-card-orb{
+      position:absolute !important;
+      border-radius:50% !important;
+      pointer-events:none !important;
+      z-index:0 !important;
+    }
+
+    .quote-card-orb-a{
+      width:120px !important;
+      height:120px !important;
+      right:-50px !important;
+      top:-46px !important;
+      background:rgba(24,183,255,.13) !important;
+    }
+
+    .quote-card-orb-b{
+      width:92px !important;
+      height:92px !important;
+      left:-48px !important;
+      bottom:-55px !important;
+      background:rgba(95,141,255,.11) !important;
+    }
+
+    .quote-card-head,
+    .quote-card-copy,
+    .quote-card-footer{
+      position:relative !important;
+      z-index:2 !important;
+    }
+
+    .quote-card-head{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      gap:9px !important;
+    }
+
+    .quote-card-kicker{
+      display:inline-flex !important;
+      align-items:center !important;
+      gap:5px !important;
+
+      color:rgba(168,221,255,.92) !important;
+      font-size:8px !important;
+      font-weight:850 !important;
+      letter-spacing:.13em !important;
+    }
+
+    .quote-card-status{
+      padding:5px 8px !important;
+      border:1px solid rgba(255,255,255,.11) !important;
+      border-radius:999px !important;
+      background:rgba(255,255,255,.055) !important;
+
+      color:rgba(255,255,255,.62) !important;
+      font-size:7.5px !important;
+      font-weight:800 !important;
+    }
+
+    .quote-card-copy{
+      display:grid !important;
+      align-content:center !important;
+      gap:7px !important;
+    }
+
+    .quote-card-copy b{
+      margin:0 !important;
+      color:#fff !important;
+      font-size:20px !important;
+      line-height:1.02 !important;
+      letter-spacing:-.048em !important;
+      font-weight:850 !important;
+    }
+
+    .quote-card-copy b em{
+      color:#9fe0ff !important;
+      font-style:normal !important;
+    }
+
+    .quote-card-copy small{
+      max-width:285px !important;
+      margin:0 !important;
+      color:rgba(255,255,255,.50) !important;
+      font-size:9.5px !important;
+      line-height:1.45 !important;
+    }
+
+    .quote-card-footer{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      gap:10px !important;
+    }
+
+    .quote-card-link{
+      display:grid !important;
+      gap:2px !important;
+      color:rgba(255,255,255,.92) !important;
+      font-size:10px !important;
+      font-weight:850 !important;
+    }
+
+    .quote-card-link small{
+      color:rgba(255,255,255,.42) !important;
+      font-size:7.5px !important;
+      font-weight:700 !important;
+    }
+
+    .quote-card-action{
+      width:44px !important;
+      height:44px !important;
+      flex:0 0 44px !important;
+
+      display:grid !important;
+      place-items:center !important;
+
+      border:1px solid rgba(255,255,255,.16) !important;
+      border-radius:14px !important;
+
+      background:rgba(255,255,255,.065) !important;
+      color:#fff !important;
+
+      backdrop-filter:blur(12px) !important;
+      -webkit-backdrop-filter:blur(12px) !important;
+
+      transition:
+        transform .28s cubic-bezier(.2,.75,.25,1),
+        background .28s ease,
+        border-color .28s ease,
+        box-shadow .28s ease !important;
+    }
+
+    .quote-card:hover .quote-card-action{
+      transform:translate(5px,-5px) scale(1.08) !important;
+
+      background:rgba(24,183,255,.16) !important;
+      border-color:rgba(42,198,255,.38) !important;
+
+      box-shadow:
+        0 12px 26px rgba(24,183,255,.15) !important;
+    }
+
+    @media(max-width:760px){
+      .quick-action{
+        min-height:78px !important;
+        padding-right:30px !important;
+      }
+
+      .calendar-mini .mini-weekdays span{
+        font-size:7.6px !important;
+      }
+
+      .calendar-mini .mini-grid .day-number{
+        width:26px !important;
+        height:26px !important;
+      }
+
+      .quote-card{
+        min-height:174px !important;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce){
+      .quick-action,
+      .quick-action:before,
+      .quick-action-icon,
+      .quick-action-arrow,
+      .quote-card,
+      .quote-card:before,
+      .quote-card-action{
+        transition:none !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+/* NOVA_FORCE_DASHBOARD_HOME_OVERRIDES END */
+
+(async function boot(){injectDashboardHomeOverrides();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
