@@ -184,6 +184,422 @@ function themeToggle(){
 }
 function setTheme(){document.body.dataset.theme=state.theme;const root=document.documentElement;if(root){root.dataset.theme=state.theme;root.style.colorScheme=state.theme}}
 function brand(){return `<div class="brand"><span class="brand-mark">${icon('university',22)}</span><span><b>Campus <em>FA</em></b><small>Nova</small></span></div>`}
+/* NOVA_ACCOUNT_INLINE_STYLES_20260919 */
+
+function injectNovaAccountInlineStyles(){
+  if(
+    typeof document === 'undefined' ||
+    !document.head ||
+    typeof document.createElement !== 'function'
+  ){
+    return;
+  }
+
+  if(
+    typeof document.getElementById === 'function' &&
+    document.getElementById('nova-account-inline-styles')
+  ){
+    return;
+  }
+
+  const style=document.createElement('style');
+  style.id='nova-account-inline-styles';
+
+  style.textContent=`
+    /* HEADER PROFILE */
+
+    .profile-menu{
+      position:relative !important;
+      display:block !important;
+      flex:0 0 auto !important;
+      width:auto !important;
+      height:auto !important;
+      overflow:visible !important;
+      z-index:100 !important;
+    }
+
+    .profile-menu .profile-chip{
+      appearance:none !important;
+      -webkit-appearance:none !important;
+
+      width:auto !important;
+      min-width:150px !important;
+      height:44px !important;
+      min-height:44px !important;
+
+      display:flex !important;
+      align-items:center !important;
+      justify-content:flex-start !important;
+      gap:9px !important;
+
+      margin:0 !important;
+      padding:6px 10px !important;
+
+      border:1px solid var(--line) !important;
+      border-radius:15px !important;
+
+      background:var(--control) !important;
+      color:var(--text) !important;
+
+      font:inherit !important;
+      line-height:1 !important;
+
+      cursor:pointer !important;
+      box-sizing:border-box !important;
+    }
+
+    .profile-menu .profile-chip > .avatar{
+      display:grid !important;
+      flex:0 0 31px !important;
+      width:31px !important;
+      height:31px !important;
+      place-items:center !important;
+    }
+
+    .profile-menu .profile-chip > span:not(.avatar){
+      display:block !important;
+      min-width:0 !important;
+    }
+
+    .profile-menu .profile-chip b{
+      display:block !important;
+      color:var(--text) !important;
+      font-size:11px !important;
+      font-weight:800 !important;
+      line-height:1.15 !important;
+      white-space:nowrap !important;
+    }
+
+    .profile-menu .profile-chip small{
+      display:block !important;
+      margin-top:3px !important;
+      color:var(--muted) !important;
+      font-size:9px !important;
+      line-height:1 !important;
+    }
+
+    .profile-menu .profile-chip > .icon{
+      flex:0 0 auto !important;
+      margin-left:2px !important;
+      transition:transform .25s ease !important;
+    }
+
+    .profile-menu.open .profile-chip > .icon{
+      transform:rotate(180deg) !important;
+    }
+
+    .profile-menu .profile-chip:hover{
+      border-color:var(--accent) !important;
+      background:var(--surface-2) !important;
+      transform:translateY(-1px) !important;
+    }
+
+    /* PROFILE POPOVER */
+
+    .profile-popover{
+      position:absolute !important;
+      top:54px !important;
+      right:0 !important;
+      left:auto !important;
+
+      width:330px !important;
+      max-width:calc(100vw - 28px) !important;
+
+      display:block !important;
+      box-sizing:border-box !important;
+
+      margin:0 !important;
+      padding:10px !important;
+
+      border:1px solid var(--line) !important;
+      border-radius:20px !important;
+
+      background:var(--surface) !important;
+      color:var(--text) !important;
+
+      opacity:0 !important;
+      visibility:hidden !important;
+      pointer-events:none !important;
+
+      transform:translateY(-8px) scale(.97) !important;
+      transform-origin:top right !important;
+
+      z-index:99999 !important;
+
+      box-shadow:
+        0 26px 70px rgba(0,0,0,.32),
+        0 5px 18px rgba(0,0,0,.12) !important;
+
+      transition:
+        opacity .18s ease,
+        visibility .18s ease,
+        transform .24s cubic-bezier(.2,.75,.25,1) !important;
+    }
+
+    .profile-menu.open .profile-popover{
+      opacity:1 !important;
+      visibility:visible !important;
+      pointer-events:auto !important;
+      transform:translateY(0) scale(1) !important;
+    }
+
+    .profile-popover-head{
+      display:flex !important;
+      align-items:center !important;
+      gap:11px !important;
+      padding:7px 7px 11px !important;
+    }
+
+    .profile-popover-head .avatar{
+      width:42px !important;
+      height:42px !important;
+      flex:0 0 42px !important;
+      border-radius:13px !important;
+    }
+
+    .profile-popover-head b{
+      display:block !important;
+      color:var(--text) !important;
+      font-size:12px !important;
+      font-weight:850 !important;
+      line-height:1.2 !important;
+    }
+
+    .profile-popover-head small{
+      display:block !important;
+      margin-top:3px !important;
+      color:var(--muted) !important;
+      font-size:9px !important;
+    }
+
+    .profile-popover-meta{
+      display:grid !important;
+      grid-template-columns:1fr 1fr !important;
+      gap:7px !important;
+      padding:8px 0 !important;
+
+      border-top:1px solid var(--line) !important;
+      border-bottom:1px solid var(--line) !important;
+    }
+
+    .profile-popover-meta span{
+      display:block !important;
+      min-width:0 !important;
+
+      padding:9px !important;
+      border-radius:12px !important;
+
+      background:var(--surface-2) !important;
+    }
+
+    .profile-popover-meta small{
+      display:block !important;
+      color:var(--muted) !important;
+      font-size:8px !important;
+      line-height:1.2 !important;
+    }
+
+    .profile-popover-meta b{
+      display:block !important;
+      margin-top:4px !important;
+      color:var(--text) !important;
+      font-size:9px !important;
+      font-weight:800 !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      white-space:nowrap !important;
+    }
+
+    .profile-popover-actions{
+      display:grid !important;
+      gap:5px !important;
+      padding-top:8px !important;
+    }
+
+    .profile-popover-item{
+      appearance:none !important;
+      -webkit-appearance:none !important;
+
+      width:100% !important;
+      min-height:52px !important;
+
+      display:grid !important;
+      grid-template-columns:32px minmax(0,1fr) auto !important;
+      align-items:center !important;
+      gap:8px !important;
+
+      margin:0 !important;
+      padding:7px 8px !important;
+
+      border:1px solid transparent !important;
+      border-radius:13px !important;
+
+      background:transparent !important;
+      color:var(--text) !important;
+
+      text-align:left !important;
+      font:inherit !important;
+      line-height:1.15 !important;
+
+      cursor:pointer !important;
+      box-sizing:border-box !important;
+    }
+
+    .profile-popover-item:hover{
+      background:var(--surface-2) !important;
+      border-color:var(--line) !important;
+      transform:translateX(2px) !important;
+    }
+
+    .profile-popover-item > span:nth-child(2){
+      display:block !important;
+      min-width:0 !important;
+    }
+
+    .profile-popover-item b{
+      display:block !important;
+      color:inherit !important;
+      font-size:10px !important;
+      font-weight:850 !important;
+    }
+
+    .profile-popover-item small{
+      display:block !important;
+      margin-top:2px !important;
+      color:var(--muted) !important;
+      font-size:8px !important;
+    }
+
+    .profile-popover-icon{
+      width:32px !important;
+      height:32px !important;
+
+      display:grid !important;
+      place-items:center !important;
+
+      border-radius:10px !important;
+      background:var(--surface-3) !important;
+      color:var(--accent) !important;
+    }
+
+    .profile-popover-item.danger{
+      color:var(--danger) !important;
+    }
+
+    .profile-popover-item.danger .profile-popover-icon{
+      color:var(--danger) !important;
+      background:rgba(232,95,118,.10) !important;
+    }
+
+    /* THEME ANIMATION */
+
+    #theme-top,
+    #theme-sidebar,
+    #theme-profile{
+      position:relative !important;
+      overflow:hidden !important;
+    }
+
+    .nova-theme-switching .icon{
+      animation:novaThemeSwitchInline .55s cubic-bezier(.2,.78,.25,1) !important;
+    }
+
+    @keyframes novaThemeSwitchInline{
+      0%{
+        opacity:.25;
+        transform:rotate(-75deg) scale(.55);
+      }
+      55%{
+        opacity:1;
+        transform:rotate(12deg) scale(1.12);
+      }
+      100%{
+        opacity:1;
+        transform:rotate(0) scale(1);
+      }
+    }
+
+    /* LOGOUT */
+
+    .danger-button{
+      appearance:none !important;
+      -webkit-appearance:none !important;
+
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      gap:7px !important;
+
+      min-height:40px !important;
+      padding:0 12px !important;
+
+      border:1px solid rgba(232,95,118,.35) !important;
+      border-radius:12px !important;
+
+      background:rgba(232,95,118,.09) !important;
+      color:var(--danger) !important;
+
+      font:700 11px inherit !important;
+      cursor:pointer !important;
+    }
+
+    .danger-button:hover{
+      border-color:rgba(232,95,118,.60) !important;
+      background:rgba(232,95,118,.15) !important;
+      transform:translateY(-1px) !important;
+    }
+
+    .nova-confirm-backdrop{
+      align-items:center !important;
+      justify-content:center !important;
+      padding:24px !important;
+      z-index:100000 !important;
+    }
+
+    .nova-confirm-modal{
+      width:min(420px,100%) !important;
+      box-sizing:border-box !important;
+      padding:22px !important;
+      border-radius:24px !important;
+    }
+
+    .nova-confirm-actions{
+      display:flex !important;
+      justify-content:flex-end !important;
+      align-items:center !important;
+      gap:8px !important;
+    }
+
+    @media(max-width:760px){
+      .profile-menu .profile-chip{
+        width:44px !important;
+        min-width:44px !important;
+        justify-content:center !important;
+        padding:5px !important;
+      }
+
+      .profile-menu .profile-chip > span:not(.avatar),
+      .profile-menu .profile-chip > .icon{
+        display:none !important;
+      }
+
+      .profile-popover{
+        right:-4px !important;
+        width:min(330px,calc(100vw - 24px)) !important;
+      }
+
+      .nova-confirm-actions{
+        display:grid !important;
+        grid-template-columns:1fr 1fr !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+/* NOVA_ACCOUNT_INLINE_STYLES_20260919 */
+
 function notificationItems(){
   const items=[];
   const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
@@ -4476,4 +4892,4 @@ enhanceNovaInteractions(document);
 
 /* NOVA_INTERACTION_SYSTEM_2026 END */
 
-(async function boot(){injectDashboardHomeOverrides();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
+(async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
