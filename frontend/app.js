@@ -199,161 +199,87 @@ function statePanel(kind,service,retry=true){
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
 function hero(){
-  const calendar=
-    state.data.calendar||{};
-
-  const events=
-    flattenCalendar(calendar);
-
-  const now=
-    new Date();
-
-  const todayKey=
-    `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
-
-  const todayEvents=
-    events.filter(
-      event=>
-        dateKey(event.timestart)===todayKey
-    );
-
-  const tasks=
-    Array.isArray(state.data.tasks)
-      ? state.data.tasks
-      : [];
-
-  const hour=
-    now.getHours();
-
-  const greeting=
-    hour<12
-      ? 'Доброе утро'
-      : hour<18
-        ? 'Добрый день'
-        : 'Добрый вечер';
+  const calendar=state.data.calendar||{};
+  const events=flattenCalendar(calendar);
+  const now=new Date();
+  const todayKey=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+  const todayEvents=events.filter(event=>dateKey(event.timestart)===todayKey);
+  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
+  const hour=now.getHours();
+  const greeting=hour<12?'Доброе утро':hour<18?'Добрый день':'Добрый вечер';
 
   const photos=[
-    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=82&w=1800',
-    'https://images.unsplash.com/photo-1769284008279-46e4c97959db?auto=format&fit=crop&fm=jpg&q=80&w=1800',
-    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=80&w=1800'
+    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=86&w=1400',
+    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=86&w=1400',
+    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&fm=jpg&q=86&w=1400'
   ];
 
-  const dateText=
-    now.toLocaleDateString(
-      'ru-RU',
-      {
-        weekday:'long',
-        day:'numeric',
-        month:'long'
-      }
-    );
+  const dateText=now.toLocaleDateString('ru-RU',{
+    weekday:'long',
+    day:'numeric',
+    month:'long'
+  });
 
   return `
     <section class="hero dashboard-hero">
 
-      <div class="hero-media">
-
+      <div class="hero-media" aria-hidden="true">
         ${photos.map((src,index)=>`
           <img
             class="hero-photo hero-photo-${index}"
             src="${src}"
-            alt="Университетский кампус"
-            loading="${index===0?'eager':'lazy'}"
+            alt=""
+            loading="eager"
             decoding="async"
           >
         `).join('')}
-
+        <div class="hero-media-glass"></div>
       </div>
 
       <div class="hero-overlay"></div>
 
       <div class="hero-brand">
-
         ${icon('university',23)}
-
         <span>
           <b>Финансовый университет</b>
           <small>Краснодарский филиал</small>
         </span>
-
       </div>
 
       <div class="hero-date">
-
         ${icon('calendar',15)}
-
-        <span>
-          ${esc(dateText)}
-        </span>
-
+        <span>${esc(dateText)}</span>
       </div>
 
       <div class="hero-copy">
-
-        <div class="eyebrow">
-          ЛИЧНЫЙ КАБИНЕТ
-        </div>
-
-        <h2>
-          ${greeting}, ${esc(firstName())}.
-        </h2>
-
-        <p>
-          Всё необходимое для учёбы уже здесь.
-        </p>
-
+        <div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div>
+        <h2>${greeting}, ${esc(firstName())}.</h2>
+        <p>Всё необходимое для учёбы уже здесь.</p>
       </div>
 
       <div class="hero-stats">
-
         <div class="hero-stat">
-
-          <strong>
-            ${todayEvents.length}
-          </strong>
-
-          <span>
-            ${
-              todayEvents.length===1
-                ? 'событие сегодня'
-                : 'событий сегодня'
-            }
-          </span>
-
+          <strong>${todayEvents.length}</strong>
+          <span>${todayEvents.length===1?'событие сегодня':'событий сегодня'}</span>
         </div>
 
         <div class="hero-stat-divider"></div>
 
         <div class="hero-stat">
-
-          <strong>
-            ${tasks.length}
-          </strong>
-
-          <span>
-            ${
-              tasks.length===1
-                ? 'активное задание'
-                : 'активных заданий'
-            }
-          </span>
-
+          <strong>${tasks.length}</strong>
+          <span>${tasks.length===1?'активное задание':'активных заданий'}</span>
         </div>
-
       </div>
 
       <div class="hero-quote">
-
-        Знания сегодня<br>
-        <strong>
-          возможности завтра.
-        </strong>
-
+        <span class="hero-quote-label">NOVA</span>
+        <strong>Знания сегодня.<br>Возможности завтра.</strong>
       </div>
 
     </section>
   `;
 }
+
 function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
 function dashboard(){
   const courses=Array.isArray(state.data.courses)?state.data.courses:[];
@@ -372,7 +298,31 @@ function dashboard(){
       ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
-    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions"><button data-go="files">${icon('download',19)}<b>Файлы</b><small>Скачать</small></button><button data-go="messages">${icon('message',19)}<b>Сообщения</b><small>Открыть</small></button><button data-go="tasks">${icon('check-square',19)}<b>Задания</b><small>Открыть</small></button><button data-go="tests">${icon('quiz',19)}<b>Тесты</b><small>Открыть</small></button></div></section><button
+    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions">
+  <button data-go="files">
+    <span class="quick-action-icon">${icon('download',19)}</span>
+    <span class="quick-action-copy"><b>Файлы</b><small>Скачать</small></span>
+    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+  </button>
+
+  <button data-go="messages">
+    <span class="quick-action-icon">${icon('message',19)}</span>
+    <span class="quick-action-copy"><b>Сообщения</b><small>Открыть</small></span>
+    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+  </button>
+
+  <button data-go="tasks">
+    <span class="quick-action-icon">${icon('check-square',19)}</span>
+    <span class="quick-action-copy"><b>Задания</b><small>Открыть</small></span>
+    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+  </button>
+
+  <button data-go="tests">
+    <span class="quick-action-icon">${icon('quiz',19)}</span>
+    <span class="quick-action-copy"><b>Тесты</b><small>Пройти</small></span>
+    <span class="quick-action-arrow">${icon('arrow',15)}</span>
+  </button>
+</div></section><button
   type="button"
   class="quote-card"
   data-go="courses"
