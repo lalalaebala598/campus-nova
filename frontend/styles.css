@@ -8228,3 +8228,716 @@ body[data-theme="light"] .auth input:focus{
     0 0 0 4px rgba(8,127,240,.09),
     0 7px 21px rgba(43,75,108,.055);
 }
+
+
+/* NOVA_ACCOUNT_HEADER_2026 START */
+
+/* =========================
+   HEADER ACCOUNT
+   ========================= */
+
+.profile-menu{
+  position:relative;
+  flex:0 0 auto;
+}
+
+.profile-menu .profile-chip{
+  min-height:44px;
+  padding:6px 10px;
+  gap:9px;
+  border-radius:15px;
+  transition:
+    transform .24s cubic-bezier(.2,.75,.25,1),
+    border-color .24s ease,
+    background .24s ease,
+    box-shadow .24s ease;
+}
+
+.profile-menu .profile-chip:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 30%,
+    var(--line)
+  );
+  background:color-mix(
+    in srgb,
+    var(--accent) 6%,
+    var(--surface)
+  );
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.09);
+}
+
+.profile-menu .profile-chip > .icon{
+  transition:
+    transform .28s cubic-bezier(.2,.75,.25,1);
+}
+
+.profile-menu.open .profile-chip > .icon{
+  transform:rotate(180deg);
+}
+
+.profile-popover{
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  width:min(330px,calc(100vw - 28px));
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 90%,
+      transparent
+    );
+  backdrop-filter:blur(24px) saturate(1.15);
+  -webkit-backdrop-filter:blur(24px) saturate(1.15);
+  box-shadow:
+    0 22px 52px rgba(0,0,0,.20),
+    0 4px 14px rgba(0,0,0,.08),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  opacity:0;
+  visibility:hidden;
+  transform:
+    translateY(-7px)
+    scale(.975);
+  transform-origin:top right;
+  pointer-events:none;
+  transition:
+    opacity .18s ease,
+    transform .28s cubic-bezier(.2,.75,.25,1),
+    visibility .18s ease;
+  z-index:40;
+}
+
+.profile-menu.open .profile-popover{
+  opacity:1;
+  visibility:visible;
+  transform:
+    translateY(0)
+    scale(1);
+  pointer-events:auto;
+}
+
+.profile-popover-head{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:7px 7px 11px;
+}
+
+.profile-popover-head .avatar{
+  width:42px;
+  height:42px;
+  border-radius:13px;
+}
+
+.profile-popover-head b,
+.profile-popover-head small{
+  display:block;
+}
+
+.profile-popover-head b{
+  font-size:12px;
+  font-weight:850;
+  color:var(--text);
+}
+
+.profile-popover-head small{
+  margin-top:3px;
+  font-size:9px;
+  color:var(--muted);
+}
+
+.profile-popover-meta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  padding:8px 0;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+
+.profile-popover-meta span{
+  min-width:0;
+  padding:9px;
+  border-radius:12px;
+  background:var(--surface-2);
+}
+
+.profile-popover-meta small,
+.profile-popover-meta b{
+  display:block;
+}
+
+.profile-popover-meta small{
+  color:var(--muted);
+  font-size:8px;
+}
+
+.profile-popover-meta b{
+  margin-top:4px;
+  color:var(--text);
+  font-size:9px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.profile-popover-actions{
+  display:grid;
+  gap:5px;
+  padding-top:8px;
+}
+
+.profile-popover-item{
+  width:100%;
+  min-height:52px;
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  text-align:left;
+  transition:
+    background .18s ease,
+    border-color .18s ease,
+    transform .18s ease;
+}
+
+.profile-popover-item:hover{
+  transform:translateX(2px);
+  background:color-mix(
+    in srgb,
+    var(--accent) 6%,
+    var(--surface-2)
+  );
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 14%,
+    var(--line)
+  );
+}
+
+.profile-popover-item.danger{
+  color:var(--danger);
+}
+
+.profile-popover-item.danger:hover{
+  background:color-mix(
+    in srgb,
+    var(--danger) 7%,
+    var(--surface-2)
+  );
+  border-color:color-mix(
+    in srgb,
+    var(--danger) 18%,
+    var(--line)
+  );
+}
+
+.profile-popover-icon{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:var(--surface-3);
+  color:var(--accent);
+}
+
+.profile-popover-item.danger .profile-popover-icon{
+  color:var(--danger);
+  background:color-mix(
+    in srgb,
+    var(--danger) 9%,
+    var(--surface-3)
+  );
+}
+
+.profile-popover-item b,
+.profile-popover-item small{
+  display:block;
+}
+
+.profile-popover-item b{
+  font-size:10px;
+  font-weight:850;
+}
+
+.profile-popover-item small{
+  margin-top:2px;
+  color:var(--muted);
+  font-size:8px;
+}
+
+/* =========================
+   THEME SWITCH
+   ========================= */
+
+#theme-top,
+#theme-sidebar,
+#theme-profile{
+  position:relative;
+  overflow:hidden;
+}
+
+#theme-top .icon,
+#theme-sidebar .icon,
+#theme-profile .icon{
+  transition:
+    transform .28s cubic-bezier(.2,.75,.25,1),
+    opacity .18s ease;
+}
+
+.nova-theme-switching .icon{
+  animation:novaThemeSwitch .56s cubic-bezier(.2,.78,.25,1);
+}
+
+@keyframes novaThemeSwitch{
+  0%{
+    opacity:.35;
+    transform:
+      rotate(-80deg)
+      scale(.55);
+  }
+  52%{
+    opacity:1;
+    transform:
+      rotate(15deg)
+      scale(1.12);
+  }
+  100%{
+    opacity:1;
+    transform:
+      rotate(0)
+      scale(1);
+  }
+}
+
+#theme-top:after,
+#theme-sidebar:after,
+#theme-profile:after{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  border-radius:50%;
+  pointer-events:none;
+  background:
+    radial-gradient(
+      circle,
+      color-mix(
+        in srgb,
+        var(--accent) 18%,
+        transparent
+      ) 0%,
+      transparent 68%
+    );
+  opacity:0;
+  transform:scale(.45);
+}
+
+.nova-theme-switching:after{
+  animation:novaThemePulse .58s ease;
+}
+
+@keyframes novaThemePulse{
+  0%{
+    opacity:0;
+    transform:scale(.45);
+  }
+  42%{
+    opacity:1;
+    transform:scale(1);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.55);
+  }
+}
+
+/* =========================
+   NOTIFICATIONS
+   ========================= */
+
+#notification-modal{
+  background:rgba(3,9,17,.16);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+  padding:
+    calc(76px + 8px)
+    20px
+    20px;
+}
+
+#notification-modal .notification-modal{
+  width:min(390px,calc(100vw - 28px));
+  max-height:min(640px,calc(100vh - 105px));
+  border-radius:20px;
+  padding:11px;
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.24),
+    0 6px 20px rgba(0,0,0,.10),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  animation:novaNotificationsIn .30s cubic-bezier(.2,.75,.25,1);
+  transform-origin:top right;
+}
+
+@keyframes novaNotificationsIn{
+  from{
+    opacity:0;
+    transform:
+      translateY(-8px)
+      scale(.965);
+  }
+  to{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+#notification-modal .modal-head{
+  padding:5px 4px 8px 6px;
+}
+
+#notification-modal .modal-head h2{
+  font-size:17px;
+  letter-spacing:-.025em;
+}
+
+#notification-modal .modal-sub{
+  margin-top:4px;
+  font-size:9px;
+}
+
+#notification-modal .notification-list{
+  gap:6px;
+}
+
+#notification-modal .modal-item{
+  min-height:58px;
+  border-radius:13px;
+  padding:9px;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease;
+}
+
+#notification-modal .modal-item:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 20%,
+    var(--line)
+  );
+  background:color-mix(
+    in srgb,
+    var(--accent) 5%,
+    var(--surface-2)
+  );
+}
+
+#notification-modal .icon-btn{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+}
+
+/* =========================
+   LOGOUT
+   ========================= */
+
+.danger-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid color-mix(
+    in srgb,
+    var(--danger) 30%,
+    var(--line)
+  );
+  background:color-mix(
+    in srgb,
+    var(--danger) 8%,
+    var(--surface)
+  );
+  color:var(--danger);
+  min-height:40px;
+  border-radius:12px;
+  padding:0 12px;
+  font:700 11px inherit;
+  cursor:pointer;
+  transition:
+    transform .20s ease,
+    border-color .20s ease,
+    background .20s ease,
+    box-shadow .20s ease;
+}
+
+.danger-button:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(
+    in srgb,
+    var(--danger) 52%,
+    var(--line)
+  );
+  background:color-mix(
+    in srgb,
+    var(--danger) 13%,
+    var(--surface)
+  );
+  box-shadow:
+    0 10px 24px color-mix(
+      in srgb,
+      var(--danger) 12%,
+      transparent
+    );
+}
+
+.profile-card .danger-button{
+  box-shadow:none;
+}
+
+.profile-card .danger-button:hover{
+  box-shadow:
+    0 10px 24px color-mix(
+      in srgb,
+      var(--danger) 10%,
+      transparent
+    );
+}
+
+/* =========================
+   LOGOUT CONFIRM
+   ========================= */
+
+.nova-confirm-backdrop{
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(2,7,14,.56);
+}
+
+.nova-confirm-modal{
+  width:min(420px,100%);
+  padding:22px;
+  border-radius:24px;
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  animation:novaConfirmIn .28s cubic-bezier(.2,.75,.25,1);
+}
+
+.nova-confirm-backdrop.is-closing .nova-confirm-modal{
+  animation:novaConfirmOut .18s ease forwards;
+}
+
+.nova-confirm-icon{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  color:var(--danger);
+  background:color-mix(
+    in srgb,
+    var(--danger) 10%,
+    var(--surface-3)
+  );
+  border:1px solid color-mix(
+    in srgb,
+    var(--danger) 18%,
+    var(--line)
+  );
+  margin-bottom:16px;
+}
+
+.nova-confirm-copy h2{
+  margin:0;
+  font-size:23px;
+  letter-spacing:-.04em;
+}
+
+.nova-confirm-copy p{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+  max-width:340px;
+}
+
+.nova-confirm-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:22px;
+}
+
+.nova-confirm-actions .secondary,
+.nova-confirm-actions .danger-button{
+  min-width:92px;
+}
+
+@keyframes novaConfirmIn{
+  from{
+    opacity:0;
+    transform:
+      translateY(8px)
+      scale(.97);
+  }
+  to{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+@keyframes novaConfirmOut{
+  to{
+    opacity:0;
+    transform:
+      translateY(6px)
+      scale(.98);
+  }
+}
+
+/* =========================
+   PROFILE PAGE POLISH
+   ========================= */
+
+.profile-page .profile-grid{
+  gap:14px;
+}
+
+.profile-page .profile-card{
+  border-radius:22px;
+  padding:22px;
+}
+
+.profile-page .main-profile{
+  min-height:150px;
+  padding:24px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(
+        in srgb,
+        var(--accent) 10%,
+        transparent
+      ) 0%,
+      transparent 36%
+    ),
+    var(--surface);
+}
+
+.profile-page .profile-avatar{
+  width:86px;
+  height:86px;
+  border-radius:24px;
+  box-shadow:
+    0 15px 34px color-mix(
+      in srgb,
+      var(--accent) 20%,
+      transparent
+    ),
+    inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+.profile-page .profile-card h2{
+  font-size:24px;
+  letter-spacing:-.04em;
+}
+
+.profile-page .profile-card p{
+  font-size:10.5px;
+}
+
+.profile-page .profile-info{
+  gap:10px;
+}
+
+.profile-page .profile-info b{
+  color:var(--text);
+}
+
+body[data-theme="light"] .profile-popover{
+  box-shadow:
+    0 24px 60px rgba(38,65,95,.16),
+    inset 0 1px 0 rgba(255,255,255,.90);
+}
+
+body[data-theme="light"] #notification-modal{
+  background:rgba(229,238,247,.26);
+}
+
+body[data-theme="light"] .nova-confirm-backdrop{
+  background:rgba(17,39,61,.26);
+}
+
+@media(max-width:760px){
+  .profile-popover{
+    right:-4px;
+  }
+
+  .profile-menu .profile-chip > span:not(.avatar){
+    display:none;
+  }
+
+  .profile-menu .profile-chip{
+    width:44px;
+    padding:5px;
+    justify-content:center;
+  }
+
+  .profile-menu .profile-chip > .icon{
+    display:none;
+  }
+
+  #notification-modal{
+    justify-content:center;
+    padding:
+      calc(76px + 6px)
+      12px
+      12px;
+  }
+
+  #notification-modal .notification-modal{
+    width:100%;
+  }
+
+  .nova-confirm-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .profile-popover,
+  .profile-menu .profile-chip,
+  .profile-popover-item,
+  .danger-button,
+  #notification-modal .modal-item{
+    transition:none !important;
+  }
+
+  .nova-theme-switching .icon,
+  .nova-theme-switching:after,
+  #notification-modal .notification-modal,
+  .nova-confirm-modal{
+    animation:none !important;
+  }
+}
+
+/* NOVA_ACCOUNT_HEADER_2026 END */

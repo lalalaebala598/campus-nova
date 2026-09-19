@@ -164,7 +164,24 @@ function flattenCalendar(c){const a=[];for(const w of c?.weeks||[])for(const d o
 function dateKey(ts){const d=new Date(Number(ts)*1000);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
 function selectedKey(){return `${state.year}-${state.month}-${state.selectedDay}`}
 function monthLabel(){return new Date(state.year,state.month-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase())}
-function themeToggle(){state.theme=state.theme==='dark'?'light':'dark';setTheme();localStorage.setItem('nova-theme',state.theme);render()}
+function themeToggle(){
+  state.theme=state.theme==='dark'?'light':'dark';
+  setTheme();
+  localStorage.setItem('nova-theme',state.theme);
+  render();
+
+  novaFrame(()=>{
+    if(typeof document.querySelectorAll!=='function') return;
+
+    document.querySelectorAll(
+      '#theme-top,#theme-sidebar,#theme-profile'
+    ).forEach(el=>{
+      el.classList.remove('nova-theme-switching');
+      void el.offsetWidth;
+      el.classList.add('nova-theme-switching');
+    });
+  });
+}
 function setTheme(){document.body.dataset.theme=state.theme;const root=document.documentElement;if(root){root.dataset.theme=state.theme;root.style.colorScheme=state.theme}}
 function brand(){return `<div class="brand"><span class="brand-mark">${icon('university',22)}</span><span><b>Campus <em>FA</em></b><small>Nova</small></span></div>`}
 function notificationItems(){
@@ -190,7 +207,7 @@ function notificationsBadge(){const messages=state.data.messages||{};const n=(me
 function shell(content){
   const active=['course','view'].includes(state.route)?'courses':state.route;
   const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><label class="search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Поиск по курсам, материалам, преподавателям…"><kbd>Ctrl K</kbd></label><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><button class="profile-chip" data-go="profile"><span class="avatar">${avatar()}</span><span><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></span>${icon('chevron',14)}</button></div></header><div id="page">${content}</div></main></div>`;
+  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><label class="search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Поиск по курсам, материалам, преподавателям…"><kbd>Ctrl K</kbd></label><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
 }
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
@@ -2504,7 +2521,7 @@ function activityPage(){
 function profilePage(){
   if(state.status.profile==='loading') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Загружаем профиль…'})}${skeletonGrid(2)}</section>`;
   if(state.status.profile==='error') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Не удалось загрузить профиль.'})}${statePanel('error','profile')}</section>`;
-  const p=state.data.profile||state.user||{}; return `<section class="page profile-page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Твой Campus в Nova.',children:`<button class="secondary" id="logout">Выйти</button>`})}<div class="profile-grid"><section class="profile-card main-profile"><div class="profile-avatar">${esc(avatar())}</div><div><h2>${esc(p.fullname||state.user?.fullname||'Студент')}</h2><p>Студент · Финансовый университет</p><div class="status-pill"><i></i> Campus подключён</div></div></section><section class="profile-card"><div class="panel-title">Подключение</div><div class="profile-info"><span>Статус</span><b>Активно</b><span>Сайт Campus</span><b>${esc(campusHost())}</b><span>Интерфейс</span><b>Campus Nova</b></div></section><section class="profile-card"><div class="panel-title">Тема</div><p class="profile-muted">Сохраняется на этом устройстве.</p><button class="secondary wide" id="theme-profile">${icon(state.theme==='dark'?'sun':'moon',16)} ${state.theme==='dark'?'Переключить на светлую':'Переключить на тёмную'}</button></section></div></section>`;
+  const p=state.data.profile||state.user||{}; return `<section class="page profile-page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Твой Campus в Nova.',children:`<button class="secondary danger-button" id="logout" type="button">${icon('close',15)} Выйти</button>`})}<div class="profile-grid"><section class="profile-card main-profile"><div class="profile-avatar">${esc(avatar())}</div><div><h2>${esc(p.fullname||state.user?.fullname||'Студент')}</h2><p>Студент · Финансовый университет</p><div class="status-pill"><i></i> Campus подключён</div></div></section><section class="profile-card"><div class="panel-title">Подключение</div><div class="profile-info"><span>Статус</span><b>Активно</b><span>ID пользователя</span><b>${esc(state.user?.id||p.id||'—')}</b><span>Сайт Campus</span><b>${esc(campusHost())}</b><span>Интерфейс</span><b>Campus Nova</b></div></section><section class="profile-card"><div class="panel-title">Тема</div><p class="profile-muted">Сохраняется на этом устройстве.</p><button class="secondary wide" id="theme-profile">${icon(state.theme==='dark'?'sun':'moon',16)} ${state.theme==='dark'?'Переключить на светлую':'Переключить на тёмную'}</button></section></div></section>`;
 }
 function viewPage(){
   const title=state.data.view?.title||'Материал';
@@ -2973,16 +2990,80 @@ function bind(){
   $$('[data-month]').forEach(el=>el.addEventListener('click',()=>changeMonth(Number(el.dataset.month))));
   $$('[data-day]').forEach(el=>el.addEventListener('click',()=>selectDay(el.dataset.day)));
   $('#theme-sidebar')?.addEventListener('click',themeToggle);$('#theme-top')?.addEventListener('click',themeToggle);$('#theme-profile')?.addEventListener('click',themeToggle);
+
+  const profileMenu=$('#profile-menu');
+  const profileTrigger=$('#profile-menu-trigger');
+
+  profileTrigger?.addEventListener('click',e=>{
+    e.stopPropagation();
+
+    const open=!profileMenu?.classList.contains('open');
+
+    profileMenu?.classList.toggle('open',open);
+    profileTrigger.setAttribute(
+      'aria-expanded',
+      open?'true':'false'
+    );
+  });
+
+  $('#profile-logout')?.addEventListener(
+    'click',
+    confirmNovaLogout
+  );
   $('#calendar-today')?.addEventListener('click',()=>{const d=new Date();state.year=d.getFullYear();state.month=d.getMonth()+1;state.selectedDay=d.getDate();render();loadData('calendar',true)});
   $('#expand-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true));$('#collapse-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=false));
   $('#cards-mode')?.addEventListener('click',()=>{state.courseView='cards';localStorage.setItem('nova-course-view','cards');render()});$('#list-mode')?.addEventListener('click',()=>{state.courseView='list';localStorage.setItem('nova-course-view','list');render()});
-  $('#logout')?.addEventListener('click',logout);$('#notifications')?.addEventListener('click',()=>showNotifications());
+  $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>showNotifications());
   const s=$('#global-search');if(s){s.addEventListener('input',()=>{state.search=s.value; if(state.route==='courses')render()});s.addEventListener('keydown',e=>{if(e.key==='Enter'&&state.search.trim())navigate('courses')});}
   $('#mobile-menu')?.addEventListener('click',()=>$('.sidebar')?.classList.toggle('mobile-open'));
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
 }
 async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
+function confirmNovaLogout(){
+  if(document.querySelector('#nova-logout-modal')) return;
+
+  const root=document.createElement('div');
+  root.id='nova-logout-modal';
+  root.className='modal-backdrop nova-confirm-backdrop';
+
+  root.innerHTML=`<div class="modal nova-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="nova-logout-title"><div class="nova-confirm-icon">${icon('close',20)}</div><div class="nova-confirm-copy"><span class="eyebrow">СЕАНС CAMPUS</span><h2 id="nova-logout-title">Выйти из Campus?</h2><p>Nova завершит текущую сессию и вернёт тебя на экран входа.</p></div><div class="nova-confirm-actions"><button class="secondary" id="nova-logout-cancel" type="button">Отмена</button><button class="danger-button" id="nova-logout-confirm" type="button">${icon('close',15)} Выйти</button></div></div>`;
+
+  document.body.append(root);
+
+  const close=()=>{
+    root.classList.add('is-closing');
+    novaFrame(()=>root.remove());
+  };
+
+  $('#nova-logout-cancel')?.addEventListener('click',close);
+
+  root.addEventListener('click',e=>{
+    if(e.target===root) close();
+  });
+
+  $('#nova-logout-confirm')?.addEventListener('click',async e=>{
+    const button=e.currentTarget;
+
+    if(button.disabled) return;
+
+    button.disabled=true;
+    button.innerHTML=`<span class="spinner small"></span> Выходим…`;
+
+    await logout();
+    close();
+  });
+
+  const escHandler=e=>{
+    if(e.key==='Escape'){
+      close();
+      document.removeEventListener('keydown',escHandler);
+    }
+  };
+
+  document.addEventListener('keydown',escHandler);
+}
+
 async function logout(){await api('/api/auth/logout',{method:'POST'}).catch(()=>{});Object.assign(state,{connected:false,user:null,demo:false});render();history.replaceState({},'', '/');toast('Campus отключён')}
 async function loadDemo(){const d=await api('/api/demo/snapshot');state.demo=true;state.connected=true;state.user={fullname:'Никита'};localStorage.removeItem('nova-demo');state.data.courses=d.courses||[];state.data.calendar={weeks:[],...d.calendar};state.data.grades=(d.grades||[]).flatMap(x=>x.items||[]).map(i=>({name:i.name,grade:i.grade,percentage:i.percentage,range:i.range}));state.data.tasks=[];state.data.messages={conversations:[]};state.data.view=null;state.status.view='idle';state.status.dashboard='success';state.status.courses='success';state.status.calendar='success';state.status.grades='success';state.status.tasks='success';state.status.messages='success';state.status.files='success';state.status.tests='success';state.data.files=[];state.data.tests=[];navigate('dashboard','',true)}
 async function loadData(service,force=false,epoch=state.routeEpoch){
@@ -3613,6 +3694,16 @@ window.addEventListener('popstate',()=>{
 });window.addEventListener('error',e=>console.error('[Nova]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[Nova]',e.reason));
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#global-search')?.focus()}});
 document.addEventListener('click',e=>{
+  const openProfile=document.querySelector('.profile-menu.open');
+
+  if(openProfile && !openProfile.contains(e.target)){
+    openProfile.classList.remove('open');
+    document.querySelector('#profile-menu-trigger')?.setAttribute(
+      'aria-expanded',
+      'false'
+    );
+  }
+
   const target=e.target?.closest?.('a[data-go]');
   if(!target || !target.isConnected || e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   const route=target.dataset.go||''; const param=target.dataset.param||'';
