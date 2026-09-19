@@ -164,7 +164,41 @@ function flattenCalendar(c){const a=[];for(const w of c?.weeks||[])for(const d o
 function dateKey(ts){const d=new Date(Number(ts)*1000);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
 function selectedKey(){return `${state.year}-${state.month}-${state.selectedDay}`}
 function monthLabel(){return new Date(state.year,state.month-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase())}
-function themeToggle(){state.theme=state.theme==='dark'?'light':'dark';setTheme();localStorage.setItem('nova-theme',state.theme);render()}
+function themeToggle(){
+  const next=
+    state.theme==='dark'
+      ? 'light'
+      : 'dark';
+
+  document.body.classList.remove(
+    'nova-theme-transition'
+  );
+
+  void document.body.offsetWidth;
+
+  document.body.classList.add(
+    'nova-theme-transition'
+  );
+
+  state.theme=next;
+
+  setTheme();
+
+  localStorage.setItem(
+    'nova-theme',
+    state.theme
+  );
+
+  render();
+
+  novaFrame(()=>{
+    setTimeout(()=>{
+      document.body.classList.remove(
+        'nova-theme-transition'
+      );
+    },420);
+  });
+}
 function setTheme(){document.body.dataset.theme=state.theme;const root=document.documentElement;if(root){root.dataset.theme=state.theme;root.style.colorScheme=state.theme}}
 function brand(){return `<div class="brand"><span class="brand-mark">${icon('university',22)}</span><span><b>Campus <em>FA</em></b><small>Nova</small></span></div>`}
 function notificationItems(){
@@ -177,21 +211,456 @@ function notificationItems(){
   return items.slice(0,8);
 }
 function showNotifications(){
-  const existing=$('#notification-modal'); if(existing){existing.remove();return;}
-  const items=notificationItems();
-  const root=document.createElement('div'); root.id='notification-modal'; root.className='modal-backdrop';
-  root.innerHTML=`<div class="modal notification-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Уведомления</h2><p class="modal-sub">События из доступных данных Campus</p></div><button class="icon-btn tiny" id="notifications-close">${icon('close',16)}</button></div><div class="notification-list">${items.map((x,i)=>`<button class="modal-item" data-notify-index="${i}"><span>${icon(x.type==='task'?'check-square':x.type==='message'?'message':'calendar',16)}</span><span><b>${esc(x.title)}</b><small>${esc(x.meta)}</small></span></button>`).join('')||'<div class="inline-empty">Новых уведомлений нет.</div>'}</div></div>`;
+
+  const existing=
+    $('#notification-modal');
+
+  if(existing){
+    existing.classList.add(
+      'nova-notification-closing'
+    );
+
+    setTimeout(()=>{
+      existing.remove();
+    },170);
+
+    return;
+  }
+
+  const items=
+    notificationItems();
+
+  const root=
+    document.createElement('div');
+
+  root.id=
+    'notification-modal';
+
+  root.className=
+    'modal-backdrop nova-notification-backdrop';
+
+  root.innerHTML=`
+    <div
+      class="modal notification-modal nova-notification-panel"
+      role="dialog"
+      aria-modal="true"
+    >
+
+      <div class="modal-head">
+
+        <div>
+          <div class="eyebrow">
+            CAMPUS NOVA
+          </div>
+
+          <h2>
+            Уведомления
+          </h2>
+
+          <p class="modal-sub">
+            Последние события Campus
+          </p>
+        </div>
+
+        <button
+          class="icon-btn tiny"
+          id="notifications-close"
+          aria-label="Закрыть"
+        >
+          ${icon('close',16)}
+        </button>
+
+      </div>
+
+      <div class="notification-list">
+
+        ${
+          items.length
+            ? items.map(
+                (x,i)=>`
+                  <button
+                    class="modal-item"
+                    data-notify-index="${i}"
+                  >
+
+                    <span
+                      class="notification-item-icon"
+                    >
+                      ${icon(
+                        x.type==='task'
+                          ? 'check-square'
+                          : x.type==='message'
+                            ? 'message'
+                            : 'calendar',
+                        16
+                      )}
+                    </span>
+
+                    <span>
+                      <b>${esc(x.title)}</b>
+                      <small>${esc(x.meta)}</small>
+                    </span>
+
+                    <span
+                      class="notification-item-arrow"
+                    >
+                      ${icon('arrow',14)}
+                    </span>
+
+                  </button>
+                `
+              ).join('')
+            : `
+              <div class="notification-empty">
+                <span class="notification-empty-icon">
+                  ${icon('bell',20)}
+                </span>
+
+                <b>Пока тихо</b>
+                <span>Новых уведомлений нет.</span>
+              </div>
+            `
+        }
+
+      </div>
+
+    </div>
+  `;
+
   document.body.append(root);
-  const close=()=>root.remove(); $('#notifications-close')?.addEventListener('click',close); root.addEventListener('click',e=>{if(e.target===root)close()});
-  root.querySelectorAll('[data-notify-index]').forEach((el,i)=>el.addEventListener('click',()=>{const item=items[i];close();item?.action?.()}));
-  const escHandler=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',escHandler)}}; document.addEventListener('keydown',escHandler);
+
+  novaFrame(()=>{
+    root.classList.add(
+      'nova-notification-opening'
+    );
+  });
+
+  const close=()=>{
+    root.classList.add(
+      'nova-notification-closing'
+    );
+
+    setTimeout(()=>{
+      root.remove();
+    },170);
+  };
+
+  $('#notifications-close')
+    ?.addEventListener(
+      'click',
+      close
+    );
+
+  root.addEventListener(
+    'click',
+    event=>{
+      if(event.target===root){
+        close();
+      }
+    }
+  );
+
+  root.querySelectorAll(
+    '[data-notify-index]'
+  ).forEach((el,i)=>{
+    el.addEventListener(
+      'click',
+      ()=>{
+        const item=items[i];
+
+        close();
+
+        item?.action?.();
+      }
+    );
+  });
+
+  const escHandler=event=>{
+    if(event.key==='Escape'){
+      close();
+
+      document.removeEventListener(
+        'keydown',
+        escHandler
+      );
+    }
+  };
+
+  document.addEventListener(
+    'keydown',
+    escHandler
+  );
 }
+
 function notificationsBadge(){const messages=state.data.messages||{};const n=(messages.conversations||[]).reduce((sum,c)=>sum+Number(c.unreadcount||c.unreadCount||0),0);return n?'<i></i>':''}
 function shell(content){
-  const active=['course','view'].includes(state.route)?'courses':state.route;
-  const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><label class="search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Поиск по курсам, материалам, преподавателям…"><kbd>Ctrl K</kbd></label><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><button class="profile-chip" data-go="profile"><span class="avatar">${avatar()}</span><span><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></span>${icon('chevron',14)}</button></div></header><div id="page">${content}</div></main></div>`;
+  const active=
+    ['course','view'].includes(state.route)
+      ? 'courses'
+      : state.route;
+
+  const nav=
+    NAV.map(([r,i,l])=>{
+      const href=
+        r==='dashboard'
+          ? '/'
+          : `/${r}`;
+
+      return `
+        <a
+          class="nav-item ${active===r?'active':''}"
+          href="${href}"
+          data-go="${r}"
+          aria-current="${active===r?'page':'false'}"
+        >
+          ${icon(i,18)}
+          <span>${l}</span>
+        </a>
+      `;
+    }).join('');
+
+  return `
+    <div class="app-shell">
+
+      <aside class="sidebar">
+
+        <div class="sidebar-top">
+          ${brand()}
+
+          <div class="uni">
+            <b>Финансовый университет</b>
+            <span>Краснодарский филиал</span>
+          </div>
+        </div>
+
+        <div class="nav-caption">
+          УЧЕБНАЯ СРЕДА
+        </div>
+
+        <nav class="nav">
+          ${nav}
+        </nav>
+
+        <div class="sidebar-bottom">
+
+          <button
+            class="nav-item ${active==='profile'?'active':''}"
+            data-go="profile"
+          >
+            ${icon('user',18)}
+            <span>Профиль</span>
+          </button>
+
+          <button
+            class="theme-row"
+            id="theme-sidebar"
+          >
+            <span class="theme-row-icon">
+              ${icon(
+                state.theme==='dark'
+                  ? 'sun'
+                  : 'moon',
+                17
+              )}
+            </span>
+
+            <span>
+              ${
+                state.theme==='dark'
+                  ? 'Светлая тема'
+                  : 'Тёмная тема'
+              }
+            </span>
+          </button>
+
+          <span class="connection">
+            <i></i>
+            ${
+              state.demo
+                ? 'Демо-режим'
+                : 'Campus подключён'
+            }
+          </span>
+
+        </div>
+
+      </aside>
+
+      <main class="main">
+
+        <header class="topbar">
+
+          <div class="crumb">
+            <button
+              class="mobile-menu"
+              id="mobile-menu"
+            >
+              ${icon('grid',18)}
+            </button>
+
+            <span>Campus Nova</span>
+            <b>›</b>
+            <strong>
+              ${esc(routeLabel(state.route))}
+            </strong>
+          </div>
+
+          <div class="top-actions">
+
+            <label class="search">
+              <span>${icon('search',17)}</span>
+
+              <input
+                id="global-search"
+                value="${esc(state.search)}"
+                placeholder="Поиск по курсам, материалам, преподавателям…"
+              >
+
+              <kbd>Ctrl K</kbd>
+            </label>
+
+            <button
+              class="icon-btn header-icon-button theme-top-button"
+              id="theme-top"
+              title="Сменить тему"
+              aria-label="Сменить тему"
+            >
+              <span class="header-icon-center">
+                ${icon(
+                  state.theme==='dark'
+                    ? 'sun'
+                    : 'moon',
+                  17
+                )}
+              </span>
+            </button>
+
+            <button
+              class="icon-btn header-icon-button notification-button ${notificationsBadge()?'has-dot':''}"
+              id="notifications"
+              title="Уведомления"
+              aria-label="Уведомления"
+            >
+              <span class="header-icon-center">
+                ${icon('bell',17)}
+              </span>
+
+              ${notificationsBadge()}
+            </button>
+
+            <div
+              class="profile-menu-wrap"
+              id="profile-menu-wrap"
+            >
+
+              <button
+                class="profile-chip"
+                id="profile-menu-trigger"
+                aria-expanded="false"
+                aria-haspopup="menu"
+              >
+
+                <span class="avatar">
+                  ${avatar()}
+                </span>
+
+                <span class="profile-chip-copy">
+                  <b>${esc(firstName())}</b>
+                  <small>Студент</small>
+                </span>
+
+                <span class="profile-chip-chevron">
+                  ${icon('chevron',14)}
+                </span>
+
+              </button>
+
+              <div
+                class="profile-dropdown"
+                id="profile-dropdown"
+                role="menu"
+              >
+
+                <div class="profile-dropdown-head">
+
+                  <span class="avatar profile-dropdown-avatar">
+                    ${avatar()}
+                  </span>
+
+                  <span>
+                    <b>${esc(firstName())}</b>
+                    <small>Студент · Campus Nova</small>
+                  </span>
+
+                </div>
+
+                <div class="profile-dropdown-info">
+
+                  <div>
+                    <span>Campus</span>
+                    <b>Подключён</b>
+                  </div>
+
+                  <div>
+                    <span>Пользователь</span>
+                    <b>
+                      ${esc(
+                        state.user?.id ||
+                        '—'
+                      )}
+                    </b>
+                  </div>
+
+                </div>
+
+                <div class="profile-dropdown-divider"></div>
+
+                <button
+                  class="profile-dropdown-item"
+                  data-go="profile"
+                  role="menuitem"
+                >
+                  <span class="profile-dropdown-icon">
+                    ${icon('user',16)}
+                  </span>
+
+                  <span>
+                    <b>Профиль</b>
+                    <small>Открыть профиль</small>
+                  </span>
+
+                  <span class="profile-dropdown-arrow">
+                    ${icon('arrow',14)}
+                  </span>
+                </button>
+
+                <button
+                  class="profile-dropdown-logout"
+                  id="profile-dropdown-logout"
+                  role="menuitem"
+                >
+                  ${icon('logout',15)}
+                  Выйти
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        <div id="page">
+          ${content}
+        </div>
+
+      </main>
+
+    </div>
+  `;
 }
+
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
   const errorTitles={course:'Не удалось загрузить курс.',activity:'Не удалось открыть активность.',grades:'Не удалось загрузить оценки.',tasks:'Не удалось загрузить задания.',files:'Не удалось загрузить файлы.',tests:'Не удалось загрузить тесты.',materials:'Не удалось загрузить материалы.',messages:'Не удалось загрузить сообщения.',profile:'Не удалось загрузить профиль.',calendar:'Не удалось загрузить календарь.',schedule:'Не удалось загрузить расписание.',courses:'Не удалось загрузить курсы.',view:'Не удалось открыть материал.',dashboard:'Не удалось загрузить главную страницу.'};
@@ -2504,7 +2973,7 @@ function activityPage(){
 function profilePage(){
   if(state.status.profile==='loading') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Загружаем профиль…'})}${skeletonGrid(2)}</section>`;
   if(state.status.profile==='error') return `<section class="page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Не удалось загрузить профиль.'})}${statePanel('error','profile')}</section>`;
-  const p=state.data.profile||state.user||{}; return `<section class="page profile-page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Твой Campus в Nova.',children:`<button class="secondary" id="logout">Выйти</button>`})}<div class="profile-grid"><section class="profile-card main-profile"><div class="profile-avatar">${esc(avatar())}</div><div><h2>${esc(p.fullname||state.user?.fullname||'Студент')}</h2><p>Студент · Финансовый университет</p><div class="status-pill"><i></i> Campus подключён</div></div></section><section class="profile-card"><div class="panel-title">Подключение</div><div class="profile-info"><span>Статус</span><b>Активно</b><span>Сайт Campus</span><b>${esc(campusHost())}</b><span>Интерфейс</span><b>Campus Nova</b></div></section><section class="profile-card"><div class="panel-title">Тема</div><p class="profile-muted">Сохраняется на этом устройстве.</p><button class="secondary wide" id="theme-profile">${icon(state.theme==='dark'?'sun':'moon',16)} ${state.theme==='dark'?'Переключить на светлую':'Переключить на тёмную'}</button></section></div></section>`;
+  const p=state.data.profile||state.user||{}; return `<section class="page profile-page">${PageHead({eyebrow:'АККАУНТ',title:'Профиль',sub:'Твой Campus в Nova.',children:`<button class="nova-danger-button" id="logout">${icon('logout',15)} Выйти</button>`})}<div class="profile-grid"><section class="profile-card main-profile"><div class="profile-avatar">${esc(avatar())}</div><div><h2>${esc(p.fullname||state.user?.fullname||'Студент')}</h2><p>Студент · Финансовый университет</p><div class="status-pill"><i></i> Campus подключён</div></div></section><section class="profile-card"><div class="panel-title">Подключение</div><div class="profile-info"><span>Статус</span><b>Активно</b><span>Сайт Campus</span><b>${esc(campusHost())}</b><span>Интерфейс</span><b>Campus Nova</b></div></section><section class="profile-card"><div class="panel-title">Тема</div><p class="profile-muted">Сохраняется на этом устройстве.</p><button class="secondary wide" id="theme-profile">${icon(state.theme==='dark'?'sun':'moon',16)} ${state.theme==='dark'?'Переключить на светлую':'Переключить на тёмную'}</button></section></div></section>`;
 }
 function viewPage(){
   const title=state.data.view?.title||'Материал';
@@ -2976,13 +3445,192 @@ function bind(){
   $('#calendar-today')?.addEventListener('click',()=>{const d=new Date();state.year=d.getFullYear();state.month=d.getMonth()+1;state.selectedDay=d.getDate();render();loadData('calendar',true)});
   $('#expand-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true));$('#collapse-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=false));
   $('#cards-mode')?.addEventListener('click',()=>{state.courseView='cards';localStorage.setItem('nova-course-view','cards');render()});$('#list-mode')?.addEventListener('click',()=>{state.courseView='list';localStorage.setItem('nova-course-view','list');render()});
-  $('#logout')?.addEventListener('click',logout);$('#notifications')?.addEventListener('click',()=>showNotifications());
+  $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>showNotifications());
   const s=$('#global-search');if(s){s.addEventListener('input',()=>{state.search=s.value; if(state.route==='courses')render()});s.addEventListener('keydown',e=>{if(e.key==='Enter'&&state.search.trim())navigate('courses')});}
   $('#mobile-menu')?.addEventListener('click',()=>$('.sidebar')?.classList.toggle('mobile-open'));
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
 }
 async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
+
+function closeNovaProfileMenu(){
+  const wrap=$('#profile-menu-wrap');
+
+  if(!wrap) return;
+
+  wrap.classList.remove(
+    'profile-menu-open'
+  );
+
+  $('#profile-menu-trigger')?.setAttribute(
+    'aria-expanded',
+    'false'
+  );
+}
+
+function toggleNovaProfileMenu(event){
+  event?.stopPropagation();
+
+  const wrap=$('#profile-menu-wrap');
+
+  if(!wrap) return;
+
+  const open=
+    !wrap.classList.contains(
+      'profile-menu-open'
+    );
+
+  wrap.classList.toggle(
+    'profile-menu-open',
+    open
+  );
+
+  $('#profile-menu-trigger')?.setAttribute(
+    'aria-expanded',
+    String(open)
+  );
+}
+
+function confirmNovaLogout(){
+
+  closeNovaProfileMenu();
+
+  if($('#nova-logout-modal')){
+    return;
+  }
+
+  const root=document.createElement('div');
+
+  root.id='nova-logout-modal';
+  root.className=
+    'modal-backdrop nova-logout-backdrop';
+
+  root.innerHTML=`
+    <div
+      class="modal nova-logout-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nova-logout-title"
+    >
+
+      <div class="nova-logout-icon">
+        ${icon('logout',20)}
+      </div>
+
+      <div class="eyebrow">
+        CAMPUS NOVA
+      </div>
+
+      <h2 id="nova-logout-title">
+        Выйти из Campus?
+      </h2>
+
+      <p>
+        Текущая сессия будет завершена.
+        Для следующего входа потребуется
+        снова подключить Campus.
+      </p>
+
+      <div class="nova-logout-actions">
+
+        <button
+          type="button"
+          class="secondary"
+          id="nova-logout-cancel"
+        >
+          Отмена
+        </button>
+
+        <button
+          type="button"
+          class="nova-danger-button"
+          id="nova-logout-confirm"
+        >
+          ${icon('logout',15)}
+          Выйти
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.append(root);
+
+  novaFrame(()=>{
+    root.classList.add(
+      'nova-logout-opening'
+    );
+  });
+
+  const close=()=>{
+    root.classList.remove(
+      'nova-logout-opening'
+    );
+
+    root.classList.add(
+      'nova-logout-closing'
+    );
+
+    setTimeout(()=>{
+      root.remove();
+    },170);
+  };
+
+  $('#nova-logout-cancel')
+    ?.addEventListener(
+      'click',
+      close
+    );
+
+  $('#nova-logout-confirm')
+    ?.addEventListener(
+      'click',
+      async()=>{
+        const btn=
+          $('#nova-logout-confirm');
+
+        if(btn){
+          btn.disabled=true;
+
+          btn.innerHTML=`
+            <span class="spinner small"></span>
+            Выходим…
+          `;
+        }
+
+        await logout();
+
+        root.remove();
+      }
+    );
+
+  root.addEventListener(
+    'click',
+    event=>{
+      if(event.target===root){
+        close();
+      }
+    }
+  );
+
+  const escHandler=event=>{
+    if(event.key==='Escape'){
+      close();
+
+      document.removeEventListener(
+        'keydown',
+        escHandler
+      );
+    }
+  };
+
+  document.addEventListener(
+    'keydown',
+    escHandler
+  );
+}
+
 async function logout(){await api('/api/auth/logout',{method:'POST'}).catch(()=>{});Object.assign(state,{connected:false,user:null,demo:false});render();history.replaceState({},'', '/');toast('Campus отключён')}
 async function loadDemo(){const d=await api('/api/demo/snapshot');state.demo=true;state.connected=true;state.user={fullname:'Никита'};localStorage.removeItem('nova-demo');state.data.courses=d.courses||[];state.data.calendar={weeks:[],...d.calendar};state.data.grades=(d.grades||[]).flatMap(x=>x.items||[]).map(i=>({name:i.name,grade:i.grade,percentage:i.percentage,range:i.range}));state.data.tasks=[];state.data.messages={conversations:[]};state.data.view=null;state.status.view='idle';state.status.dashboard='success';state.status.courses='success';state.status.calendar='success';state.status.grades='success';state.status.tasks='success';state.status.messages='success';state.status.files='success';state.status.tests='success';state.data.files=[];state.data.tests=[];navigate('dashboard','',true)}
 async function loadData(service,force=false,epoch=state.routeEpoch){
