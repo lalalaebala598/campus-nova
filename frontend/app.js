@@ -1357,10 +1357,288 @@ function schedulePage(){
   return `<section class="page">${PageHead({eyebrow:'РАСПИСАНИЕ',title:'Расписание',sub:formatLong(new Date(state.year,state.month-1,state.selectedDay).getTime()/1000),children:`<button class="secondary" data-go="calendar">${icon('calendar',16)} Открыть календарь</button>`})}<div class="schedule-list">${events.map(e=>`<button class="schedule-card" data-view="${esc(e.url||'')}" data-route-url><time>${formatTime(e.timestart)}</time><span class="schedule-dot"></span><div><b>${esc(e.name||'Событие')}</b><small>${esc(e.location||e.course?.fullname||'')}</small></div>${icon('arrow',16)}</button>`).join('')||'<div class="inline-empty">На выбранную дату занятий нет.</div>'}</div></section>`;
 }
 function calendarPage(){
-  if(state.status.calendar==='loading') return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:'Календарь',sub:'Загружаем календарь Campus…'})}${skeletonGrid(3)}</section>`;
-  if(state.status.calendar==='error') return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:'Календарь',sub:'Не удалось получить календарь.'})}${statePanel('error','calendar')}</section>`;
-  return `<section class="page">${PageHead({eyebrow:'КАЛЕНДАРЬ',title:monthLabel(),sub:'Выбери день, чтобы увидеть события.',children:`<div class="calendar-actions"><button class="icon-btn" data-month="-1">${icon('back',17)}</button><button class="secondary" id="calendar-today">Сегодня</button><button class="icon-btn" data-month="1">${icon('next',17)}</button></div>`})}<div class="calendar-layout"><div class="calendar-card"><div class="weekday">${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span>${x}</span>`).join('')}</div>${calendarGrid()}</div><aside class="events-card"><div class="panel-head"><div><h2>${icon('calendar',16)} События</h2><small>${esc(formatLong(new Date(state.year,state.month-1,state.selectedDay).getTime()/1000))}</small></div></div><div class="events-list">${eventsForSelected().map(e=>`<button class="event-card" data-view="${esc(e.url||'')}" data-route-url><span class="event-time">${formatTime(e.timestart)}</span><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.location||e.course?.fullname||'')}</small></span>${icon('arrow',14)}</button>`).join('')||'<div class="inline-empty">Событий на выбранную дату нет.</div>'}</div></aside></div></section>`;
+  if(state.status.calendar==='loading'){
+    return `
+      <section class="page calendar-page">
+        ${PageHead({
+          eyebrow:'КАЛЕНДАРЬ',
+          title:'Календарь',
+          sub:'Загружаем календарь Campus…'
+        })}
+        ${skeletonGrid(3)}
+      </section>
+    `;
+  }
+
+  if(state.status.calendar==='error'){
+    return `
+      <section class="page calendar-page">
+        ${PageHead({
+          eyebrow:'КАЛЕНДАРЬ',
+          title:'Календарь',
+          sub:'Не удалось получить календарь.'
+        })}
+        ${statePanel('error','calendar')}
+      </section>
+    `;
+  }
+
+  const events=flattenCalendar(
+    state.data.calendar||{}
+  );
+
+  const selectedEvents=eventsForSelected();
+
+  const selectedDate=new Date(
+    state.year,
+    state.month-1,
+    state.selectedDay
+  );
+
+  const selectedLabel=selectedDate.toLocaleDateString(
+    'ru-RU',
+    {
+      weekday:'long',
+      day:'numeric',
+      month:'long'
+    }
+  );
+
+  const selectedLabelShort=selectedDate.toLocaleDateString(
+    'ru-RU',
+    {
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }
+  );
+
+  const monthEvents=events.length;
+
+  const taskCount=events.filter(
+    e=>calendarEventKind(e)==='task'
+  ).length;
+
+  const quizCount=events.filter(
+    e=>calendarEventKind(e)==='quiz'
+  ).length;
+
+  return `
+    <section class="page calendar-page">
+
+      ${PageHead({
+        eyebrow:'КАЛЕНДАРЬ',
+        title:monthLabel(),
+        sub:'Планируй учебные дни, задания и события Campus.',
+        children:`
+          <div class="calendar-actions">
+            <button
+              class="icon-btn calendar-nav-btn"
+              data-month="-1"
+              aria-label="Предыдущий месяц"
+              title="Предыдущий месяц"
+            >
+              ${icon('back',17)}
+            </button>
+
+            <button
+              class="secondary calendar-today-btn"
+              id="calendar-today"
+            >
+              ${icon('calendar',15)}
+              Сегодня
+            </button>
+
+            <button
+              class="icon-btn calendar-nav-btn"
+              data-month="1"
+              aria-label="Следующий месяц"
+              title="Следующий месяц"
+            >
+              ${icon('next',17)}
+            </button>
+          </div>
+        `
+      })}
+
+      <div class="calendar-overview">
+
+        <div class="calendar-overview-date">
+
+          <div class="calendar-overview-icon">
+            ${icon('calendar',20)}
+          </div>
+
+          <div>
+            <span>Выбранная дата</span>
+            <b>${esc(
+              selectedLabel.charAt(0).toUpperCase()+
+              selectedLabel.slice(1)
+            )}</b>
+            <small>${esc(selectedLabelShort)}</small>
+          </div>
+
+        </div>
+
+        <div class="calendar-overview-stats">
+
+          <div class="calendar-stat">
+            <b>${monthEvents}</b>
+            <span>событий</span>
+          </div>
+
+          <div class="calendar-stat task">
+            <b>${taskCount}</b>
+            <span>заданий</span>
+          </div>
+
+          <div class="calendar-stat quiz">
+            <b>${quizCount}</b>
+            <span>тестов</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="calendar-layout">
+
+        <section class="calendar-card calendar-primary">
+
+          <div class="calendar-card-head">
+
+            <div>
+              <span class="calendar-card-kicker">
+                ${icon('grid',14)}
+                МЕСЯЦ
+              </span>
+
+              <b>${esc(monthLabel())}</b>
+
+              <small>
+                Нажми на день, чтобы открыть события.
+              </small>
+            </div>
+
+            ${calendarLegend()}
+
+          </div>
+
+          <div
+            class="weekday calendar-weekdays"
+            aria-label="Дни недели"
+          >
+            ${[
+              'Пн','Вт','Ср','Чт','Пт','Сб','Вс'
+            ].map(x=>`<span>${x}</span>`).join('')}
+          </div>
+
+          <div class="calendar-month-grid">
+            ${calendarGrid(false)}
+          </div>
+
+        </section>
+
+        <aside class="events-card calendar-events">
+
+          <div class="calendar-events-head">
+
+            <div class="calendar-events-icon">
+              ${icon('calendar',17)}
+            </div>
+
+            <div>
+              <span>ВЫБРАННЫЙ ДЕНЬ</span>
+
+              <h2>
+                ${esc(
+                  selectedLabel.charAt(0).toUpperCase()+
+                  selectedLabel.slice(1)
+                )}
+              </h2>
+
+              <small>${esc(selectedLabelShort)}</small>
+            </div>
+
+          </div>
+
+          <div class="calendar-events-divider"></div>
+
+          <div class="calendar-events-list">
+
+            ${
+              selectedEvents.length
+                ? selectedEvents.map(e=>`
+                    <button
+                      class="calendar-event-item"
+                      data-view="${esc(e.url||'')}"
+                      data-route-url
+                    >
+
+                      <span class="calendar-event-time">
+                        ${formatTime(e.timestart)}
+                      </span>
+
+                      <span class="calendar-event-line"></span>
+
+                      <span class="calendar-event-copy">
+
+                        <small class="calendar-event-type ${calendarEventKind(e)}">
+                          ${
+                            calendarEventKind(e)==='task'
+                              ? 'Задание'
+                              : calendarEventKind(e)==='quiz'
+                              ? 'Тест'
+                              : 'Событие'
+                          }
+                        </small>
+
+                        <b>
+                          ${esc(e.name||'Событие')}
+                        </b>
+
+                        <small>
+                          ${esc(
+                            e.location||
+                            e.course?.fullname||
+                            'Campus'
+                          )}
+                        </small>
+
+                      </span>
+
+                      ${icon('arrow',15)}
+
+                    </button>
+                  `).join('')
+                : `
+                  <div class="calendar-empty-state">
+
+                    <div class="calendar-empty-icon">
+                      ${icon('check',20)}
+                    </div>
+
+                    <b>День свободен</b>
+
+                    <p>
+                      На выбранную дату событий нет.
+                      Можно спокойно заняться другими задачами.
+                    </p>
+
+                  </div>
+                `
+            }
+
+          </div>
+
+        </aside>
+
+      </div>
+
+    </section>
+  `;
 }
+
 function calendarEventKind(event){
   const value=[
     event?.modulename,
