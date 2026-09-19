@@ -4348,12 +4348,16 @@ document.addEventListener('pointermove',e=>{
 /*
  * Automatically decorate every newly rendered Nova page.
  */
-if(!window.__novaInteractionObserver){
-  window.__novaInteractionObserver=new MutationObserver(()=>{
-    requestAnimationFrame(()=>{
-      enhanceNovaInteractions(document);
+if(
+  typeof MutationObserver!=='undefined' &&
+  !window.__novaInteractionObserver
+){
+  window.__novaInteractionObserver=
+    new MutationObserver(()=>{
+      requestAnimationFrame(()=>{
+        enhanceNovaInteractions(document);
+      });
     });
-  });
 
   window.__novaInteractionObserver.observe(
     document.body,
