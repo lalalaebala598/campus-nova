@@ -119,21 +119,296 @@ export class AssignmentDriver {
   }
 
   async load(activity, options = {}) {
-    const result = await this.session.executeOperation('assignment.view', { ...activity.ref, parentTraceId: options.parentTraceId, activityType: activity.ref.type }, { cmid: activity.ref.cmid }, { redirect: 'follow', timeoutMs: options.timeoutMs || 20000 });
-    const html = htmlMain(result.parsed);
-    if (!html) throw activityError('Не удалось загрузить задание.', 'ASSIGNMENT_EMPTY', 'PARSER');
-    const title = result.parsed?.title || textOnly(html.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/i)?.[1] || activity.identity.name);
-    const status = detectSubmission(html);
-    const addSubmission = /editsubmission|Добавить ответ|Add submission/i.test(html);
-    this.trace?.stage(options.parentTraceId, 'DRIVER_PARSED', { parser: 'moodle.html.assignment.v1', title, submissionStatus: status });
+    const result =
+      await this.session.executeOperation(
+        'assignment.view',
+        {
+          ...activity.ref,
+          parentTraceId: options.parentTraceId,
+          activityType: activity.ref.type
+        },
+        {
+          cmid: activity.ref.cmid
+        },
+        {
+          redirect: 'follow',
+          timeoutMs: options.timeoutMs || 20000
+        }
+      );
+
+    const html =
+      htmlMain(result.parsed);
+
+    if (!html) {
+      throw activityError(
+        'Не удалось загрузить задание.',
+        'ASSIGNMENT_EMPTY',
+        'PARSER'
+      );
+    }
+
+    const title =
+      result.parsed?.title ||
+      textOnly(
+        html.match(
+          /<h[12][^>]*>([\s\S]*?)<\/h[12]>/i
+        )?.[1] ||
+        activity.identity.name
+      );
+
+    /*
+     * The actual practical assignment text and its attachments
+     * come from the page we have just opened.
+     *
+     * We do NOT use activity.content.description/files here,
+     * because those values belong to the course graph.
+     */
+
+    const statusIndex =
+      html.search(
+        /Состояние ответа|Состояние оценивания|Submission status|Grading status/i
+      );
+
+    let descriptionHtml =
+      statusIndex > 0
+        ? html.slice(
+            0,
+            statusIndex
+          )
+        : html;
+
+    const files = [];
+    const seen = new Set();
+
+    /*
+     * Only real anchor links can become assignment files.
+     *
+     * img/src is deliberately ignored, so logos and favicons
+     * cannot become attachments.
+     */
+    for (
+      const match of String(
+        descriptionHtml
+      ).matchAll(
+        /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+      )
+    ) {
+      const fileurl =
+        String(
+          match[1] || ''
+        )
+          .replace(
+            /&amp;/gi,
+            '&'
+          )
+          .trim();
+
+      if (
+        !fileurl ||
+        seen.has(fileurl)
+      ) {
+        continue;
+      }
+
+      const anchorName =
+        textOnly(
+          match[2] || ''
+        )
+          .replace(
+            /\s+/g,
+            ' '
+          )
+          .trim();
+
+      const urlName =
+        fileurl
+          .split('/')
+          .pop()
+          ?.split('?')[0] ||
+        '';
+
+      const filename =
+        anchorName ||
+        urlName ||
+        'Файл задания';
+
+      /*
+       * Website assets are never assignment materials.
+       */
+      const isAsset =
+        /\.(?:ico|png|jpe?g|gif|svg|webp|bmp|avif|css|js|woff2?|woff|ttf|otf)(?:$|[?#])/i.test(
+          filename
+        ) ||
+        /\.(?:ico|png|jpe?g|gif|svg|webp|bmp|avif|css|js|woff2?|woff|ttf|otf)(?:$|[?#])/i.test(
+          fileurl
+        );
+
+      if (isAsset) {
+        continue;
+      }
+
+      /*
+       * Accept Moodle/Campus protected files and normal
+       * educational document extensions.
+       */
+      const isFile =
+        /(?:pluginfile|webservice\/pluginfile|tokenpluginfile|draftfile)\.php/i.test(
+          fileurl
+        ) ||
+        /\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(
+          filename
+        ) ||
+        /\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(
+          fileurl
+        );
+
+      if (!isFile) {
+        continue;
+      }
+
+      files.push({
+        type: 'file',
+        filename,
+        filepath: '/',
+        filesize: 0,
+        fileurl,
+        content: '',
+        sortorder: files.length,
+        mimetype: ''
+      });
+
+      seen.add(
+        fileurl
+      );
+    }
+
+    /*
+     * Remove raw attachment links from displayed description.
+     * Nova draws its own download buttons.
+     */
+    descriptionHtml =
+      descriptionHtml.replace(
+        /<a\b[^>]*href=["'][^"']*(?:pluginfile|webservice\/pluginfile|tokenpluginfile|draftfile)\.php[^"']*["'][^>]*>[\s\S]*?<\/a>/gi,
+        ''
+      );
+
+    /*
+     * Remove page chrome that might remain inside <main>.
+     */
+    descriptionHtml =
+      descriptionHtml
+        .replace(
+          /<nav\b[^>]*>[\s\S]*?<\/nav>/gi,
+          ''
+        )
+        .replace(
+          /<header\b[^>]*>[\s\S]*?<\/header>/gi,
+          ''
+        )
+        .replace(
+          /<footer\b[^>]*>[\s\S]*?<\/footer>/gi,
+          ''
+        )
+        .replace(
+          /<script\b[^>]*>[\s\S]*?<\/script>/gi,
+          ''
+        )
+        .replace(
+          /<style\b[^>]*>[\s\S]*?<\/style>/gi,
+          ''
+        )
+        .trim();
+
+    const description =
+      textOnly(
+        descriptionHtml
+      )
+        .replace(
+          /\s+/g,
+          ' '
+        )
+        .trim();
+
+    const status =
+      detectSubmission(
+        html
+      );
+
+    const addSubmission =
+      /editsubmission|Добавить ответ|Add submission/i.test(
+        html
+      );
+
+    this.trace?.stage(
+      options.parentTraceId,
+      'DRIVER_PARSED',
+      {
+        parser:
+          'moodle.html.assignment.final',
+
+        title,
+
+        submissionStatus:
+          status,
+
+        descriptionLength:
+          description.length,
+
+        pageFiles:
+          files.length
+      }
+    );
+
     return {
-      kind: 'assignment', title, html, activityRef: activity.ref,
-      submission: { status, addSubmission },
-      capabilities: { ...this.getCapabilities(activity), canSubmit: addSubmission ? true : null },
-      source: { transport: 'WEB_FORM', operation: 'assignment.view' },
+      kind: 'assignment',
+
+      title,
+
+      html,
+
+      /*
+       * These fields are consumed by the Nova practical UI.
+       */
+      description,
+
+      descriptionHtml,
+
+      /*
+       * Only files from this assignment page.
+       */
+      files,
+
+      activityRef:
+        activity.ref,
+
+      submission: {
+        status,
+        addSubmission
+      },
+
+      capabilities: {
+        ...this.getCapabilities(
+          activity
+        ),
+
+        canDownload:
+          files.length > 0,
+
+        canSubmit:
+          addSubmission
+            ? true
+            : null
+      },
+
+      source: {
+        transport:
+          'WEB_FORM',
+
+        operation:
+          'assignment.view'
+      }
     };
   }
-
   async edit(activity, options = {}) {
     const result = await this.session.executeOperation('assignment.edit', { ...activity.ref, parentTraceId: options.parentTraceId, activityType: activity.ref.type }, { cmid: activity.ref.cmid }, { redirect: 'follow', timeoutMs: options.timeoutMs || 20000 });
     const html = htmlMain(result.parsed);

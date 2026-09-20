@@ -3732,11 +3732,25 @@ function prepareCampusActivityHtml(html, title = '') {
 
 function assignmentSourceMarkup(activity, result) {
   const content = activity?.content || {};
-  const description = String(content.description || '').trim();
+  const description =
+    String(
+      result?.description ||
+      content.description ||
+      ''
+    ).trim();
 
-  const files = Array.isArray(content.files)
-    ? content.files.filter(file => file?.fileurl)
-    : [];
+  const descriptionHtml =
+    String(
+      result?.descriptionHtml ||
+      ''
+    ).trim();
+
+  const files =
+    Array.isArray(result?.files)
+      ? result.files.filter(
+          file => file?.fileurl
+        )
+      : [];
 
   const dates = Array.isArray(content.dates)
     ? content.dates
@@ -3764,7 +3778,7 @@ function assignmentSourceMarkup(activity, result) {
         description
           ? `
             <div class="nova-practice-description">
-              ${esc(description)}
+              ${descriptionHtml || esc(description)}
             </div>
           `
           : `
