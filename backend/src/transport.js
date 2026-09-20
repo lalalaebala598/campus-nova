@@ -42,9 +42,49 @@ function isSafeRetryMethod(method, options) {
 
 function interpolate(template, values = {}) {
   return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, (_, key) => {
-    if (!(key in values)) { const err = new Error(`Missing dynamic contract parameter: ${key}`); err.code = 'CONTRACT_PARAMETER_MISSING'; throw err; }
-    const value = String(values[key]);
-    return key === 'filePath' ? encodeURI(value.replace(/^\/+/, '')) : encodeURIComponent(value);
+    if (!(key in values)) {
+      const err =
+        new Error(
+          `Missing dynamic contract parameter: ${key}`
+        );
+
+      err.code =
+        'CONTRACT_PARAMETER_MISSING';
+
+      throw err;
+    }
+
+    const value =
+      String(values[key]);
+
+    /*
+     * Runtime Moodle form actions are already real
+     * paths. Never encode "/" in an action.
+     *
+     * Encoding:
+     *   /mod/quiz/startattempt.php
+     *
+     * with encodeURIComponent() produces:
+     *   %2Fmod%2Fquiz%2Fstartattempt.php
+     *
+     * which can become:
+     *   //mod/quiz/startattempt.php
+     *
+     * on the upstream Moodle server.
+     */
+    if (key === 'action') {
+      return encodeURI(
+        value.replace(/^\/+/, '/')
+      );
+    }
+
+    if (key === 'filePath') {
+      return encodeURI(
+        value.replace(/^\/+/, '')
+      );
+    }
+
+    return encodeURIComponent(value);
   });
 }
 
