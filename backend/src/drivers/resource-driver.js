@@ -56,6 +56,21 @@ function extractResourceFiles(parsed = {}) {
       String(filename || '').trim() ||
       filenameFromUrl(url);
 
+    /*
+     * Moodle/Campus can serve site assets through
+     * pluginfile.php too. They are not lesson files.
+     */
+    if (
+      /\.(?:ico|png|jpe?g|gif|svg|webp|bmp|avif|css|js|woff2?|woff|ttf|otf)(?:$|[?#])/i.test(
+        cleanName
+      ) ||
+      /\.(?:ico|png|jpe?g|gif|svg|webp|bmp|avif|css|js|woff2?|woff|ttf|otf)(?:$|[?#])/i.test(
+        url
+      )
+    ) {
+      return;
+    }
+
     files.push({
       type: 'file',
       filename: cleanName || 'Файл',
@@ -76,12 +91,23 @@ function extractResourceFiles(parsed = {}) {
    * We only inspect HTML of THIS resource.view request.
    * We never read activity.content.files here.
    */
+  /*
+   * Only explicit links are files.
+   *
+   * img/src is intentionally ignored because
+   * favicon/logo/theme assets can also use pluginfile.php.
+   */
   for (
     const match of String(html || '').matchAll(
-      /(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php|\/draftfile\.php)[^"']*)["']/gi
+      /<a\\b[^>]*href=["']([^"']*(?:\\/pluginfile\\.php|\\/webservice\\/pluginfile\\.php|\\/tokenpluginfile\\.php|\\/draftfile\\.php)[^"']*)["'][^>]*>([\\s\\S]*?)<\\/a>/gi
     )
   ) {
-    add(match[1]);
+    add(
+      match[1],
+      textOnly(
+        match[2] || ''
+      )
+    );
   }
 
   /*
