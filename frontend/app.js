@@ -68,6 +68,7 @@ function icon(name,size=18){
     info:'<circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/>',
     eye:'<path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/>',
     file:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+    book:'<path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5z"/><path d="M5 4.5v17"/><path d="M7.5 19H20"/>',
     upload:'<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>',
     edit:'<path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="m13.5 6.5 4 4"/>',
     save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-6h8v6"/>',
@@ -2698,39 +2699,298 @@ function detectLearningMaterial(a = {}, result = {}, title = ''){
   };
 }
 
-function collectActivityFiles(a = {}, result = {}){
-  const all = [
-    ...(Array.isArray(a?.content?.files) ? a.content.files : []),
-    ...(Array.isArray(result?.files) ? result.files : []),
-    ...(result?.file ? [result.file] : [])
-  ];
+function learningMimeFromName(name = ''){
+  const lower =
+    String(name || '')
+      .toLowerCase();
 
+  if(lower.endsWith('.pdf')) return 'application/pdf';
+  if(lower.endsWith('.doc')) return 'application/msword';
+  if(lower.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if(lower.endsWith('.xls')) return 'application/vnd.ms-excel';
+  if(lower.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if(lower.endsWith('.ppt')) return 'application/vnd.ms-powerpoint';
+  if(lower.endsWith('.pptx')) return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  if(lower.endsWith('.zip')) return 'application/zip';
+
+  return '';
+}
+
+function learningFilenameFromUrl(url = ''){
+  try{
+    const parsed =
+      new URL(
+        String(url || ''),
+        campusOrigin() || window.location.origin
+      );
+
+    const parts =
+      parsed.pathname
+        .split('/')
+        .filter(Boolean);
+
+    return (
+      decodeURIComponent(
+        parts[parts.length - 1] || ''
+      )
+        .replace(/\?.*$/,'')
+        .trim()
+    ) || 'Файл';
+  }catch{
+    return 'Файл';
+  }
+}
+
+function normalizeLearningFileUrl(value = ''){
+  const raw =
+    String(value || '').trim();
+
+  if(!raw || raw === '#'){
+    return null;
+  }
+
+  if(/^javascript:/i.test(raw)){
+    return null;
+  }
+
+  /*
+   * Сначала пробуем стандартный Nova normalizer.
+   */
+  const normalized =
+    normalizePath(raw);
+
+  if(normalized && isFile(normalized)){
+    return normalized;
+  }
+
+  /*
+   * Потом корректно разрешаем относительный Campus URL.
+   */
+  try{
+    const base =
+      new URL(
+        location.href
+      );
+
+    const parsed =
+      new URL(
+        raw,
+        base
+      );
+
+    const origin =
+      campusOrigin();
+
+    if(
+      origin &&
+      parsed.origin !== origin
+    ){
+      return null;
+    }
+
+    const path =
+      parsed.pathname +
+      parsed.search +
+      parsed.hash;
+
+    if(isFile(path)){
+      return normalizePath(path);
+    }
+
+  }catch{
+    return null;
+  }
+
+  return null;
+}
+
+function extractActivityFilesFromHtml(
+  html = ''
+){
+  const source =
+    String(html || '');
+
+  if(!source.trim()){
+    return [];
+  }
+
+  const doc =
+    new DOMParser().parseFromString(
+      source,
+      'text/html'
+    );
+
+  const out = [];
   const seen = new Set();
 
-  return all.filter(file=>{
-    const path =
-      normalizePath(
+  const anchors =
+    [
+      ...doc.querySelectorAll(
+        'a[href], area[href]'
+      )
+    ];
+
+  for(const link of anchors){
+    const raw =
+      link.getAttribute('href') || '';
+
+    const fileurl =
+      normalizeLearningFileUrl(raw);
+
+    if(!fileurl || seen.has(fileurl)){
+      continue;
+    }
+
+    const filename =
+      text(
+        link.textContent || ''
+      ) ||
+      learningFilenameFromUrl(
+        fileurl
+      );
+
+    out.push({
+      fileurl,
+      filename:
+        filename || 'Файл',
+      mimetype:
+        learningMimeFromName(
+          filename
+        ),
+      filesize:
+        Number(
+          link.getAttribute(
+            'data-filesize'
+          ) || 0
+        ) || 0
+    });
+
+    seen.add(fileurl);
+  }
+
+  /*
+   * В Moodle файл иногда лежит в data-* атрибуте,
+   * а обычный href ведёт на промежуточную страницу.
+   */
+  const elements =
+    [
+      ...doc.querySelectorAll(
+        '[data-fileurl],[data-url],[data-href]'
+      )
+    ];
+
+  for(const element of elements){
+    const raw =
+      element.getAttribute(
+        'data-fileurl'
+      ) ||
+      element.getAttribute(
+        'data-url'
+      ) ||
+      element.getAttribute(
+        'data-href'
+      ) ||
+      '';
+
+    const fileurl =
+      normalizeLearningFileUrl(raw);
+
+    if(!fileurl || seen.has(fileurl)){
+      continue;
+    }
+
+    const filename =
+      text(
+        element.textContent || ''
+      ) ||
+      learningFilenameFromUrl(
+        fileurl
+      );
+
+    out.push({
+      fileurl,
+      filename:
+        filename || 'Файл',
+      mimetype:
+        learningMimeFromName(
+          filename
+        ),
+      filesize:0
+    });
+
+    seen.add(fileurl);
+  }
+
+  return out;
+}
+
+function collectActivityFiles(
+  a = {},
+  result = {}
+){
+  const structured = [
+    ...(Array.isArray(a?.content?.files)
+      ? a.content.files
+      : []),
+
+    ...(Array.isArray(result?.files)
+      ? result.files
+      : []),
+
+    ...(result?.file
+      ? [result.file]
+      : [])
+  ];
+
+  const fromHtml =
+    extractActivityFilesFromHtml(
+      result?.html || ''
+    );
+
+  const all = [
+    ...structured,
+    ...fromHtml
+  ];
+
+  const out = [];
+  const seen = new Set();
+
+  for(const file of all){
+    const fileurl =
+      normalizeLearningFileUrl(
         file?.fileurl ||
         file?.url ||
         ''
       );
 
-    if(!path || seen.has(path)){
-      return false;
+    if(!fileurl || seen.has(fileurl)){
+      continue;
     }
 
-    seen.add(path);
-
-    return true;
-  }).map(file=>({
-    ...file,
-    fileurl:
-      normalizePath(
-        file?.fileurl ||
-        file?.url ||
+    const filename =
+      text(
+        file?.filename ||
+        file?.name ||
         ''
-      )
-  }));
+      ) ||
+      learningFilenameFromUrl(
+        fileurl
+      );
+
+    out.push({
+      ...file,
+      fileurl,
+      filename:
+        filename || 'Файл',
+      mimetype:
+        file?.mimetype ||
+        learningMimeFromName(filename)
+    });
+
+    seen.add(fileurl);
+  }
+
+  return out;
 }
 
 function learningFileLabel(file = {}){
@@ -3013,14 +3273,28 @@ function prepareCampusActivityHtml(html, title = '') {
   ).forEach(el => el.remove());
 
   // Remove duplicate legacy Moodle navigation/copy links.
-  [...root.querySelectorAll('p')].forEach(el => {
-    const text = normalize(el.textContent);
-    if (
-      text.startsWith('нажмите на ссылку') ||
-      text === 'назад' ||
-      text.startsWith('назад') ||
-      text.startsWith('далее')
-    ) {
+  [...root.querySelectorAll('p,div,span')].forEach(el => {
+    const value =
+      normalize(
+        el.textContent
+      );
+
+    if(
+      /^нажмите на ссылку(?:\s|$)/i.test(
+        value
+      ) &&
+      value.length < 500
+    ){
+      el.remove();
+      return;
+    }
+
+    if(
+      /^(назад|далее)(?:\s|[а-яёa-z0-9])/i.test(
+        value
+      ) &&
+      value.length < 500
+    ){
       el.remove();
     }
   });
@@ -3070,15 +3344,50 @@ function prepareCampusActivityHtml(html, title = '') {
   ).forEach(el => el.remove());
 
   [...root.querySelectorAll('a')].forEach(a => {
-    const text = normalize(a.textContent);
+    const linkText =
+      normalize(
+        a.textContent
+      );
 
-    if (
-      text === 'назад' ||
-      text === 'далее' ||
-      text.startsWith('назад ') ||
-      text.startsWith('далее ')
-    ) {
-      a.closest('p,div,li')?.remove();
+    if(
+      /^(назад|далее)(?:\s|[а-яёa-z0-9])/i.test(
+        linkText
+      )
+    ){
+      const holder =
+        a.closest('p,li');
+
+      if(holder){
+        holder.remove();
+      }else{
+        a.remove();
+      }
+
+      return;
+    }
+
+    /*
+     * Файл уже представлен Nova отдельной кнопкой.
+     * Убираем старую Moodle-ссылку, чтобы не было
+     * двух разных способов скачать один и тот же файл.
+     */
+    const href =
+      a.getAttribute('href') || '';
+
+    const normalizedHref =
+      normalizeLearningFileUrl(
+        href
+      );
+
+    if(normalizedHref){
+      const holder =
+        a.closest('p,li');
+
+      if(holder){
+        holder.remove();
+      }else{
+        a.remove();
+      }
     }
   });
 
