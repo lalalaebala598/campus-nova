@@ -104,6 +104,16 @@ const resource = index.getActivitiesByType('resource')[0];
 const resourceResult = await engine.open(resource.ref);
 assert.equal(resourceResult.kind, 'resource');
 assert.equal(resourceResult.title, 'Lecture');
+assert.equal(
+  resourceResult.files.length,
+  1,
+  'resource must expose only files found on its own page'
+);
+assert.equal(
+  resourceResult.files[0].filename,
+  'lecture.pdf',
+  'resource file must come from the opened resource page'
+);
 
 const fileGraph = new CourseGraph({ scopeId: 'file', registry: new ActivityRegistry(), index: new ActivityIndex({ scopeId: 'file' }), trace });
 fileGraph.mergeCourse({ id: 9100, title: 'File course', sections: [{ id: 1, name: 'Files', activities: [{ id: 9101, cmid: 9101, instance: 9102, modname: 'file', name: 'Lecture PDF', contents: [{ type: 'file', filename: 'Лекция 1.pdf', fileurl: 'https://campus.fa.ru/pluginfile.php/123/mod_resource/content/1/%D0%9B%D0%B5%D0%BA%D1%86%D0%B8%D1%8F%201.pdf', mimetype: 'application/pdf' }] }] }] });

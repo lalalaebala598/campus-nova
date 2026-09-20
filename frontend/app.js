@@ -3004,60 +3004,92 @@ function collectActivityFiles(
   a = {},
   result = {}
 ){
-  const structured = [
-    ...(Array.isArray(a?.content?.files)
+  const activityKind =
+    String(
+      result?.kind ||
+      a?.ref?.type ||
+      ''
+    ).toLowerCase();
+
+  const graphFiles = [
+    ...(Array.isArray(
+      a?.content?.files
+    )
       ? a.content.files
-      : []),
+      : [])
+  ];
 
-    ...(Array.isArray(result?.files)
+  const pageFiles = [
+    ...(Array.isArray(
+      result?.files
+    )
       ? result.files
-      : []),
-
-    ...(result?.file
-      ? [result.file]
       : [])
   ];
 
   /*
-   * Structured files come from the activity itself and are
-   * authoritative.
+   * RESOURCE ISOLATION:
    *
-   * HTML extraction is a fallback only when Campus did not
-   * provide structured files. This prevents a resource page
-   * from accidentally importing pluginfiles from neighbouring
-   * activities.
+   * Once a resource has been opened, result.files came
+   * directly from that resource's own Campus page.
+   *
+   * NEVER merge course graph files into it.
    */
-  const fromHtml =
-    structured.length === 0
-      ? extractActivityFilesFromHtml(
-          result?.html || ''
-        )
-      : [];
+  let primary;
 
-  const all = [
-    ...structured,
-    ...fromHtml
-  ];
+  if (
+    activityKind === 'resource'
+  ) {
+    primary =
+      pageFiles;
+  } else if (
+    activityKind === 'file'
+  ) {
+    primary =
+      pageFiles.length
+        ? pageFiles
+        : graphFiles.slice(
+            0,
+            1
+          );
+  } else {
+    primary = [
+      ...pageFiles,
+      ...graphFiles
+    ];
+  }
+
+  /*
+   * HTML is a last-resort fallback only.
+   */
+  const all =
+    primary.length > 0
+      ? primary
+      : (
+          result?.html
+            ? extractActivityFilesFromHtml(
+                result.html
+              )
+            : []
+        );
 
   const out = [];
   const seen = new Set();
 
-  for(const file of all){
-
-    const rawPath =
-      file?.fileurl ||
-      file?.url ||
-      '';
-
+  for (
+    const file of all
+  ) {
     const fileurl =
       normalizePath(
-        rawPath
+        file?.fileurl ||
+        file?.url ||
+        ''
       );
 
-    if(
+    if (
       !fileurl ||
       seen.has(fileurl)
-    ){
+    ) {
       continue;
     }
 
@@ -3071,29 +3103,6 @@ function collectActivityFiles(
         fileurl
       ) ||
       'Файл';
-
-    const indirect =
-      Boolean(
-        file?.downloadViaPage ||
-        !isFile(fileurl)
-      );
-
-    /*
-     * Не добавляем в список обычные ссылки на страницы.
-     * Оставляем:
-     *
-     * - реальные файлы;
-     * - resource/folder страницы,
-     *   если они описываются как файл.
-     */
-    if(
-      indirect &&
-      !/\/mod\/(?:resource|folder)\/view\.php(?:\?|$)/i.test(
-        fileurl
-      )
-    ){
-      continue;
-    }
 
     out.push({
       ...file,
@@ -3109,7 +3118,9 @@ function collectActivityFiles(
         ),
 
       downloadViaPage:
-        indirect
+        Boolean(
+          file?.downloadViaPage
+        )
     });
 
     seen.add(
