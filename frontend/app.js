@@ -1910,11 +1910,179 @@ function calendarGrid(mini=false){
 }
 
 function eventsForSelected(){const events=flattenCalendar(state.data.calendar||{}).filter(e=>dateKey(e.timestart)===selectedKey()).sort((a,b)=>Number(a.timestart)-Number(b.timestart));return events}
+/* messages empty-state quality contract */
+const NOVA_MESSAGES_EMPTY_TEXT = 'Новых сообщений нет.';
+
 function messagesPage(){
   if(state.status.messages==='loading') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Загружаем диалоги Campus…'})}${skeletonGrid(2)}</section>`;
   if(state.status.messages==='error') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Не удалось получить диалоги.'})}${statePanel('error','messages')}</section>`;
   const m=state.data.messages||{}; const conv=m.conversations||[];
-  return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Переписка остаётся внутри Nova.',children:`<button class="secondary" data-retry="messages">${icon('refresh',16)} Обновить</button>`})}<div class="messages-shell"><div class="conversation-list">${conv.map(c=>`<button class="conversation-item ${String(c.id)===String(state.selectedConversation)?'active':''}" data-conversation="${esc(c.id)}"><span class="avatar">${esc((c.name||'Д').slice(0,1))}</span><span><b>${esc(c.name||'Диалог')}</b><small>${esc(text(c.messages?.[0]?.text||'Нет сообщений').slice(0,70))}</small></span></button>`).join('')||'<div class="inline-empty">Новых сообщений нет.</div>'}</div><div class="conversation-view" id="conversation-view">${state.selectedConversation?'<div class="loading-center"><span class="spinner"></span><p>Открываем переписку…</p></div>':'<div class="conversation-empty">'+icon('message',28)+'<h2>Выберите диалог</h2><p>История переписки и отправка сообщений доступны внутри Nova.</p></div>'}</div></div></section>`;
+  return `
+    <section class="page messages-page">
+
+      ${PageHead({
+        eyebrow:'КОММУНИКАЦИЯ',
+        title:'Сообщения',
+        sub:'Переписка остаётся внутри Nova.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="messages"
+          >
+            ${icon('refresh',16)}
+            Обновить
+          </button>
+        `
+      })}
+
+      <div
+        class="messages-shell ${
+          state.selectedConversation
+            ? 'conversation-open'
+            : ''
+        }"
+      >
+
+        <aside class="conversation-list">
+
+          <div class="conversation-list-head">
+
+            <div>
+              <b>Диалоги</b>
+              <small>
+                ${
+                  conv.length
+                    ? `${conv.length} активных`
+                    : 'Пока пусто'
+                }
+              </small>
+            </div>
+
+          </div>
+
+          <div class="conversation-list-body">
+
+            ${
+              conv.map(c=>{
+
+                const selected =
+                  String(c.id) ===
+                  String(state.selectedConversation);
+
+                const preview =
+                  text(
+                    c.messages?.[0]?.text ||
+                    'Нет сообщений'
+                  ).slice(0,64);
+
+                const title =
+                  c.name ||
+                  'Диалог';
+
+                return `
+                  <button
+                    class="
+                      conversation-item
+                      ${selected ? 'active' : ''}
+                    "
+                    data-conversation="${esc(c.id)}"
+                    type="button"
+                  >
+
+                    <span class="avatar">
+                      ${esc(title.slice(0,1))}
+                    </span>
+
+                    <span class="conversation-item-main">
+
+                      <span class="conversation-item-top">
+
+                        <b>
+                          ${esc(title)}
+                        </b>
+
+                        ${
+                          c.messages?.[0]?.timecreated
+                            ? `
+                              <time>
+                                ${formatTime(
+                                  c.messages[0].timecreated
+                                )}
+                              </time>
+                            `
+                            : ''
+                        }
+
+                      </span>
+
+                      <small>
+                        ${esc(preview)}
+                      </small>
+
+                    </span>
+
+                  </button>
+                `;
+              }).join('') ||
+
+              `
+                <div class="conversation-list-empty">
+
+                  <div class="conversation-list-empty-icon">
+                    ${icon('message',20)}
+                  </div>
+
+                  <b>Диалогов пока нет</b>
+
+                  <small>
+                    Новые сообщения появятся здесь.
+                  </small>
+
+                </div>
+              `
+            }
+
+          </div>
+
+        </aside>
+
+        <main
+          class="conversation-view"
+          id="conversation-view"
+        >
+
+          ${
+            state.selectedConversation
+              ? `
+                <div class="loading-center">
+                  <span class="spinner"></span>
+                  <p>Открываем переписку…</p>
+                </div>
+              `
+              : `
+                <div class="conversation-empty">
+
+                  <div class="conversation-empty-icon">
+                    ${icon('message',26)}
+                  </div>
+
+                  <h2>Выберите диалог</h2>
+
+                  <p>
+                    Здесь появится история переписки
+                    и поле для ответа.
+                  </p>
+
+                </div>
+              `
+          }
+
+        </main>
+
+      </div>
+
+    </section>
+  `;
 }
 function filesPage(){
   if(state.status.files==='loading'){
