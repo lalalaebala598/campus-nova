@@ -557,13 +557,28 @@ function extractMain(html) {
   return main?.[1] || source;
 }
 export function sanitizeCampusHtml(html, basePath = '/', baseUrl = CAMPUS_ORIGIN) {
-  let out = extractMain(html)
+  const source = String(html || '');
+
+  const isQuizPage =
+    /\/mod\/quiz\/(?:attempt|review)\.php(?:\?|$)/i.test(
+      String(basePath || '')
+    );
+
+  let out = (
+    isQuizPage
+      ? source
+      : extractMain(source)
+  )
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<link\b[^>]*>/gi, '')
     .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
     .replace(/<!--([\s\S]*?)-->/g, '')
-    .replace(/<(header|footer|nav|aside)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(
+      isQuizPage
+        ? /<(header|footer)\b[^>]*>[\s\S]*?<\/\1>/gi
+        : /<(header|footer|nav|aside)\b[^>]*>[\s\S]*?<\/\1>/gi
+    )
     .replace(/<(div|section)\b[^>]*class=["'][^"']*(?:navbar|breadcrumb|block-region|sidebar|side-pre|page-header|notifications)[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi, '');
   out = out.replace(/\s(?:on\w+)=["'][^"']*["']/gi, '');
   out = out.replace(/\b(?:src|href|action)=["']([^"']+)["']/gi, (m, v) => {

@@ -503,8 +503,65 @@ async function api(req, res, route, q) {
       return json(res,200,{ok:true,activity:publicActivity(data.activity),driver:data.driver,capabilities:data.capabilities,actions:data.actions,fallback:data.fallback});
     }
     if (route === '/api/campus/action' && req.method === 'POST') {
-      const p = safePath(q.get('path') || '/', campusUrlOf(s)); const body = await rawBody(req); const ct = req.headers['content-type'] || 'application/octet-stream';
-      const upstream = await s.campus.proxy(p, { method:'POST', headers:{'content-type':ct,referer:campusUrlOf(s)+p,origin:campusUrlOf(s)}, body, redirect:'manual' });
+      const p = safePath(
+        q.get('path') || '/',
+        campusUrlOf(s)
+      );
+
+      let body =
+        await rawBody(req);
+
+      const ct =
+        req.headers['content-type'] ||
+        'application/octet-stream';
+
+      /*
+       * Moodle quiz processattempt.php expects
+       * the current web-session sesskey.
+       *
+       * Keep the browser payload simple, but make the
+       * backend authoritative for the session-bound token.
+       */
+      if (
+        /\/mod\/quiz\/processattempt\.php/i.test(p) &&
+        /application\/x-www-form-urlencoded/i.test(ct) &&
+        s.campus.sesskey
+      ) {
+        const form =
+          new URLSearchParams(
+            body.toString('utf8')
+          );
+
+        if (!form.has('sesskey')) {
+          form.set(
+            'sesskey',
+            String(s.campus.sesskey)
+          );
+
+          body =
+            Buffer.from(
+              form.toString(),
+              'utf8'
+            );
+        }
+      }
+
+      const upstream =
+        await s.campus.proxy(
+          p,
+          {
+            method:'POST',
+            headers:{
+              'content-type':ct,
+              referer:
+                campusUrlOf(s) + p,
+              origin:
+                campusUrlOf(s)
+            },
+            body,
+            redirect:'manual'
+          }
+        );
       const location = upstream.headers.get('location'); const outCt = upstream.headers.get('content-type') || ''; if(upstream.status===401){ invalidateNovaSession(req,res,s); return json(res,401,{ok:false,error:'Сессия Campus истекла. Подключите Campus заново.'}); }
       if(upstream.status===403) return json(res,403,{ok:false,error:'Campus отказал в доступе к этому действию.'});
       if (location) {
