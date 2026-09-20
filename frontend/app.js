@@ -3004,6 +3004,28 @@ function learningFileLabel(file = {}){
   return raw || 'Файл';
 }
 
+
+function learningMaterialDescription(
+  material,
+  files = []
+){
+  if(files.length){
+    if(files.length === 1){
+      return (
+        `${material.label} готова к скачиванию через защищённую Campus-сессию.`
+      );
+    }
+
+    return (
+      `${material.label} содержит ${files.length} файла. Все файлы доступны через защищённую Campus-сессию.`
+    );
+  }
+
+  return (
+    `${material.label} доступен через защищённую Campus-сессию.`
+  );
+}
+
 function learningFileType(file = {}){
   const filename =
     String(
@@ -5809,11 +5831,12 @@ function activityPage(){
           </h2>
 
           <p>
-            ${
-              files.length
-                ? `Файл готов к скачиванию через защищённую Campus-сессию.`
-                : 'Материал доступен через защищённую Campus-сессию.'
-            }
+            ${esc(
+              learningMaterialDescription(
+                material,
+                files
+              )
+            )}
           </p>
 
         </div>
@@ -5840,7 +5863,15 @@ function activityPage(){
       </section>
 
       ${
-        result.html
+        /*
+         * Когда у материала уже есть реальный Campus-файл,
+         * не показываем ниже сырой Moodle HTML с дублями
+         * названия, "Назад", "Далее" и ссылкой на тот же файл.
+         *
+         * Если файла нет, HTML остаётся видимым, потому что
+         * в таком ресурсе контент может быть самой лекцией.
+         */
+        !files.length && result.html
           ? `
             <div class="nova-activity-html">
               ${activityHtml(result,title)}
