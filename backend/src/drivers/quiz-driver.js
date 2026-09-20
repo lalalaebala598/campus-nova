@@ -55,12 +55,41 @@ export class QuizDriver {
       const html = opened.html || '';
       const form = this.formService?.parseMatching(html, (_tag, chunk) => /startattempt\.php/i.test(chunk));
       if (!form?.action || !/startattempt\.php/i.test(form.action)) throw unverified('quiz.start', 'Реальная startattempt form не была найдена в ответе Campus.');
-      const preferred = form.submitters?.find(x => /attempt|start|начать|попыт/i.test(`${x.name} ${x.value}`)) || form.submitters?.[0];
-      if (!preferred) throw unverified('quiz.start', 'Start form не содержит submitter.');
-      const started = await this.formService.submit(form, payload?.values || payload || {}, { submitter: preferred, timeoutMs: options.timeoutMs || 30000, parentTraceId: options.parentTraceId });
+      /*
+       * Moodle may use an unnamed submit button.
+       * The form itself is still executable, so a named
+       * submitter must not be a hard requirement.
+       */
+      const preferred =
+        form.submitters?.find(
+          x => /attempt|start|начать|попыт/i.test(
+            `${x.name || ''} ${x.value || ''}`
+          )
+        ) ||
+        form.submitters?.[0] ||
+        null;
+
+      const started =
+        await this.formService.submit(
+          form,
+          payload?.values || payload || {},
+          {
+            submitter: preferred,
+            timeoutMs: options.timeoutMs || 30000,
+            parentTraceId: options.parentTraceId
+          }
+        );
       const redirectedPath = started.redirectedPath || null;
       const attemptId = Number((redirectedPath || '').match(/[?&]attempt=(\d+)/i)?.[1] || 0) || null;
-      this.trace?.stage(options.parentTraceId, 'RUNTIME_FORM_SUBMITTED', { action: 'quiz.start', submitter: preferred.name, attemptId });
+      this.trace?.stage(
+        options.parentTraceId,
+        'RUNTIME_FORM_SUBMITTED',
+        {
+          action: 'quiz.start',
+          submitter: preferred?.name || null,
+          attemptId
+        }
+      );
       return {
         kind: 'quiz-action', action: 'start', activityRef: activity.ref, confirmed: started.response?.ok === true && Boolean(attemptId),
         httpStatus: started.response?.status ?? null,

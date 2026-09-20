@@ -16,27 +16,125 @@ function parseOptions(html) {
 
 function parseControls(html) {
   const controls = [];
-  for (const tag of String(html || '').match(/<(?:input|textarea|select|button)\b[\s\S]*?(?:>|<\/textarea>|<\/select>|<\/button>)/gi) || []) {
+
+  for (
+    const tag of
+      String(html || '').match(
+        /<(?:input|textarea|select|button)\b[\s\S]*?(?:>|<\/textarea>|<\/select>|<\/button>)/gi
+      ) || []
+  ) {
+
+    const tagName =
+      tag.match(/^<(\w+)/i)?.[1]?.toLowerCase() ||
+      'input';
+
+    const declaredType =
+      String(attr(tag, 'type') || '').toLowerCase();
+
+    /*
+     * HTML semantics:
+     * <button> without an explicit type behaves as submit.
+     */
+    const type =
+      declaredType ||
+      (
+        tagName === 'button'
+          ? 'submit'
+          : tagName === 'textarea'
+            ? 'textarea'
+            : tagName === 'select'
+              ? 'select'
+              : 'text'
+      );
+
+    const isSubmitter =
+      type === 'submit' ||
+      (
+        tagName === 'button' &&
+        type !== 'button' &&
+        type !== 'reset'
+      );
+
     const name = attr(tag, 'name');
-    if (!name) continue;
-    const type = String(attr(tag, 'type') || (tag.startsWith('<textarea') ? 'textarea' : tag.startsWith('<select') ? 'select' : 'text')).toLowerCase();
-    const selectOptions = type === 'select' ? parseOptions(tag) : undefined;
-    const selectedOption = selectOptions?.find(option => option.selected)?.value;
-    const textareaValue = type === 'textarea' ? String(tag.match(/<textarea\b[^>]*>([\s\S]*?)<\/textarea>/i)?.[1] || '') : '';
-    const selected = /\bselected(?:\s*=|\b)/i.test(tag);
-    const controlValue = textareaValue || (type === 'checkbox' || type === 'radio' ? (/\bchecked(?:\s*=|\b)/i.test(tag) ? (attr(tag, 'value') || '1') : undefined) : selectedOption || attr(tag, 'value'));
+
+    /*
+     * Normal controls require a name.
+     * Submit controls are different:
+     * Campus/Moodle can legally use an unnamed submit button.
+     */
+    if (!name && !isSubmitter) continue;
+
+    const selectOptions =
+      type === 'select'
+        ? parseOptions(tag)
+        : undefined;
+
+    const selectedOption =
+      selectOptions?.find(
+        option => option.selected
+      )?.value;
+
+    const textareaValue =
+      type === 'textarea'
+        ? String(
+            tag.match(
+              /<textarea\b[^>]*>([\s\S]*?)<\/textarea>/i
+            )?.[1] || ''
+          )
+        : '';
+
+    const selected =
+      /\bselected(?:\s*=|\b)/i.test(tag);
+
+    const buttonText =
+      isSubmitter
+        ? String(
+            tag
+              .replace(/^<[^>]*>/, '')
+              .replace(/<\/(?:button)>$/i, '')
+          )
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+        : '';
+
+    const controlValue =
+      textareaValue ||
+      (
+        type === 'checkbox' ||
+        type === 'radio'
+          ? (
+              /\bchecked(?:\s*=|\b)/i.test(tag)
+                ? (attr(tag, 'value') || '1')
+                : undefined
+            )
+          : (
+              selectedOption ||
+              attr(tag, 'value') ||
+              (
+                isSubmitter
+                  ? buttonText
+                  : undefined
+              )
+            )
+      );
+
     controls.push({
-      tag: tag.match(/^<(\w+)/)?.[1] || 'input',
+      tag: tagName,
       type,
-      name,
+      name: name || null,
       value: controlValue,
-      required: /\brequired(?:\s*=|\b)/i.test(tag),
-      disabled: /\bdisabled(?:\s*=|\b)/i.test(tag),
-      checked: /\bchecked(?:\s*=|\b)/i.test(tag),
+      required:
+        /\brequired(?:\s*=|\b)/i.test(tag),
+      disabled:
+        /\bdisabled(?:\s*=|\b)/i.test(tag),
+      checked:
+        /\bchecked(?:\s*=|\b)/i.test(tag),
       options: selectOptions,
-      submitter: type === 'submit' || /^<button/i.test(tag),
+      submitter: isSubmitter,
     });
   }
+
   return controls;
 }
 
