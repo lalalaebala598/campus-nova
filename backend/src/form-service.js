@@ -191,7 +191,9 @@ export class FormService {
       controls,
       hidden,
       submitters,
-      hasSesskey: controls.some(c => c.name.toLowerCase() === 'sesskey'),
+      hasSesskey: controls.some(
+  c => String(c.name || '').toLowerCase() === 'sesskey'
+),
       hasFileManager: controls.some(c => /filemanager|draft/i.test(c.name)),
       safeHidden: redact(hidden),
     };
