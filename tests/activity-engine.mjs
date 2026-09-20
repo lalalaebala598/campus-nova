@@ -37,7 +37,7 @@ const fakeSession = {
   },
   async executeOperation(operation, context, params, options) {
     calls.push({ operation, context, params, options });
-    if (operation === 'quiz.view') return { response: htmlResponse('<html><title>Test Quiz</title><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="777"><input type="hidden" name="sesskey" value="SECRET"><button type="submit" name="submitbutton" value="Attempt quiz">Start</button></form></html>'), parsed: { html: '<html><title>Test Quiz</title><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="777"><input type="hidden" name="sesskey" value="SECRET"><button type="submit" name="submitbutton" value="Attempt quiz">Start</button></form></html>', title: 'Test Quiz' }, traceId: 'transport-1', contract: { transport: 'WEB_FORM', operation: 'quiz.view' } };
+    if (operation === 'quiz.view') return { response: htmlResponse('<html><title>Test Quiz</title><a href="/mod/quiz/attempt.php?attempt=901&cmid=777&page=0">Continue attempt</a><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="777"><input type="hidden" name="sesskey" value="SECRET"><button type="submit" name="submitbutton" value="Attempt quiz">Start</button></form></html>'), parsed: { html: '<html><title>Test Quiz</title><a href="/mod/quiz/attempt.php?attempt=901&cmid=777&page=0">Continue attempt</a><form action="/mod/quiz/startattempt.php" method="post"><input type="hidden" name="cmid" value="777"><input type="hidden" name="sesskey" value="SECRET"><button type="submit" name="submitbutton" value="Attempt quiz">Start</button></form></html>', title: 'Test Quiz' }, traceId: 'transport-1', contract: { transport: 'WEB_FORM', operation: 'quiz.view' } };
     if (operation === 'assignment.view') return { response: htmlResponse('<html><title>Assignment</title><div>Add submission</div></html>'), parsed: { html: '<html><title>Assignment</title><div>Add submission</div></html>', title: 'Assignment' }, traceId: 'transport-2', contract: { transport: 'WEB_FORM', operation: 'assignment.view' } };
     if (operation === 'assignment.edit') return { response: htmlResponse('<form id="mform"><input type="hidden" name="sesskey" value="SECRET"><textarea name="onlinetext">hello</textarea><input type="submit" name="submitbutton" value="Save changes"><input type="file" name="files_filemanager"></form>'), parsed: { html: '<form id="mform"><input type="hidden" name="sesskey" value="SECRET"><textarea name="onlinetext">hello</textarea><input type="submit" name="submitbutton" value="Save changes"><input type="file" name="files_filemanager"></form>', title: null }, traceId: 'transport-3', contract: { transport: 'WEB_FORM', operation: 'assignment.edit' } };
     if (operation === 'resource.view') return { response: htmlResponse('<html><title>Lecture</title><main>Lecture body</main></html>'), parsed: { html: '<html><title>Lecture</title><main>Lecture body</main></html>', title: 'Lecture' }, traceId: 'transport-4', contract: { transport: 'WEB_FORM', operation: 'resource.view' } };
@@ -71,6 +71,14 @@ const openedQuiz = await engine.open(quiz.ref);
 assert.equal(openedQuiz.kind, 'quiz');
 assert.equal(openedQuiz.access.startForm.hasSesskey, true);
 assert.equal(openedQuiz.capabilities.canStart, true);
+assert.equal(openedQuiz.capabilities.canAttempt, true);
+assert.equal(openedQuiz.access.continueAttempt.attemptId, 901);
+assert.equal(openedQuiz.attempts[0].status, 'inprogress');
+assert.ok(
+  openedQuiz.access.continueAttempt.path.includes(
+    'attempt=901'
+  )
+);
 assert.ok(calls.some(c => c.operation === 'quiz.view'));
 
 const assign = index.getActivitiesByType('assign')[0];

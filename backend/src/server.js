@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import { fileURLToPath } from 'node:url';
-import { CampusSession, CAMPUS_ORIGIN, makeSessionId } from './campus.js';
+import { CampusSession, CAMPUS_ORIGIN, makeSessionId, sanitizeCampusHtml } from './campus.js';
 
 const ROOT = path.resolve(path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'));
 const FRONTEND = path.join(ROOT, 'frontend');
@@ -569,7 +569,55 @@ async function api(req, res, route, q) {
         if (isLikelyDownloadLocation(target,outCt)) return json(res,200,{ok:true,status:upstream.status,redirectedPath:target,downloadPath:target,success:true});
         try { const parsed=await s.campus.contentPage(target); return json(res,200,{ok:true,status:upstream.status,redirectedPath:target,page:parsed,success:upstream.status<400}); } catch(e){ return json(res,502,{ok:false,error:e.message,redirectedPath:target}); }
       }
-      if (isHtml(outCt)) { const parsed=await s.campus.contentPage(p); return json(res,200,{ok:true,status:upstream.status,redirectedPath:p,page:parsed,success:upstream.status<400}); }
+      if (isHtml(outCt)) {
+        /*
+         * Важный quiz-fix:
+         * если Moodle отвечает HTML-страницей с HTTP 200 без
+         * Location, нельзя повторно делать GET к processattempt.php.
+         *
+         * POST уже вернул следующий документ. Используем именно его.
+         */
+        const responseHtml = await upstream.text();
+        const title =
+          (
+            responseHtml.match(
+              /<title[^>]*>([\\s\\S]*?)<\\/title>/i
+            )?.[1] ||
+            responseHtml.match(
+              /<h1[^>]*>([\\s\\S]*?)<\\/h1>/i
+            )?.[1] ||
+            'Campus'
+          )
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/\\s+/g, ' ')
+            .trim();
+
+        const parsed = {
+          title: title || 'Campus',
+          path: p,
+          kind: 'html',
+          downloadPath: null,
+          html: sanitizeCampusHtml(
+            responseHtml,
+            p,
+            campusUrlOf(s)
+          )
+        };
+
+        return json(
+          res,
+          200,
+          {
+            ok: true,
+            status: upstream.status,
+            redirectedPath: p,
+            page: parsed,
+            success: upstream.status < 400
+          }
+        );
+      }
       const buf=Buffer.from(await upstream.arrayBuffer()); return json(res,200,{ok:upstream.status<400,status:upstream.status,redirectedPath:p,bodyBase64:buf.toString('base64'),contentType:outCt});
     }
     if (route === '/api/download' && req.method === 'GET') {

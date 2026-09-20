@@ -3505,6 +3505,80 @@ function prepareQuizAttemptHtml(html = '', title = '') {
   ).trim();
 }
 
+function quizActionAvailable(html = '', action = '') {
+  const doc =
+    new DOMParser().parseFromString(
+      String(html || ''),
+      'text/html'
+    );
+
+  const controls = [
+    ...doc.querySelectorAll(
+      'button,input[type="submit"],input[type="image"]'
+    )
+  ];
+
+  const patterns = {
+    previous:/previous|prev|назад|предыдущ|back/i,
+    next:/next|далее|следующ|вперёд|вперед/i,
+    finish:/finish|submitallandfinish|заверш|законч|сдать|отправ/i
+  };
+
+  const matcher = patterns[action];
+
+  if(!matcher){
+    return false;
+  }
+
+  return controls.some(control=>{
+    if(
+      control.disabled ||
+      (
+        control.getAttribute('type') &&
+        /^(button|reset)$/i.test(
+          control.getAttribute('type')
+        )
+      )
+    ){
+      return false;
+    }
+
+    const name =
+      control.getAttribute('name') || '';
+
+    const value =
+      control.getAttribute('value') || '';
+
+    const content =
+      control.textContent || '';
+
+    if(
+      action === 'previous' &&
+      /^(previous|prev)$/i.test(name)
+    ){
+      return true;
+    }
+
+    if(
+      action === 'next' &&
+      /^(next|nextpage)$/i.test(name)
+    ){
+      return true;
+    }
+
+    if(
+      action === 'finish' &&
+      /^(finish|submitallandfinish)$/i.test(name)
+    ){
+      return true;
+    }
+
+    return matcher.test(
+      `${name} ${value} ${content}`
+    );
+  });
+}
+
 function quizAttemptMeta(result = {}) {
   const path =
     result.attemptPath ||
@@ -3590,13 +3664,35 @@ function quizAttemptMeta(result = {}) {
       (end / total) * 100
     );
 
+  const nativePrevious =
+    quizActionAvailable(
+      result.html || '',
+      'previous'
+    );
+
+  const nativeNext =
+    quizActionAvailable(
+      result.html || '',
+      'next'
+    );
+
+  const canPrevious =
+    nativePrevious ||
+    start > 1;
+
+  const canNext =
+    nativeNext ||
+    end < total;
+
   return {
     nav,
     total,
     start,
     end,
     label,
-    progress
+    progress,
+    canPrevious,
+    canNext
   };
 }
 
@@ -3725,7 +3821,7 @@ function quizAttemptMarkup(
               type="button"
               class="secondary nova-quiz-control"
               data-quiz-control="previous"
-              ${meta.start <= 1 ? 'disabled' : ''}
+              ${meta.canPrevious ? '' : 'disabled'}
             >
               ${icon('back',16)}
               Назад
@@ -3737,7 +3833,7 @@ function quizAttemptMarkup(
               type="button"
               class="secondary nova-quiz-control"
               data-quiz-control="next"
-              ${meta.end >= meta.total ? 'disabled' : ''}
+              ${meta.canNext ? '' : 'disabled'}
             >
               Далее
               ${icon('next',16)}
@@ -3941,7 +4037,11 @@ function quizFormPayload(form, submitter, action) {
    * поэтому реальный submitter надо добавить вручную.
    */
   if(submitter?.name){
-    fd.append(
+    /*
+     * Если hidden input имеет такое же имя, duplicate-поле
+     * может ломать Moodle action routing.
+     */
+    fd.set(
       submitter.name,
       submitter.value ||
       submitter.textContent?.trim() ||
