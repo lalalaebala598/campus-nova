@@ -3034,6 +3034,1307 @@ function assignmentUploadMarkup(result) {
   `;
 }
 
+/* NOVA_QUIZ_WORKSPACE_20260920 */
+
+function extractQuizNavigation(html = '', currentPath = '') {
+  const doc = new DOMParser().parseFromString(
+    String(html || ''),
+    'text/html'
+  );
+
+  const seen = new Map();
+
+  const links = [
+    ...doc.querySelectorAll(
+      'a[href*="/mod/quiz/attempt.php"], a[href*="attempt.php"]'
+    )
+  ];
+
+  for (const link of links) {
+    const href = link.getAttribute('href') || '';
+
+    if (!/[?&]page=\d+/i.test(href)) continue;
+
+    let url;
+
+    try {
+      url = new URL(
+        href,
+        campusOrigin() || window.location.origin
+      );
+    } catch {
+      continue;
+    }
+
+    const page = Number(
+      url.searchParams.get('page')
+    );
+
+    if (!Number.isInteger(page)) continue;
+
+    const rawLabel =
+      text(link.textContent || '') ||
+      String(page + 1);
+
+    const labelMatch =
+      rawLabel.match(/\d+/);
+
+    const label =
+      labelMatch
+        ? Number(labelMatch[0])
+        : page + 1;
+
+    const path = normalizePath(
+      url.pathname +
+      url.search +
+      url.hash
+    );
+
+    if (!path || seen.has(page)) continue;
+
+    const holder =
+      link.closest(
+        '.qnbutton,.navitem,.columnbutton,li,td'
+      ) ||
+      link;
+
+    seen.set(
+      page,
+      {
+        page,
+        label,
+        path,
+        current:
+          holder.classList.contains('thispage') ||
+          holder.classList.contains('current') ||
+          /\bthispage\b|\bcurrent\b/i.test(
+            holder.className || ''
+          )
+      }
+    );
+  }
+
+  let items =
+    [...seen.values()]
+      .sort((a,b)=>a.page-b.page);
+
+  if (!items.length) {
+    const match =
+      String(currentPath || '')
+        .match(/[?&]page=(\d+)/i);
+
+    const page =
+      Number(match?.[1] || 0);
+
+    if (Number.isInteger(page)) {
+      items = [{
+        page,
+        label:page + 1,
+        path:normalizePath(currentPath),
+        current:true
+      }];
+    }
+  }
+
+  const currentPage =
+    Number(
+      String(currentPath || '')
+        .match(/[?&]page=(\d+)/i)?.[1] || 0
+    );
+
+  items.forEach(item=>{
+    if (item.page === currentPage) {
+      item.current = true;
+    }
+  });
+
+  return items;
+}
+
+function quizQuestionNumbers(html = '') {
+  const doc = new DOMParser().parseFromString(
+    String(html || ''),
+    'text/html'
+  );
+
+  const numbers = [];
+
+  doc.querySelectorAll(
+    '.que .qno,.que .qnum,.que .qno-text'
+  ).forEach(el=>{
+    const match =
+      text(el.textContent || '')
+        .match(/\d+/);
+
+    if (!match) return;
+
+    const value =
+      Number(match[0]);
+
+    if (
+      Number.isInteger(value) &&
+      !numbers.includes(value)
+    ) {
+      numbers.push(value);
+    }
+  });
+
+  if (!numbers.length) {
+    doc.querySelectorAll(
+      '.que,.que.multichoice,.que.shortanswer,.que.truefalse'
+    ).forEach((el,index)=>{
+      const match =
+        text(el.textContent || '')
+          .match(/(?:вопрос|question)\s*(\d+)/i);
+
+      if (match) {
+        const value = Number(match[1]);
+
+        if (!numbers.includes(value)) {
+          numbers.push(value);
+        }
+      } else {
+        numbers.push(index + 1);
+      }
+    });
+  }
+
+  return numbers.sort(
+    (a,b)=>a-b
+  );
+}
+
+function prepareQuizAttemptHtml(html = '', title = '') {
+  const source =
+    String(html || '');
+
+  if (!source.trim()) {
+    return `
+      <div class="inline-empty">
+        Campus не передал содержимое попытки.
+      </div>
+    `;
+  }
+
+  const doc =
+    new DOMParser().parseFromString(
+      source,
+      'text/html'
+    );
+
+  const removeSelectors = [
+    'script',
+    'style',
+    'noscript',
+    'header',
+    'nav',
+    'footer',
+    '.navbar',
+    '.breadcrumb',
+    '.breadcrumbs',
+    '#page-header',
+    '#page-footer',
+    '#nav-drawer',
+    '#block-region-side-pre',
+    '#block-region-side-post',
+    '.block_navigation',
+    '.block_settings',
+    '.usermenu',
+    '.logininfo',
+    '.activity-navigation',
+    '.activity-navigation .navbutton',
+    '.navfooter',
+    '.paging-bar',
+    '.quiznavigation',
+    '.quiz-nav',
+    '.quizaccessnotices',
+    '.qnbutton'
+  ];
+
+  doc.querySelectorAll(
+    removeSelectors.join(',')
+  ).forEach(el=>el.remove());
+
+  const titleNorm =
+    text(title).toLowerCase();
+
+  const preferred = [
+    '#region-main',
+    '#region-main-box',
+    '[role="main"]',
+    '#page-content',
+    '.region-main',
+    '#quizcontent',
+    '.quizattempt',
+    'form#responseform',
+    'main'
+  ];
+
+  let root = null;
+
+  for (const selector of preferred) {
+    const candidate =
+      doc.querySelector(selector);
+
+    if (
+      candidate &&
+      candidate.textContent.trim().length > 40
+    ) {
+      root = candidate;
+      break;
+    }
+  }
+
+  if (!root) {
+    const question =
+      doc.querySelector('.que');
+
+    root =
+      question?.parentElement ||
+      doc.body;
+  }
+
+  root.querySelectorAll(
+    [
+      '.navbar',
+      '.breadcrumb',
+      '.breadcrumbs',
+      '.block_navigation',
+      '.block_settings',
+      '#page-header',
+      '#page-footer',
+      '.navfooter',
+      '.activity-navigation',
+      '.paging-bar',
+      '.quiznavigation',
+      '.quiz-nav'
+    ].join(',')
+  ).forEach(el=>el.remove());
+
+  [...root.querySelectorAll('h1,h2,h3')].forEach(el=>{
+    const value =
+      text(el.textContent || '')
+        .toLowerCase();
+
+    if (
+      titleNorm &&
+      (
+        value === titleNorm ||
+        value.includes(titleNorm)
+      )
+    ) {
+      el.remove();
+    }
+  });
+
+  root.querySelectorAll('[style]').forEach(el=>{
+    el.removeAttribute('style');
+  });
+
+  root.querySelectorAll('font,center').forEach(el=>{
+    el.replaceWith(
+      ...el.childNodes
+    );
+  });
+
+  root.querySelectorAll(
+    [
+      '.submitbtns',
+      '.quizsummary',
+      '.quizreviewsummary',
+      '.quizattemptnavigation'
+    ].join(',')
+  ).forEach(el=>el.remove());
+
+  return root.innerHTML.trim();
+}
+
+function quizAttemptMeta(result = {}) {
+  const path =
+    result.attemptPath ||
+    result.redirectedPath ||
+    '';
+
+  const nav =
+    extractQuizNavigation(
+      result.html || '',
+      path
+    );
+
+  const numbers =
+    quizQuestionNumbers(
+      result.html || ''
+    );
+
+  const total =
+    Math.max(
+      nav.length,
+      numbers.length,
+      1
+    );
+
+  let start =
+    numbers.length
+      ? numbers[0]
+      : Number(
+          String(path)
+            .match(/[?&]page=(\d+)/i)?.[1] || 0
+        ) + 1;
+
+  let end =
+    numbers.length
+      ? numbers[numbers.length - 1]
+      : start;
+
+  const currentPage =
+    Number(
+      String(path)
+        .match(/[?&]page=(\d+)/i)?.[1] || 0
+    );
+
+  const selected =
+    nav.find(
+      item=>item.page===currentPage
+    );
+
+  if (
+    !numbers.length &&
+    selected?.label
+  ) {
+    start = selected.label;
+    end = selected.label;
+  }
+
+  start =
+    Math.max(
+      1,
+      Math.min(
+        total,
+        Number(start) || 1
+      )
+    );
+
+  end =
+    Math.max(
+      start,
+      Math.min(
+        total,
+        Number(end) || start
+      )
+    );
+
+  const label =
+    start === end
+      ? `Вопрос ${start} из ${total}`
+      : `Вопросы ${start}–${end} из ${total}`;
+
+  const progress =
+    Math.round(
+      (end / total) * 100
+    );
+
+  return {
+    nav,
+    total,
+    start,
+    end,
+    label,
+    progress
+  };
+}
+
+function quizAttemptMarkup(
+  result = {},
+  title = ''
+) {
+  const meta =
+    quizAttemptMeta(result);
+
+  const current =
+    result.attemptPath ||
+    result.redirectedPath ||
+    '';
+
+  const html =
+    prepareQuizAttemptHtml(
+      result.html || '',
+      title
+    );
+
+  return `
+    <section class="nova-quiz-workspace">
+
+      <header class="nova-quiz-head">
+
+        <div class="nova-quiz-head-copy">
+
+          <span class="nova-quiz-kicker">
+            ${icon('quiz',13)}
+            ТЕСТ · ПОПЫТКА
+          </span>
+
+          <h2>
+            ${esc(title)}
+          </h2>
+
+          <p>
+            Ответы отправляются в реальный Campus.
+            Интерфейс Nova меняет только представление.
+          </p>
+
+        </div>
+
+        <div class="nova-quiz-head-state">
+
+          <span>
+            ${meta.label}
+          </span>
+
+          <strong>
+            ${meta.progress}%
+          </strong>
+
+        </div>
+
+        <div class="nova-quiz-progress">
+          <i style="width:${meta.progress}%"></i>
+        </div>
+
+      </header>
+
+      <div class="nova-quiz-layout">
+
+        <aside class="nova-quiz-nav">
+
+          <div class="nova-quiz-nav-head">
+
+            <div>
+              <span>НАВИГАЦИЯ</span>
+              <b>Вопросы</b>
+            </div>
+
+            <span class="nova-quiz-total">
+              ${meta.total}
+            </span>
+
+          </div>
+
+          <div class="nova-quiz-nav-grid">
+
+            ${
+              meta.nav.length
+                ? meta.nav.map(item=>`
+                    <button
+                      type="button"
+                      class="nova-quiz-nav-button ${item.current?'current':''}"
+                      data-quiz-path="${esc(item.path || current)}"
+                      aria-label="Вопрос ${item.label}"
+                    >
+                      ${esc(item.label)}
+                    </button>
+                  `).join('')
+                : `
+                    <button
+                      type="button"
+                      class="nova-quiz-nav-button current"
+                      disabled
+                    >
+                      1
+                    </button>
+                `
+            }
+
+          </div>
+
+          <div class="nova-quiz-nav-note">
+            ${icon('info',13)}
+            Навигация использует настоящую попытку Campus.
+          </div>
+
+        </aside>
+
+        <section class="nova-quiz-content">
+
+          <div class="nova-quiz-html">
+            ${
+              html ||
+              '<div class="inline-empty">Вопросы теста не переданы Campus.</div>'
+            }
+          </div>
+
+          <div class="nova-quiz-controls">
+
+            <button
+              type="button"
+              class="secondary nova-quiz-control"
+              data-quiz-control="previous"
+              ${meta.start <= 1 ? 'disabled' : ''}
+            >
+              ${icon('back',16)}
+              Назад
+            </button>
+
+            <div class="nova-quiz-control-spacer"></div>
+
+            <button
+              type="button"
+              class="secondary nova-quiz-control"
+              data-quiz-control="next"
+              ${meta.end >= meta.total ? 'disabled' : ''}
+            >
+              Далее
+              ${icon('next',16)}
+            </button>
+
+            <button
+              type="button"
+              class="primary nova-quiz-control"
+              data-quiz-control="finish"
+            >
+              ${icon('check',16)}
+              Завершить тест
+            </button>
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </section>
+  `;
+}
+
+async function loadNovaQuizPage(path) {
+  const normalized =
+    normalizePath(path);
+
+  if (!normalized) {
+    toast(
+      'Не удалось открыть вопрос.',
+      'error'
+    );
+    return;
+  }
+
+  try {
+    const d =
+      await api(
+        `/api/page?path=${encodeURIComponent(normalized)}`
+      );
+
+    if (
+      !state.data.activity ||
+      state.route !== 'activity'
+    ) return;
+
+    const previous =
+      state.data.activity.result || {};
+
+    state.data.activity.result = {
+      ...previous,
+      kind:'quiz-action',
+      title:
+        d.page?.title ||
+        previous.title ||
+        'Тест',
+      html:
+        d.page?.html ||
+        '',
+      attemptPath:
+        d.page?.path ||
+        normalized,
+      redirectedPath:
+        d.page?.path ||
+        normalized
+    };
+
+    state.status.activity='success';
+    state.errors.activity=null;
+
+    render();
+    bindCampusContent();
+
+    toast(
+      'Вопрос открыт.',
+      'success'
+    );
+
+  } catch (error) {
+    toast(
+      error?.message ||
+      'Не удалось открыть вопрос.',
+      'error'
+    );
+  }
+}
+
+function quizSubmitter(form, action) {
+  const controls = [
+    ...form.querySelectorAll(
+      'button,input[type="submit"],input[type="image"]'
+    )
+  ];
+
+  const patterns = {
+    previous:/previous|prev|назад|предыдущ/i,
+    next:/next|далее|следующ/i,
+    finish:/finish|submitallandfinish|заверш|законч|сдать|отправ/i
+  };
+
+  const matcher =
+    patterns[action];
+
+  if (!matcher) return null;
+
+  return (
+    controls.find(control=>
+      matcher.test(
+        `${control.getAttribute('name') || ''} ${control.getAttribute('value') || ''} ${control.textContent || ''}`
+      )
+    ) ||
+    null
+  );
+}
+
+async function submitNovaQuizControl(action) {
+  const current =
+    state.data.activity;
+
+  if (!current?.activity?.ref) return;
+
+  const root =
+    $('#campus-content');
+
+  const form =
+    root?.querySelector(
+      'form#responseform, form[action*="processattempt.php"], form'
+    );
+
+  if (!form) {
+    toast(
+      'Не удалось найти форму попытки Campus.',
+      'error'
+    );
+    return;
+  }
+
+  const path =
+    normalizePath(
+      form.getAttribute('action') ||
+      current.result?.attemptPath ||
+      current.result?.redirectedPath ||
+      ''
+    );
+
+  if (!path) {
+    toast(
+      'Не удалось определить адрес ответа Campus.',
+      'error'
+    );
+    return;
+  }
+
+  const data =
+    new FormData(form);
+
+  const submitter =
+    quizSubmitter(
+      form,
+      action
+    );
+
+  if (
+    submitter?.name &&
+    !data.has(submitter.name)
+  ) {
+    data.append(
+      submitter.name,
+      submitter.value || ''
+    );
+  }
+
+  const body =
+    new URLSearchParams();
+
+  for (const [key,value] of data.entries()) {
+    if (
+      typeof value === 'string'
+    ) {
+      body.append(
+        key,
+        value
+      );
+    }
+  }
+
+  try {
+    const response =
+      await api(
+        `/api/campus/action?path=${encodeURIComponent(path)}`,
+        {
+          method:'POST',
+          headers:{
+            'content-type':
+              'application/x-www-form-urlencoded'
+          },
+          body
+        }
+      );
+
+    if (!response.page) {
+      throw new Error(
+        'Campus не вернул страницу попытки.'
+      );
+    }
+
+    const previous =
+      current.result || {};
+
+    state.data.activity = {
+      activity:current.activity,
+      result:{
+        ...previous,
+        kind:'quiz-action',
+        title:
+          response.page.title ||
+          previous.title ||
+          current.activity?.identity?.name ||
+          'Тест',
+        html:
+          response.page.html ||
+          '',
+        attemptPath:
+          response.page.path ||
+          response.redirectedPath ||
+          path,
+        redirectedPath:
+          response.page.path ||
+          response.redirectedPath ||
+          path,
+        confirmed:
+          response.success !== false
+      }
+    };
+
+    state.status.activity='success';
+    state.errors.activity=null;
+
+    render();
+    bindCampusContent();
+
+    toast(
+      action === 'finish'
+        ? 'Команда завершения отправлена в Campus.'
+        : action === 'next'
+        ? 'Ответ сохранён. Следующий вопрос.'
+        : 'Ответ сохранён. Предыдущий вопрос.',
+      'success'
+    );
+
+  } catch (error) {
+    toast(
+      error?.message ||
+      'Не удалось сохранить ответ в Campus.',
+      'error'
+    );
+  }
+}
+
+function injectNovaQuizInlineStyles() {
+  if (
+    typeof document === 'undefined' ||
+    !document.head
+  ) return;
+
+  if (
+    document.getElementById &&
+    document.getElementById(
+      'nova-quiz-inline-styles'
+    )
+  ) return;
+
+  const style =
+    document.createElement('style');
+
+  style.id =
+    'nova-quiz-inline-styles';
+
+  style.textContent = `
+    .nova-quiz-workspace{
+      display:grid;
+      gap:16px;
+      width:100%;
+    }
+
+    .nova-quiz-head{
+      position:relative;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:12px 18px;
+      padding:20px;
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:var(--surface);
+      box-shadow:0 16px 48px rgba(0,0,0,.10);
+      overflow:hidden;
+    }
+
+    .nova-quiz-head::after{
+      content:"";
+      position:absolute;
+      width:180px;
+      height:180px;
+      right:-50px;
+      top:-90px;
+      border-radius:50%;
+      background:rgba(24,183,255,.10);
+      filter:blur(8px);
+      pointer-events:none;
+    }
+
+    .nova-quiz-head-copy,
+    .nova-quiz-head-state{
+      position:relative;
+      z-index:1;
+    }
+
+    .nova-quiz-kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--accent);
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.14em;
+    }
+
+    .nova-quiz-head h2{
+      margin:7px 0 0;
+      color:var(--text);
+      font-size:21px;
+      font-weight:900;
+      letter-spacing:-.045em;
+      line-height:1.1;
+    }
+
+    .nova-quiz-head p{
+      max-width:720px;
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:10px;
+      line-height:1.55;
+    }
+
+    .nova-quiz-head-state{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      justify-content:center;
+      gap:3px;
+      min-width:110px;
+    }
+
+    .nova-quiz-head-state span{
+      color:var(--muted-2);
+      font-size:8px;
+      font-weight:800;
+    }
+
+    .nova-quiz-head-state strong{
+      color:var(--text);
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.04em;
+    }
+
+    .nova-quiz-progress{
+      grid-column:1 / -1;
+      position:relative;
+      height:6px;
+      overflow:hidden;
+      border-radius:999px;
+      background:var(--surface-2);
+      border:1px solid var(--line);
+    }
+
+    .nova-quiz-progress i{
+      display:block;
+      height:100%;
+      min-width:3px;
+      border-radius:999px;
+      background:var(--accent);
+      box-shadow:0 4px 14px rgba(24,183,255,.25);
+      transition:width .35s ease;
+    }
+
+    .nova-quiz-layout{
+      display:grid;
+      grid-template-columns:220px minmax(0,1fr);
+      gap:16px;
+      align-items:start;
+    }
+
+    .nova-quiz-nav,
+    .nova-quiz-content{
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:var(--surface);
+      box-shadow:0 12px 36px rgba(0,0,0,.08);
+    }
+
+    .nova-quiz-nav{
+      position:sticky;
+      top:92px;
+      padding:14px;
+    }
+
+    .nova-quiz-nav-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:4px 2px 12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .nova-quiz-nav-head > div{
+      min-width:0;
+    }
+
+    .nova-quiz-nav-head span:first-child{
+      display:block;
+      color:var(--muted-2);
+      font-size:7px;
+      font-weight:900;
+      letter-spacing:.13em;
+    }
+
+    .nova-quiz-nav-head b{
+      display:block;
+      margin-top:4px;
+      color:var(--text);
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .nova-quiz-total{
+      display:grid;
+      place-items:center;
+      width:32px;
+      height:32px;
+      border-radius:11px;
+      color:var(--accent);
+      background:rgba(24,183,255,.08);
+      border:1px solid rgba(24,183,255,.14);
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .nova-quiz-nav-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:6px;
+      padding-top:12px;
+      max-height:420px;
+      overflow:auto;
+    }
+
+    .nova-quiz-nav-button{
+      appearance:none;
+      width:100%;
+      aspect-ratio:1;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:var(--surface-2);
+      color:var(--muted);
+      font:inherit;
+      font-size:10px;
+      font-weight:850;
+      cursor:pointer;
+      transition:transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+    }
+
+    .nova-quiz-nav-button:hover{
+      transform:translateY(-1px);
+      color:var(--text);
+      border-color:var(--accent);
+    }
+
+    .nova-quiz-nav-button.current{
+      color:#fff;
+      background:var(--accent);
+      border-color:var(--accent);
+      box-shadow:0 8px 20px rgba(24,183,255,.22);
+    }
+
+    .nova-quiz-nav-note{
+      display:flex;
+      align-items:flex-start;
+      gap:7px;
+      margin-top:12px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:11px;
+      background:var(--surface-2);
+      color:var(--muted);
+      font-size:7.5px;
+      line-height:1.45;
+    }
+
+    .nova-quiz-nav-note .icon{
+      flex:0 0 auto;
+      color:var(--accent);
+    }
+
+    .nova-quiz-content{
+      overflow:hidden;
+    }
+
+    .nova-quiz-html{
+      padding:16px;
+      min-width:0;
+    }
+
+    .nova-quiz-html,
+    .nova-quiz-html *{
+      box-sizing:border-box;
+    }
+
+    .nova-quiz-html form{
+      width:100%;
+      margin:0;
+    }
+
+    .nova-quiz-html .que{
+      margin:0 0 13px;
+      padding:17px;
+      border:1px solid var(--line);
+      border-radius:17px;
+      background:var(--surface-2);
+      box-shadow:0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .nova-quiz-html .que:last-child{
+      margin-bottom:0;
+    }
+
+    .nova-quiz-html .que .info{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:0 0 12px;
+      padding:0;
+      border:0;
+      background:transparent;
+    }
+
+    .nova-quiz-html .que .qno{
+      color:var(--accent);
+      font-size:9px;
+      font-weight:900;
+    }
+
+    .nova-quiz-html .que .qtype{
+      margin-left:auto;
+      color:var(--muted-2);
+      font-size:7px;
+      font-weight:800;
+    }
+
+    .nova-quiz-html .qtext{
+      color:var(--text);
+      font-size:15px;
+      font-weight:750;
+      line-height:1.5;
+    }
+
+    .nova-quiz-html .answer{
+      display:grid;
+      gap:8px;
+      margin-top:14px;
+    }
+
+    .nova-quiz-html .answer > div,
+    .nova-quiz-html .answer > label,
+    .nova-quiz-html .answer .r0,
+    .nova-quiz-html .answer .r1{
+      padding:11px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--surface);
+      transition:border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .nova-quiz-html .answer > div:hover,
+    .nova-quiz-html .answer > label:hover{
+      border-color:var(--accent);
+      transform:translateY(-1px);
+    }
+
+    .nova-quiz-html .answer input[type="radio"],
+    .nova-quiz-html .answer input[type="checkbox"]{
+      width:18px;
+      height:18px;
+      margin:0 9px 0 0;
+      vertical-align:middle;
+      accent-color:var(--accent);
+    }
+
+    .nova-quiz-html .answer label{
+      color:var(--text);
+      font-size:10px;
+      line-height:1.45;
+      cursor:pointer;
+    }
+
+    .nova-quiz-html textarea,
+    .nova-quiz-html input[type="text"],
+    .nova-quiz-html input[type="number"],
+    .nova-quiz-html select{
+      width:100%;
+      min-height:42px;
+      margin-top:8px;
+      padding:10px 11px;
+      border:1px solid var(--line);
+      border-radius:11px;
+      background:var(--surface);
+      color:var(--text);
+      outline:none;
+      font:inherit;
+    }
+
+    .nova-quiz-html textarea:focus,
+    .nova-quiz-html input[type="text"]:focus,
+    .nova-quiz-html input[type="number"]:focus,
+    .nova-quiz-html select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(24,183,255,.10);
+    }
+
+    .nova-quiz-html .submitbtns,
+    .nova-quiz-html .mod_quiz-next-nav,
+    .nova-quiz-html .quizattemptnavigation,
+    .nova-quiz-html .quiznavigation{
+      display:none !important;
+    }
+
+    .nova-quiz-controls{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 16px 16px;
+      border-top:1px solid var(--line);
+      background:var(--surface);
+    }
+
+    .nova-quiz-control-spacer{
+      flex:1;
+    }
+
+    .nova-quiz-controls .primary,
+    .nova-quiz-controls .secondary{
+      min-height:42px;
+    }
+
+    @media(max-width:980px){
+      .nova-quiz-layout{
+        grid-template-columns:1fr;
+      }
+
+      .nova-quiz-nav{
+        position:static;
+      }
+
+      .nova-quiz-nav-grid{
+        grid-template-columns:repeat(8,minmax(0,1fr));
+        max-height:none;
+      }
+    }
+
+    @media(max-width:680px){
+      .nova-quiz-head{
+        grid-template-columns:1fr;
+        padding:16px;
+        border-radius:17px;
+      }
+
+      .nova-quiz-head-state{
+        align-items:flex-start;
+      }
+
+      .nova-quiz-layout{
+        gap:10px;
+      }
+
+      .nova-quiz-nav,
+      .nova-quiz-content{
+        border-radius:16px;
+      }
+
+      .nova-quiz-nav{
+        padding:11px;
+      }
+
+      .nova-quiz-nav-grid{
+        grid-template-columns:repeat(6,minmax(0,1fr));
+        gap:5px;
+      }
+
+      .nova-quiz-html{
+        padding:10px;
+      }
+
+      .nova-quiz-html .que{
+        padding:13px;
+        border-radius:13px;
+      }
+
+      .nova-quiz-html .qtext{
+        font-size:13px;
+      }
+
+      .nova-quiz-controls{
+        flex-wrap:wrap;
+        padding:10px;
+      }
+
+      .nova-quiz-control{
+        flex:1 1 130px;
+        justify-content:center;
+      }
+
+      .nova-quiz-control-spacer{
+        display:none;
+      }
+
+      .nova-quiz-head h2{
+        font-size:18px;
+      }
+    }
+
+    body[data-theme="light"] .nova-quiz-head,
+    body[data-theme="light"] .nova-quiz-nav,
+    body[data-theme="light"] .nova-quiz-content{
+      box-shadow:0 14px 38px rgba(38,65,95,.07);
+    }
+
+    body[data-theme="light"] .nova-quiz-html .que{
+      background:#f8fafc;
+    }
+
+    body[data-theme="light"] .nova-quiz-html .answer > div,
+    body[data-theme="light"] .nova-quiz-html .answer > label{
+      background:#fff;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
 function activityPage(){
   if(state.status.activity==='loading')
     return `
@@ -3390,35 +4691,10 @@ function activityPage(){
 
   else if(kind === 'quiz-action'){
 
-    body = `
-      <section class="nova-quiz-status">
-
-        <div class="nova-quiz-status-icon">
-          ${icon('check',20)}
-        </div>
-
-        <div>
-          <span class="eyebrow">ТЕСТ</span>
-
-          <h3>
-            Попытка запущена
-          </h3>
-
-          <p>
-            Выберите ответы и завершите тест
-            через кнопку внизу.
-          </p>
-        </div>
-
-      </section>
-
-      <div class="nova-activity-html nova-quiz-html">
-        ${
-          result.html ||
-          '<div class="inline-empty">Вопросы теста не переданы Campus.</div>'
-        }
-      </div>
-    `;
+    body = quizAttemptMarkup(
+      result,
+      title
+    );
   }
 
 
@@ -4478,6 +5754,45 @@ function bindCampusContent(){
   });
 
   bindQuizStart();
+
+  if(
+    state.route==='activity' &&
+    state.data.activity?.result?.kind==='quiz-action'
+  ){
+    const quizRoot=$('#campus-content');
+
+    if(quizRoot){
+      $$('[data-quiz-path]',quizRoot).forEach(el=>{
+        if(el.dataset.novaBound) return;
+        el.dataset.novaBound='1';
+
+        el.addEventListener(
+          'click',
+          ()=>{
+            if(el.disabled) return;
+            loadNovaQuizPage(
+              el.dataset.quizPath || ''
+            );
+          }
+        );
+      });
+
+      $$('[data-quiz-control]',quizRoot).forEach(el=>{
+        if(el.dataset.novaBound) return;
+        el.dataset.novaBound='1';
+
+        el.addEventListener(
+          'click',
+          ()=>{
+            if(el.disabled) return;
+            submitNovaQuizControl(
+              el.dataset.quizControl
+            );
+          }
+        );
+      });
+    }
+  }
 
   if(
     state.route==='activity' &&
@@ -6329,4 +7644,4 @@ function injectNovaCalendarInlineStyles(){
 
 /* NOVA_CALENDAR_INLINE_FINAL_20260919 */
 
-(async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();injectNovaCalendarInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
+(async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();injectNovaCalendarInlineStyles();injectNovaQuizInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
