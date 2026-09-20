@@ -2823,63 +2823,147 @@ function extractActivityFilesFromHtml(
   const out = [];
   const seen = new Set();
 
-  const anchors =
-    [
-      ...doc.querySelectorAll(
-        'a[href], area[href]'
+  const addFile = (
+    rawPath,
+    filename = '',
+    filesize = 0,
+    mimetype = '',
+    downloadViaPage = false
+  ) => {
+
+    const normalized =
+      normalizePath(
+        rawPath
+      );
+
+    if(
+      !normalized ||
+      normalized === '/' ||
+      /^javascript:/i.test(
+        String(rawPath || '')
       )
-    ];
-
-  for(const link of anchors){
-    const raw =
-      link.getAttribute('href') || '';
-
-    const fileurl =
-      normalizeLearningFileUrl(raw);
-
-    if(!fileurl || seen.has(fileurl)){
-      continue;
+    ){
+      return;
     }
+
+    if(
+      seen.has(normalized)
+    ){
+      return;
+    }
+
+    const cleanName =
+      text(
+        filename
+      ) ||
+      learningFilenameFromUrl(
+        normalized
+      ) ||
+      'Файл';
+
+    /*
+     * Accept both:
+     *
+     * /pluginfile.php/...
+     *
+     * and indirect:
+     *
+     * /mod/resource/view.php?id=...
+     *
+     */
+    const looksLikeDocument =
+      isFile(normalized) ||
+      /\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(
+        cleanName
+      );
+
+    const looksLikeResource =
+      /\/mod\/resource\/view\.php(?:\?|$)/i.test(
+        normalized
+      ) ||
+      /\/mod\/folder\/view\.php(?:\?|$)/i.test(
+        normalized
+      );
+
+    if(
+      !looksLikeDocument &&
+      !looksLikeResource &&
+      !downloadViaPage
+    ){
+      return;
+    }
+
+    out.push({
+      fileurl:normalized,
+
+      filename:
+        cleanName,
+
+      mimetype:
+        mimetype ||
+        learningMimeFromName(
+          cleanName
+        ),
+
+      filesize:
+        Number(
+          filesize || 0
+        ) || 0,
+
+      downloadViaPage:
+        Boolean(
+          downloadViaPage ||
+          !isFile(normalized)
+        )
+    });
+
+    seen.add(normalized);
+  };
+
+  /*
+   * Standard links.
+   */
+  for(
+    const link of doc.querySelectorAll(
+      'a[href], area[href]'
+    )
+  ){
+
+    const raw =
+      link.getAttribute(
+        'href'
+      ) || '';
 
     const filename =
       text(
         link.textContent || ''
       ) ||
       learningFilenameFromUrl(
-        fileurl
+        raw
       );
 
-    out.push({
-      fileurl,
-      filename:
-        filename || 'Файл',
-      mimetype:
-        learningMimeFromName(
-          filename
-        ),
-      filesize:
-        Number(
-          link.getAttribute(
-            'data-filesize'
-          ) || 0
-        ) || 0
-    });
-
-    seen.add(fileurl);
+    addFile(
+      raw,
+      filename,
+      link.getAttribute(
+        'data-filesize'
+      ),
+      link.getAttribute(
+        'data-mimetype'
+      ),
+      false
+    );
   }
 
   /*
-   * В Moodle файл иногда лежит в data-* атрибуте,
-   * а обычный href ведёт на промежуточную страницу.
+   * Moodle data-* links.
    */
-  const elements =
-    [
-      ...doc.querySelectorAll(
-        '[data-fileurl],[data-url],[data-href]'
-      )
-    ];
+  for(
+    const element of doc.querySelectorAll(
+      '[data-fileurl],[data-url],[data-href]'
+    )
+  ){
 
-  for(const element of elements){
     const raw =
       element.getAttribute(
         'data-fileurl'
@@ -2892,33 +2976,25 @@ function extractActivityFilesFromHtml(
       ) ||
       '';
 
-    const fileurl =
-      normalizeLearningFileUrl(raw);
-
-    if(!fileurl || seen.has(fileurl)){
-      continue;
-    }
-
     const filename =
       text(
         element.textContent || ''
       ) ||
       learningFilenameFromUrl(
-        fileurl
+        raw
       );
 
-    out.push({
-      fileurl,
-      filename:
-        filename || 'Файл',
-      mimetype:
-        learningMimeFromName(
-          filename
-        ),
-      filesize:0
-    });
-
-    seen.add(fileurl);
+    addFile(
+      raw,
+      filename,
+      element.getAttribute(
+        'data-filesize'
+      ),
+      element.getAttribute(
+        'data-mimetype'
+      ),
+      true
+    );
   }
 
   return out;
@@ -2956,14 +3032,21 @@ function collectActivityFiles(
   const seen = new Set();
 
   for(const file of all){
+
+    const rawPath =
+      file?.fileurl ||
+      file?.url ||
+      '';
+
     const fileurl =
-      normalizeLearningFileUrl(
-        file?.fileurl ||
-        file?.url ||
-        ''
+      normalizePath(
+        rawPath
       );
 
-    if(!fileurl || seen.has(fileurl)){
+    if(
+      !fileurl ||
+      seen.has(fileurl)
+    ){
       continue;
     }
 
@@ -2975,19 +3058,52 @@ function collectActivityFiles(
       ) ||
       learningFilenameFromUrl(
         fileurl
+      ) ||
+      'Файл';
+
+    const indirect =
+      Boolean(
+        file?.downloadViaPage ||
+        !isFile(fileurl)
       );
+
+    /*
+     * Не добавляем в список обычные ссылки на страницы.
+     * Оставляем:
+     *
+     * - реальные файлы;
+     * - resource/folder страницы,
+     *   если они описываются как файл.
+     */
+    if(
+      indirect &&
+      !/\/mod\/(?:resource|folder)\/view\.php(?:\?|$)/i.test(
+        fileurl
+      )
+    ){
+      continue;
+    }
 
     out.push({
       ...file,
+
       fileurl,
-      filename:
-        filename || 'Файл',
+
+      filename,
+
       mimetype:
         file?.mimetype ||
-        learningMimeFromName(filename)
+        learningMimeFromName(
+          filename
+        ),
+
+      downloadViaPage:
+        indirect
     });
 
-    seen.add(fileurl);
+    seen.add(
+      fileurl
+    );
   }
 
   return out;
@@ -3026,7 +3142,9 @@ function learningMaterialDescription(
   );
 }
 
-function learningFileType(file = {}){
+function learningFileType(
+  file = {}
+){
   const filename =
     String(
       file?.filename ||
@@ -3048,13 +3166,6 @@ function learningFileType(file = {}){
   }
 
   if(
-    filename.endsWith('.doc') ||
-    mime.includes('msword')
-  ){
-    return 'DOC';
-  }
-
-  if(
     filename.endsWith('.docx') ||
     mime.includes('wordprocessingml')
   ){
@@ -3062,10 +3173,10 @@ function learningFileType(file = {}){
   }
 
   if(
-    filename.endsWith('.xls') ||
-    mime.includes('ms-excel')
+    filename.endsWith('.doc') ||
+    mime.includes('msword')
   ){
-    return 'XLS';
+    return 'DOC';
   }
 
   if(
@@ -3076,10 +3187,10 @@ function learningFileType(file = {}){
   }
 
   if(
-    filename.endsWith('.ppt') ||
-    mime.includes('ms-powerpoint')
+    filename.endsWith('.xls') ||
+    mime.includes('ms-excel')
   ){
-    return 'PPT';
+    return 'XLS';
   }
 
   if(
@@ -3087,6 +3198,13 @@ function learningFileType(file = {}){
     mime.includes('presentationml')
   ){
     return 'PPTX';
+  }
+
+  if(
+    filename.endsWith('.ppt') ||
+    mime.includes('ms-powerpoint')
+  ){
+    return 'PPT';
   }
 
   if(
@@ -3101,26 +3219,6 @@ function learningFileType(file = {}){
     mime.includes('rar')
   ){
     return 'RAR';
-  }
-
-  if(
-    filename.endsWith('.7z') ||
-    mime.includes('7z')
-  ){
-    return '7Z';
-  }
-
-  if(mime){
-    const slash = mime.lastIndexOf('/');
-
-    if(slash >= 0){
-      return (
-        mime
-          .slice(slash + 1)
-          .split(';')[0]
-          .toUpperCase()
-      );
-    }
   }
 
   return 'ФАЙЛ';
@@ -3160,18 +3258,25 @@ function learningDownloadButton(
   }
 
   const filename =
-    learningFileLabel(file);
+    learningFileLabel(
+      file
+    );
 
   const label =
     multiple
       ? 'Скачать'
       : material.buttonLabel;
 
+  const attribute =
+    file?.downloadViaPage
+      ? 'data-download-smart'
+      : 'data-download';
+
   return `
     <button
       class="nova-learning-download"
       type="button"
-      data-download="${esc(file.fileurl)}"
+      ${attribute}="${esc(file.fileurl)}"
       data-download-filename="${esc(filename)}"
       title="${esc(
         multiple
@@ -3180,7 +3285,9 @@ function learningDownloadButton(
       )}"
     >
       ${icon('download',17)}
-      <span>${esc(label)}</span>
+      <span>
+        ${esc(label)}
+      </span>
     </button>
   `;
 }
@@ -3194,20 +3301,76 @@ function learningFilesMarkup(
   }
 
   if(files.length === 1){
+
+    const file =
+      files[0];
+
     return `
-      <div class="nova-learning-files">
-        ${learningDownloadButton(
-          files[0],
-          material
-        )}
+      <div
+        class="nova-learning-files
+               nova-learning-files-single"
+      >
+
+        <div
+          class="nova-learning-file-single"
+        >
+
+          <div
+            class="nova-learning-file-info"
+          >
+
+            <span
+              class="nova-learning-file-icon"
+            >
+              ${icon(
+                material.icon,
+                19
+              )}
+            </span>
+
+            <span
+              class="nova-learning-file-details"
+            >
+
+              <b>
+                ${esc(
+                  learningFileLabel(
+                    file
+                  )
+                )}
+              </b>
+
+              <small>
+                ${esc(
+                  learningFileMeta(
+                    file
+                  )
+                )}
+              </small>
+
+            </span>
+
+          </div>
+
+          ${learningDownloadButton(
+            file,
+            material
+          )}
+
+        </div>
+
       </div>
     `;
   }
 
   return `
-    <div class="nova-learning-files">
+    <div
+      class="nova-learning-files"
+    >
 
-      <div class="nova-learning-files-head">
+      <div
+        class="nova-learning-files-head"
+      >
         <span>
           ФАЙЛЫ МАТЕРИАЛА
         </span>
@@ -3217,33 +3380,49 @@ function learningFilesMarkup(
         </b>
       </div>
 
-      <div class="nova-learning-file-list">
+      <div
+        class="nova-learning-file-list"
+      >
+
         ${
           files.map(file=>`
             <div
               class="nova-learning-file"
             >
 
-              <div class="nova-learning-file-info">
+              <div
+                class="nova-learning-file-info"
+              >
 
                 <span
                   class="nova-learning-file-icon"
                 >
-                  ${icon(material.icon,18)}
+                  ${icon(
+                    material.icon,
+                    18
+                  )}
                 </span>
 
-                <span>
+                <span
+                  class="nova-learning-file-details"
+                >
+
                   <b>
                     ${esc(
-                      learningFileLabel(file)
+                      learningFileLabel(
+                        file
+                      )
                     )}
                   </b>
 
                   <small>
                     ${esc(
-                      learningFileMeta(file)
+                      learningFileMeta(
+                        file
+                      )
                     )}
                   </small>
+
                 </span>
 
               </div>
@@ -3257,6 +3436,7 @@ function learningFilesMarkup(
             </div>
           `).join('')
         }
+
       </div>
 
     </div>
@@ -6559,18 +6739,125 @@ function bind(){
   bindQuizStart();
   bindQuizContinue();
   $$('[data-view]').forEach(el=>el.addEventListener('click',e=>{if(el.hasAttribute('data-activity'))return;if(e.target.closest('[data-download]'))return;const p=el.dataset.view;if(p)openCampusPath(p)}));
-  $$('[data-download]').forEach(el=>el.addEventListener('click',()=>{
-    const path =
-      el.dataset.download || '';
+  $$('[data-download-smart]').forEach(el=>{
+    if(el.dataset.novaDownloadBound === '1'){
+      return;
+    }
 
-    const filename =
-      el.dataset.downloadFilename || '';
+    el.dataset.novaDownloadBound = '1';
 
-    downloadCampus(
-      path,
-      filename
+    el.addEventListener(
+      'click',
+      async()=>{
+        const path =
+          el.dataset.downloadSmart ||
+          '';
+
+        const filename =
+          el.dataset.downloadFilename ||
+          '';
+
+        if(
+          !path ||
+          el.disabled
+        ){
+          return;
+        }
+
+        const original =
+          el.innerHTML;
+
+        el.disabled = true;
+        el.classList.add(
+          'is-loading'
+        );
+
+        el.innerHTML =
+          `${icon('download',15)}
+           <span>Скачиваем…</span>`;
+
+        try{
+          await downloadCampusSmart(
+            path,
+            filename
+          );
+        }finally{
+          if(
+            document.body.contains(
+              el
+            )
+          ){
+            el.disabled = false;
+            el.classList.remove(
+              'is-loading'
+            );
+            el.innerHTML =
+              original;
+          }
+        }
+      }
     );
-  }));
+  });
+
+  $$('[data-download]').forEach(el=>{
+    if(el.dataset.novaDownloadBound === '1'){
+      return;
+    }
+
+    el.dataset.novaDownloadBound = '1';
+
+    el.addEventListener(
+      'click',
+      async()=>{
+        const path =
+          el.dataset.download ||
+          '';
+
+        const filename =
+          el.dataset.downloadFilename ||
+          '';
+
+        if(
+          !path ||
+          el.disabled
+        ){
+          return;
+        }
+
+        const original =
+          el.innerHTML;
+
+        el.disabled = true;
+        el.classList.add(
+          'is-loading'
+        );
+
+        el.innerHTML =
+          `${icon('download',15)}
+           <span>Скачиваем…</span>`;
+
+        try{
+          await downloadCampus(
+            path,
+            filename
+          );
+        }finally{
+          if(
+            document.body.contains(
+              el
+            )
+          ){
+            el.disabled = false;
+            el.classList.remove(
+              'is-loading'
+            );
+            el.innerHTML =
+              original;
+          }
+        }
+      }
+    );
+  });
   $$('[data-conversation]').forEach(el=>el.addEventListener('click',()=>openConversation(el.dataset.conversation)));
   $$('[data-month]').forEach(el=>el.addEventListener('click',()=>changeMonth(Number(el.dataset.month))));
   $$('[data-day]').forEach(el=>el.addEventListener('click',()=>selectDay(el.dataset.day)));
@@ -6768,6 +7055,149 @@ function changeMonth(delta){let m=state.month+delta,y=state.year;if(m<1){m=12;y-
 function normalizePath(p){let x=String(p||'');if(/^https?:\/\//i.test(x)){try{const u=new URL(x);if(!campusOrigin()||u.origin!==campusOrigin())return null;x=u.pathname+u.search+u.hash}catch{return null}}if(x.startsWith('/campus/'))x=x.slice(7);if(!x.startsWith('/'))x='/'+x;return x}
 function isFile(p){return /\/(?:pluginfile|tokenpluginfile|webservice\/pluginfile|draftfile)\.php(?:\/|$)/i.test(p)||/\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(p)}
 function openCampusPath(p){const x=normalizePath(p);if(!x){window.open(p,'_blank','noopener,noreferrer');return}if(isFile(x)){downloadCampus(x);return}if(x.startsWith('/course/view.php')){const id=new URL(x,campusOrigin()||location.origin).searchParams.get('id');if(id)return navigate('course',id)}if(x.startsWith('/login/index.php')){toast('Сессия Campus закончилась','error');return navigate('profile')}navigate('view',x)}
+async function downloadCampusSmart(
+  path,
+  filename = ''
+){
+  const normalized =
+    normalizePath(
+      path
+    );
+
+  if(!normalized){
+    toast(
+      'Файл недоступен.',
+      'error'
+    );
+    return;
+  }
+
+  /*
+   * Direct pluginfile/document URL.
+   */
+  if(isFile(normalized)){
+    return downloadCampus(
+      normalized,
+      filename
+    );
+  }
+
+  try{
+
+    const response =
+      await api(
+        `/api/page?path=${encodeURIComponent(normalized)}`
+      );
+
+    const page =
+      response?.page || null;
+
+    if(!page){
+      throw new Error(
+        'Campus не вернул страницу материала.'
+      );
+    }
+
+    /*
+     * API already resolved it as a binary file.
+     */
+    if(
+      page.kind === 'file' &&
+      page.path
+    ){
+      return downloadCampus(
+        page.path,
+        filename ||
+        page.filename ||
+        ''
+      );
+    }
+
+    /*
+     * Search the resource page for the real
+     * pluginfile/document URL.
+     */
+    const nested =
+      extractActivityFilesFromHtml(
+        page.html || ''
+      );
+
+    const direct =
+      nested.find(
+        file =>
+          file?.fileurl &&
+          isFile(
+            file.fileurl
+          )
+      );
+
+    if(direct){
+      return downloadCampus(
+        direct.fileurl,
+        filename ||
+        direct.filename ||
+        ''
+      );
+    }
+
+    /*
+     * Last chance: a raw href whose anchor text
+     * itself contains a known document name.
+     */
+    const doc =
+      new DOMParser()
+        .parseFromString(
+          String(
+            page.html || ''
+          ),
+          'text/html'
+        );
+
+    for(
+      const link of doc.querySelectorAll(
+        'a[href]'
+      )
+    ){
+
+      const href =
+        normalizePath(
+          link.getAttribute(
+            'href'
+          ) || ''
+        );
+
+      const anchorName =
+        text(
+          link.textContent || ''
+        );
+
+      if(
+        href &&
+        isFile(href)
+      ){
+        return downloadCampus(
+          href,
+          filename ||
+          anchorName ||
+          ''
+        );
+      }
+    }
+
+    throw new Error(
+      'Campus не показал прямую ссылку на файл.'
+    );
+
+  }catch(error){
+
+    toast(
+      error?.message ||
+      'Не удалось скачать файл.',
+      'error'
+    );
+  }
+}
+
 async function downloadCampus(path,filename=''){
   const x=normalizePath(path); if(!x){toast('Файл недоступен','error');return;}
   const q=new URLSearchParams({path:x}); if(filename)q.set('filename',filename);

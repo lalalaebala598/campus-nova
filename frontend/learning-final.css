@@ -1,0 +1,629 @@
+/*
+ * Campus Nova
+ * Learning Materials Final
+ *
+ * Loaded AFTER styles.css so generic button rules
+ * cannot turn material controls into browser-grey buttons.
+ */
+
+.nova-learning-material{
+  position:relative !important;
+
+  width:100% !important;
+  box-sizing:border-box !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+
+  gap:18px !important;
+
+  margin:20px 0 !important;
+  padding:27px !important;
+
+  overflow:hidden !important;
+
+  border:1px solid
+    rgba(24,183,255,.18) !important;
+
+  border-radius:24px !important;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(24,183,255,.11),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      #0e1725,
+      #0a111c
+    ) !important;
+
+  box-shadow:
+    0 24px 60px
+      rgba(0,0,0,.18),
+    inset 0 1px 0
+      rgba(255,255,255,.035) !important;
+}
+
+.nova-learning-material::after{
+  content:"" !important;
+
+  position:absolute !important;
+
+  width:260px !important;
+  height:260px !important;
+
+  right:-150px !important;
+  top:-155px !important;
+
+  border-radius:50% !important;
+
+  background:
+    rgba(24,183,255,.045) !important;
+
+  filter:blur(12px) !important;
+
+  pointer-events:none !important;
+}
+
+.nova-learning-top{
+  position:relative !important;
+  z-index:2 !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+
+  gap:14px !important;
+}
+
+.nova-learning-type{
+  display:flex !important;
+  align-items:center !important;
+
+  gap:13px !important;
+}
+
+.nova-learning-type-icon{
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  border-radius:16px !important;
+
+  color:#18b7ff !important;
+
+  background:
+    rgba(24,183,255,.10) !important;
+
+  border:1px solid
+    rgba(24,183,255,.23) !important;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(255,255,255,.05),
+    0 8px 22px
+      rgba(24,183,255,.06) !important;
+}
+
+.nova-learning-type-icon .icon{
+  color:#18b7ff !important;
+}
+
+.nova-learning-type b{
+  display:block !important;
+
+  color:#f5f8ff !important;
+
+  font-size:10px !important;
+  font-weight:900 !important;
+
+  letter-spacing:.16em !important;
+}
+
+.nova-learning-type small{
+  display:block !important;
+
+  margin-top:5px !important;
+
+  color:#7e8da4 !important;
+
+  font-size:9px !important;
+}
+
+.nova-learning-count{
+  padding:7px 10px !important;
+
+  border:1px solid
+    rgba(255,255,255,.07) !important;
+
+  border-radius:10px !important;
+
+  background:
+    rgba(255,255,255,.035) !important;
+
+  color:#8d9bb0 !important;
+
+  font-size:9px !important;
+  font-weight:850 !important;
+}
+
+.nova-learning-copy{
+  position:relative !important;
+  z-index:2 !important;
+}
+
+.nova-learning-copy h2{
+  margin:0 !important;
+
+  color:#f5f8ff !important;
+
+  font-size:25px !important;
+
+  line-height:1.14 !important;
+
+  letter-spacing:-.045em !important;
+}
+
+.nova-learning-copy p{
+  max-width:900px !important;
+
+  margin:8px 0 0 !important;
+
+  color:#8796aa !important;
+
+  font-size:11px !important;
+
+  line-height:1.55 !important;
+}
+
+
+/* =========================================================
+   SINGLE FILE
+   ========================================================= */
+
+.nova-learning-files-single{
+  width:100% !important;
+}
+
+.nova-learning-file-single{
+  position:relative !important;
+
+  width:100% !important;
+
+  box-sizing:border-box !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+
+  gap:16px !important;
+
+  padding:12px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.07) !important;
+
+  border-radius:17px !important;
+
+  background:
+    rgba(255,255,255,.025) !important;
+
+  transition:
+    border-color .18s ease,
+    transform .18s ease,
+    background .18s ease !important;
+}
+
+.nova-learning-file-single:hover{
+  transform:translateY(-1px) !important;
+
+  border-color:
+    rgba(24,183,255,.22) !important;
+
+  background:
+    rgba(24,183,255,.035) !important;
+}
+
+
+/* =========================================================
+   FILE INFO
+   ========================================================= */
+
+.nova-learning-file-info{
+  min-width:0 !important;
+
+  flex:1 1 auto !important;
+
+  display:flex !important;
+  align-items:center !important;
+
+  gap:11px !important;
+}
+
+.nova-learning-file-icon{
+  width:40px !important;
+  height:40px !important;
+  min-width:40px !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  border-radius:12px !important;
+
+  color:#18b7ff !important;
+
+  background:
+    rgba(24,183,255,.09) !important;
+
+  border:1px solid
+    rgba(24,183,255,.17) !important;
+}
+
+.nova-learning-file-icon .icon{
+  color:#18b7ff !important;
+}
+
+.nova-learning-file-details{
+  min-width:0 !important;
+}
+
+.nova-learning-file-details b{
+  display:block !important;
+
+  max-width:100% !important;
+
+  overflow:hidden !important;
+
+  text-overflow:ellipsis !important;
+
+  white-space:nowrap !important;
+
+  color:#f4f7fc !important;
+
+  font-size:10px !important;
+  font-weight:800 !important;
+}
+
+.nova-learning-file-details small{
+  display:block !important;
+
+  margin-top:4px !important;
+
+  color:#7f8da2 !important;
+
+  font-size:8px !important;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+   ========================================================= */
+
+.nova-learning-download{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+
+  position:relative !important;
+
+  overflow:hidden !important;
+
+  isolation:isolate !important;
+
+  display:inline-flex !important;
+
+  align-items:center !important;
+  justify-content:center !important;
+
+  gap:8px !important;
+
+  flex:0 0 auto !important;
+
+  width:auto !important;
+
+  min-width:155px !important;
+  min-height:47px !important;
+
+  padding:0 18px !important;
+
+  margin:0 !important;
+
+  border:0 !important;
+
+  border-radius:14px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #18b7ff 0%,
+      #617dff 100%
+    ) !important;
+
+  color:#fff !important;
+
+  font-family:inherit !important;
+
+  font-size:10px !important;
+
+  font-weight:900 !important;
+
+  line-height:1 !important;
+
+  cursor:pointer !important;
+
+  text-decoration:none !important;
+
+  box-shadow:
+    0 12px 28px
+      rgba(24,183,255,.22),
+    inset 0 1px 0
+      rgba(255,255,255,.18) !important;
+
+  transition:
+    transform .18s ease,
+    filter .18s ease,
+    box-shadow .18s ease,
+    opacity .18s ease !important;
+}
+
+.nova-learning-download::before{
+  content:"" !important;
+
+  position:absolute !important;
+
+  inset:0 !important;
+
+  pointer-events:none !important;
+
+  background:
+    linear-gradient(
+      110deg,
+      transparent 15%,
+      rgba(255,255,255,.18) 48%,
+      transparent 80%
+    ) !important;
+
+  transform:translateX(-125%) !important;
+
+  transition:
+    transform .60s ease !important;
+}
+
+.nova-learning-download:hover::before{
+  transform:translateX(125%) !important;
+}
+
+.nova-learning-download:hover{
+  transform:translateY(-2px) !important;
+
+  filter:
+    saturate(1.08)
+    brightness(1.05) !important;
+
+  box-shadow:
+    0 17px 35px
+      rgba(24,183,255,.30),
+    inset 0 1px 0
+      rgba(255,255,255,.20) !important;
+}
+
+.nova-learning-download:active{
+  transform:
+    translateY(0)
+    scale(.985) !important;
+}
+
+.nova-learning-download:disabled{
+  opacity:.68 !important;
+
+  cursor:wait !important;
+
+  transform:none !important;
+}
+
+.nova-learning-download .icon,
+.nova-learning-download span{
+  position:relative !important;
+
+  z-index:2 !important;
+
+  color:#fff !important;
+}
+
+
+/* =========================================================
+   MULTIPLE FILES
+   ========================================================= */
+
+.nova-learning-file-list{
+  display:flex !important;
+
+  flex-direction:column !important;
+
+  gap:8px !important;
+}
+
+.nova-learning-file{
+  width:100% !important;
+
+  box-sizing:border-box !important;
+
+  display:flex !important;
+
+  align-items:center !important;
+
+  justify-content:space-between !important;
+
+  gap:14px !important;
+
+  padding:11px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.07) !important;
+
+  border-radius:15px !important;
+
+  background:
+    rgba(255,255,255,.025) !important;
+
+  transition:
+    border-color .18s ease,
+    transform .18s ease,
+    background .18s ease !important;
+}
+
+.nova-learning-file:hover{
+  transform:translateX(2px) !important;
+
+  border-color:
+    rgba(24,183,255,.24) !important;
+
+  background:
+    rgba(24,183,255,.035) !important;
+}
+
+.nova-learning-file
+.nova-learning-download{
+  min-width:108px !important;
+
+  min-height:38px !important;
+
+  padding:0 13px !important;
+
+  border-radius:11px !important;
+
+  font-size:9px !important;
+}
+
+.nova-learning-files-head{
+  display:flex !important;
+
+  align-items:center !important;
+
+  justify-content:space-between !important;
+
+  margin-bottom:7px !important;
+
+  color:#77879d !important;
+
+  font-size:8px !important;
+
+  font-weight:900 !important;
+
+  letter-spacing:.12em !important;
+}
+
+.nova-learning-files-head b{
+  display:grid !important;
+
+  place-items:center !important;
+
+  width:24px !important;
+  height:24px !important;
+
+  border-radius:8px !important;
+
+  background:
+    rgba(255,255,255,.035) !important;
+
+  color:#edf2f9 !important;
+
+  font-size:9px !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media(max-width:680px){
+
+  .nova-learning-material{
+    padding:18px !important;
+
+    border-radius:19px !important;
+  }
+
+  .nova-learning-type-icon{
+    width:45px !important;
+    height:45px !important;
+    min-width:45px !important;
+  }
+
+  .nova-learning-copy h2{
+    font-size:20px !important;
+  }
+
+  .nova-learning-file-single,
+  .nova-learning-file{
+    flex-direction:column !important;
+
+    align-items:stretch !important;
+  }
+
+  .nova-learning-files-single
+  .nova-learning-download,
+  .nova-learning-file
+  .nova-learning-download{
+    width:100% !important;
+
+    min-width:0 !important;
+  }
+}
+
+body[data-theme="light"]
+.nova-learning-material{
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(24,183,255,.09),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f4f8fc
+    ) !important;
+
+  border-color:
+    rgba(32,104,184,.15) !important;
+
+  box-shadow:
+    0 22px 55px
+      rgba(38,65,95,.12),
+    inset 0 1px 0
+      rgba(255,255,255,.90) !important;
+}
+
+body[data-theme="light"]
+.nova-learning-type b,
+body[data-theme="light"]
+.nova-learning-copy h2,
+body[data-theme="light"]
+.nova-learning-file-details b{
+  color:#112033 !important;
+}
+
+body[data-theme="light"]
+.nova-learning-type small,
+body[data-theme="light"]
+.nova-learning-copy p,
+body[data-theme="light"]
+.nova-learning-file-details small{
+  color:#6a7c91 !important;
+}
+
+body[data-theme="light"]
+.nova-learning-file-single,
+body[data-theme="light"]
+.nova-learning-file{
+  background:#fbfdff !important;
+
+  border-color:#e2e9f1 !important;
+}
