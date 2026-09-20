@@ -3730,6 +3730,100 @@ function prepareCampusActivityHtml(html, title = '') {
 }
 
 
+
+function practiceDescriptionFragment(result = {}) {
+  const raw = String(result?.html || '');
+
+  if (!raw) {
+    return '';
+  }
+
+  const doc =
+    new DOMParser().parseFromString(
+      raw,
+      'text/html'
+    );
+
+  let root =
+    doc.querySelector('#intro');
+
+  if (!root) {
+    root =
+      doc.querySelector(
+        '.activity-description, .assign-intro, .assignment-description'
+      );
+  }
+
+  if (!root) {
+    return '';
+  }
+
+  const clone =
+    root.cloneNode(true);
+
+  clone.querySelectorAll(
+    'script,style,noscript,nav,header,footer,' +
+    '.navbar,.breadcrumb,.breadcrumbs,' +
+    '#page-header,#page-footer,#nav-drawer,' +
+    '.block_navigation,.block_settings,' +
+    '.activity-navigation,.navfooter,.paging-bar'
+  ).forEach(
+    el => el.remove()
+  );
+
+  clone.querySelectorAll('table').forEach(
+    table => {
+      const value =
+        String(
+          table.textContent || ''
+        );
+
+      if (
+        /Состояние ответа|Состояние оценивания|Submission status|Grading status/i.test(
+          value
+        )
+      ) {
+        table.remove();
+      }
+    }
+  );
+
+  clone.querySelectorAll('a').forEach(
+    link => {
+      const href =
+        link.getAttribute('href') || '';
+
+      if (
+        /pluginfile|webservice\/pluginfile|tokenpluginfile|draftfile/i.test(
+          href
+        )
+      ) {
+        const holder =
+          link.closest('p,li');
+
+        if (holder) {
+          holder.remove();
+        } else {
+          link.remove();
+        }
+      }
+    }
+  );
+
+  return String(
+    clone.innerHTML || ''
+  )
+    .replace(
+      /<p>\s*<\/p>/gi,
+      ''
+    )
+    .replace(
+      /<div>\s*<\/div>/gi,
+      ''
+    )
+    .trim();
+}
+
 function assignmentSourceMarkup(activity, result) {
   const content = activity?.content || {};
   const description =
@@ -3740,8 +3834,12 @@ function assignmentSourceMarkup(activity, result) {
     ).trim();
 
   const descriptionHtml =
+    practiceDescriptionFragment(
+      result
+    ) ||
     String(
-      result?.descriptionHtml ||
+      result?.description ||
+      content.description ||
       ''
     ).trim();
 
