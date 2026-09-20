@@ -3113,46 +3113,109 @@ function activityPage(){
 
   else if(kind === 'quiz'){
 
-    body = `
-      <section class="nova-quiz-intro">
+    const startForm =
+      result?.access?.startForm ||
+      null;
 
-        <div class="nova-quiz-icon">
-          ${icon('quiz',24)}
+    const canStart =
+      Boolean(
+        startForm?.action &&
+        /startattempt\.php/i.test(
+          String(startForm.action)
+        )
+      );
+
+    body = `
+      <section class="nova-quiz-intro nova-quiz-launch-card">
+
+        <div class="nova-quiz-launch-icon">
+          ${icon('quiz',26)}
         </div>
 
-        <div>
-          <span class="eyebrow">ТЕСТ</span>
+        <div class="nova-quiz-launch-copy">
+
+          <span class="eyebrow">
+            ТЕСТ
+          </span>
 
           <h2>
             ${esc(title)}
           </h2>
 
           <p>
-            После запуска вопросы и ответы
-            синхронизируются с Campus.
+            ${
+              canStart
+                ? 'Тест готов к прохождению. После запуска откроется настоящая попытка Campus.'
+                : 'Campus сейчас не разрешает открыть попытку этого теста.'
+            }
           </p>
+
+          <div class="nova-quiz-meta">
+
+            <span>
+              ${icon('quiz',13)}
+              <b>Формат</b>
+              Тест
+            </span>
+
+            <span class="${
+              canStart
+                ? 'available'
+                : 'unavailable'
+            }">
+
+              ${icon(
+                canStart
+                  ? 'check'
+                  : 'close',
+                13
+              )}
+
+              <b>Статус</b>
+
+              ${
+                canStart
+                  ? 'Доступен'
+                  : 'Недоступен'
+              }
+
+            </span>
+
+          </div>
+
         </div>
 
-        <button
-          class="primary"
-          id="quiz-start-button"
-          type="button"
-        >
-          ${icon('arrow',16)}
-          Начать тест
-        </button>
+        ${
+          canStart
+            ? `
+              <button
+                class="primary nova-quiz-start"
+                id="quiz-start-button"
+                type="button"
+              >
+                ${icon('play',16)}
+                Начать тест
+              </button>
+            `
+            : `
+              <div class="nova-quiz-unavailable">
+
+                <span class="nova-quiz-unavailable-icon">
+                  ${icon('close',15)}
+                </span>
+
+                <div>
+                  <b>Тест пока недоступен</b>
+                  <small>
+                    Доступ определяется Campus.
+                  </small>
+                </div>
+
+              </div>
+            `
+        }
 
       </section>
-
-      ${
-        result.html
-          ? `
-            <div class="nova-activity-html nova-quiz-html">
-              ${activityHtml(result,title)}
-            </div>
-          `
-          : ''
-      }
     `;
   }
 
