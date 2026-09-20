@@ -99,7 +99,33 @@ async function api(path,options={}){
   catch(e){ if(e?.name==='AbortError') throw new Error('Nova не дождалась ответа. Повторите попытку.'); throw new Error('Не удалось связаться с сервером Nova.'); }
   finally{if(timer)clearTimeout(timer)}
   const d=await r.json().catch(()=>null);
-  if(r.status===401){expireLocalSession();throw new Error(d?.error||'Сессия Campus закончилась. Подключите Campus заново.')}
+  if(r.status===401){
+    const activeQuiz =
+      state.route === 'activity' &&
+      (
+        state.data.activity?.result?.kind === 'quiz-action' ||
+        state.data.activity?.result?.kind === 'quiz'
+      );
+
+    /*
+     * Не выбрасываем пользователя из Nova из-за одного
+     * неудачного quiz-запроса. Иначе вопрос навигации
+     * превращается в полный logout-интерфейс.
+     */
+    if(activeQuiz){
+      throw new Error(
+        d?.error ||
+        'Сессия Campus закончилась. Подключите Campus заново.'
+      );
+    }
+
+    expireLocalSession();
+
+    throw new Error(
+      d?.error ||
+      'Сессия Campus закончилась. Подключите Campus заново.'
+    );
+  }
   if(!r.ok||d?.ok===false) throw new Error(d?.error||`Ошибка ${r.status}`);
   return d;
 }
@@ -3319,7 +3345,7 @@ function prepareQuizAttemptHtml(html = '', title = '') {
   const source =
     String(html || '');
 
-  if (!source.trim()) {
+  if(!source.trim()){
     return `
       <div class="inline-empty">
         Campus не передал содержимое попытки.
@@ -3369,7 +3395,13 @@ function prepareQuizAttemptHtml(html = '', title = '') {
   const titleNorm =
     text(title).toLowerCase();
 
+  /*
+   * Сначала пытаемся сохранить настоящую Moodle response form.
+   * Это важно, потому что наши Nova-кнопки отправляют именно
+   * эту форму напрямую.
+   */
   const preferred = [
+    'form#responseform',
     '#region-main',
     '#region-main-box',
     '[role="main"]',
@@ -3377,34 +3409,39 @@ function prepareQuizAttemptHtml(html = '', title = '') {
     '.region-main',
     '#quizcontent',
     '.quizattempt',
-    'form#responseform',
     'main'
   ];
 
   let root = null;
 
-  for (const selector of preferred) {
+  for(const selector of preferred){
     const candidate =
       doc.querySelector(selector);
 
-    if (
+    if(
       candidate &&
       candidate.textContent.trim().length > 40
-    ) {
+    ){
       root = candidate;
       break;
     }
   }
 
-  if (!root) {
+  if(!root){
     const question =
       doc.querySelector('.que');
 
     root =
+      question?.closest('form') ||
       question?.parentElement ||
       doc.body;
   }
 
+  /*
+   * Убираем нативные Moodle-кнопки. Nova управляет
+   * переходом сама, поэтому две системы навигации
+   * одновременно больше не конфликтуют.
+   */
   root.querySelectorAll(
     [
       '.navbar',
@@ -3418,7 +3455,8 @@ function prepareQuizAttemptHtml(html = '', title = '') {
       '.activity-navigation',
       '.paging-bar',
       '.quiznavigation',
-      '.quiz-nav'
+      '.quiz-nav',
+      '.submitbtns'
     ].join(',')
   ).forEach(el=>el.remove());
 
@@ -3427,13 +3465,13 @@ function prepareQuizAttemptHtml(html = '', title = '') {
       text(el.textContent || '')
         .toLowerCase();
 
-    if (
+    if(
       titleNorm &&
       (
         value === titleNorm ||
         value.includes(titleNorm)
       )
-    ) {
+    ){
       el.remove();
     }
   });
@@ -3456,7 +3494,15 @@ function prepareQuizAttemptHtml(html = '', title = '') {
     ].join(',')
   ).forEach(el=>el.remove());
 
-  return root.innerHTML.trim();
+  /*
+   * Если корень это сама response form, нельзя возвращать
+   * только innerHTML, иначе <form> исчезнет.
+   */
+  return (
+    root.tagName === 'FORM'
+      ? root.outerHTML
+      : root.innerHTML
+  ).trim();
 }
 
 function quizAttemptMeta(result = {}) {
@@ -3720,7 +3766,7 @@ async function loadNovaQuizPage(path) {
   const normalized =
     normalizePath(path);
 
-  if (!normalized) {
+  if(!normalized){
     toast(
       'Не удалось открыть вопрос.',
       'error'
@@ -3728,45 +3774,29 @@ async function loadNovaQuizPage(path) {
     return;
   }
 
-  try {
+  try{
     const d =
       await api(
         `/api/page?path=${encodeURIComponent(normalized)}`
       );
 
-    if (
-      !state.data.activity ||
-      state.route !== 'activity'
-    ) return;
+    if(
+      !d?.page ||
+      state.route !== 'activity' ||
+      !state.data.activity
+    ){
+      return;
+    }
 
     const previous =
       state.data.activity.result || {};
 
-    const nextPath =
-      d.page?.path ||
-      normalized;
-
-    state.data.activity.result = {
-      ...previous,
-      kind:'quiz-action',
-      title:
-        d.page?.title ||
-        previous.title ||
-        'Тест',
-      html:
-        d.page?.html ||
-        '',
-      attemptPath:
-        nextPath,
-      redirectedPath:
-        nextPath,
-      quizNavigation:
-        mergeQuizNavigation(
-          previous.quizNavigation || [],
-          d.page?.html || '',
-          nextPath
-        )
-    };
+    state.data.activity.result =
+      updateQuizResultFromPage(
+        d.page,
+        previous,
+        normalized
+      );
 
     state.status.activity='success';
     state.errors.activity=null;
@@ -3779,7 +3809,7 @@ async function loadNovaQuizPage(path) {
       'success'
     );
 
-  } catch (error) {
+  }catch(error){
     toast(
       error?.message ||
       'Не удалось открыть вопрос.',
@@ -3788,23 +3818,74 @@ async function loadNovaQuizPage(path) {
   }
 }
 
+function updateQuizResultFromPage(
+  page,
+  previous = {},
+  fallbackPath = ''
+){
+  const nextPath =
+    page?.path ||
+    previous.attemptPath ||
+    previous.redirectedPath ||
+    fallbackPath ||
+    '';
+
+  return {
+    ...previous,
+    kind:'quiz-action',
+    title:
+      page?.title ||
+      previous.title ||
+      'Тест',
+    html:
+      page?.html ||
+      '',
+    attemptPath:
+      nextPath,
+    redirectedPath:
+      nextPath,
+    quizNavigation:
+      mergeQuizNavigation(
+        previous.quizNavigation || [],
+        page?.html || '',
+        nextPath
+      )
+  };
+}
+
 function quizSubmitter(form, action) {
   const controls = [
     ...form.querySelectorAll(
       'button,input[type="submit"],input[type="image"]'
     )
-  ];
+  ].filter(control=>{
+    if(control.disabled) return false;
+
+    if(control.tagName === 'INPUT'){
+      return /^(submit|image)$/i.test(
+        control.getAttribute('type') || ''
+      );
+    }
+
+    const type =
+      String(
+        control.getAttribute('type') ||
+        'submit'
+      ).toLowerCase();
+
+    return type === 'submit';
+  });
 
   const patterns = {
-    previous:/previous|prev|назад|предыдущ/i,
-    next:/next|далее|следующ/i,
+    previous:/previous|prev|назад|предыдущ|back/i,
+    next:/next|далее|следующ|вперёд|вперед/i,
     finish:/finish|submitallandfinish|заверш|законч|сдать|отправ/i
   };
 
   const matcher =
     patterns[action];
 
-  if (!matcher) return null;
+  if(!matcher) return null;
 
   return (
     controls.find(control=>{
@@ -3813,33 +3894,33 @@ function quizSubmitter(form, action) {
           control.getAttribute('name') || ''
         ).toLowerCase();
 
-      if (
+      if(
         action === 'previous' &&
         (
           name === 'previous' ||
           name === 'prev'
         )
-      ) {
+      ){
         return true;
       }
 
-      if (
+      if(
         action === 'next' &&
         (
           name === 'next' ||
           name === 'nextpage'
         )
-      ) {
+      ){
         return true;
       }
 
-      if (
+      if(
         action === 'finish' &&
         (
           name === 'finish' ||
           name === 'submitallandfinish'
         )
-      ) {
+      ){
         return true;
       }
 
@@ -3851,28 +3932,92 @@ function quizSubmitter(form, action) {
   );
 }
 
+function quizFormPayload(form, submitter, action) {
+  const fd =
+    new FormData(form);
+
+  /*
+   * Кнопка Nova находится снаружи настоящей Moodle form,
+   * поэтому реальный submitter надо добавить вручную.
+   */
+  if(submitter?.name){
+    fd.append(
+      submitter.name,
+      submitter.value ||
+      submitter.textContent?.trim() ||
+      ''
+    );
+  }else{
+    const fallbackName = {
+      previous:'previous',
+      next:'next',
+      finish:'finish'
+    }[action];
+
+    if(
+      fallbackName &&
+      !fd.has(fallbackName)
+    ){
+      fd.append(
+        fallbackName,
+        '1'
+      );
+    }
+  }
+
+  const body =
+    new URLSearchParams();
+
+  for(const [name,value] of fd.entries()){
+    if(
+      typeof File !== 'undefined' &&
+      value instanceof File
+    ){
+      if(value.size > 0){
+        throw new Error(
+          'Campus передал файл внутри формы теста. Такой ответ нельзя отправить через текущий quiz-поток.'
+        );
+      }
+
+      continue;
+    }
+
+    body.append(
+      name,
+      String(value)
+    );
+  }
+
+  return body;
+}
+
 async function submitNovaQuizControl(action) {
   const current =
     state.data.activity;
 
-  if (!current?.activity?.ref) return;
+  if(!current?.activity?.ref){
+    return;
+  }
 
   const root =
     $('#campus-content');
+
+  const result =
+    current.result || {};
 
   const form =
     root?.querySelector(
       'form#responseform, form[action*="processattempt.php"], form'
     );
 
-  if (!form) {
+  if(!form){
     console.error(
       '[Nova][Quiz] response form not found',
       {
         action,
         attemptPath:
-          current.result?.attemptPath ||
-          current.result?.redirectedPath ||
+          result.attemptPath ||
+          result.redirectedPath ||
           null
       }
     );
@@ -3884,100 +4029,156 @@ async function submitNovaQuizControl(action) {
     return;
   }
 
+  const formAction =
+    normalizePath(
+      form.getAttribute('action') ||
+      result.attemptPath ||
+      result.redirectedPath ||
+      ''
+    );
+
+  if(!formAction){
+    toast(
+      'Не удалось определить адрес отправки ответа.',
+      'error'
+    );
+    return;
+  }
+
   const submitter =
     quizSubmitter(
       form,
       action
     );
 
-  console.info(
-    '[Nova][Quiz] submit',
-    {
-      action,
-      formAction:
-        form.getAttribute('action') || null,
-      submitter: submitter
-        ? {
-            tag: submitter.tagName,
-            type:
-              submitter.getAttribute('type'),
-            name:
-              submitter.getAttribute('name'),
-            value:
-              submitter.getAttribute('value'),
-            text:
-              submitter.textContent?.trim()
-          }
-        : null
-    }
-  );
+  let body;
 
-  /*
-   * Best path:
-   * ask the browser to perform the real Moodle form submit
-   * using the actual Moodle submit button.
-   *
-   * This preserves native HTML semantics and lets the
-   * existing handleCampusForm(e) receive e.submitter.
-   */
-  if (
-    submitter &&
-    typeof form.requestSubmit === 'function'
-  ) {
-    form.requestSubmit(
-      submitter
-    );
-
-    return;
-  }
-
-  /*
-   * Fallback for Campus variants where the submit button
-   * itself is unnamed or not exposed to the parser.
-   *
-   * Moodle's standard quiz contracts use these field names.
-   */
-  const fallbackNames = {
-    previous: 'previous',
-    next: 'next',
-    finish: 'finish'
-  };
-
-  const fallbackName =
-    fallbackNames[action];
-
-  if (
-    !fallbackName ||
-    typeof form.requestSubmit !== 'function'
-  ) {
+  try{
+    body =
+      quizFormPayload(
+        form,
+        submitter,
+        action
+      );
+  }catch(error){
     toast(
-      'Campus не передал кнопку управления этой попыткой.',
+      error?.message ||
+      'Не удалось собрать ответы теста.',
       'error'
     );
     return;
   }
 
-  const hidden =
-    document.createElement('input');
+  const controls =
+    [...root.querySelectorAll(
+      '[data-quiz-control]'
+    )];
 
-  hidden.type = 'hidden';
-  hidden.name = fallbackName;
-  hidden.value = '1';
+  controls.forEach(el=>{
+    el.disabled = true;
+  });
 
-  form.appendChild(hidden);
-
-  console.warn(
-    '[Nova][Quiz] fallback submitter',
+  console.info(
+    '[Nova][Quiz] submit',
     {
       action,
-      name: fallbackName
+      formAction,
+      submitter:
+        submitter
+          ? {
+              tag:submitter.tagName,
+              type:
+                submitter.getAttribute('type'),
+              name:
+                submitter.getAttribute('name'),
+              value:
+                submitter.getAttribute('value'),
+              text:
+                submitter.textContent?.trim()
+            }
+          : null
     }
   );
 
-  try {
-    form.requestSubmit();
-  } finally {
-    hidden.remove();
+  try{
+    /*
+     * Больше НЕ используем requestSubmit().
+     *
+     * Это ключевой фикс:
+     * - нет browser constraint validation;
+     * - не теряются hidden inputs;
+     * - не конфликтуют два набора кнопок;
+     * - Campus получает настоящий form payload;
+     * - sesskey добавляется сервером при необходимости.
+     */
+    const response =
+      await api(
+        `/api/campus/action?path=${encodeURIComponent(formAction)}`,
+        {
+          method:'POST',
+          headers:{
+            'content-type':
+              'application/x-www-form-urlencoded'
+          },
+          body
+        }
+      );
+
+    if(!response?.page){
+      throw new Error(
+        response?.error ||
+        'Campus не вернул следующий шаг теста.'
+      );
+    }
+
+    /*
+     * После Finish возвращаемся к карточке теста.
+     * Это одновременно обновляет статус Continue/Start.
+     */
+    if(action === 'finish'){
+      await loadActivity(true);
+
+      toast(
+        'Тест завершён.',
+        'success'
+      );
+
+      return;
+    }
+
+    const previous =
+      state.data.activity?.result || {};
+
+    state.data.activity.result =
+      updateQuizResultFromPage(
+        response.page,
+        previous,
+        formAction
+      );
+
+    state.status.activity='success';
+    state.errors.activity=null;
+
+    render();
+    bindCampusContent();
+
+    toast(
+      action === 'next'
+        ? 'Следующий вопрос открыт.'
+        : 'Предыдущий вопрос открыт.',
+      'success'
+    );
+
+  }catch(error){
+    controls.forEach(el=>{
+      el.disabled = false;
+    });
+
+    toast(
+      error?.message ||
+      'Не удалось отправить ответ в Campus.',
+      'error'
+    );
   }
 }
 

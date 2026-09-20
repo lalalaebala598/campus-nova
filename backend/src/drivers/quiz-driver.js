@@ -9,71 +9,355 @@ function parseStartForm(html) {
   return { action, cmid: cmid ? Number(cmid) : null, hasSesskey };
 }
 
-function parseContinueAttempt(html) {
-  const source = String(html || '');
-  const candidates = [];
 
-  for (const match of source.matchAll(
-    /(?:href|data-href|data-url)=["']([^"']*(?:\/mod\/quiz\/)?attempt\.php\?[^"']*)["']/gi
-  )) {
-    const href = match[1] || '';
+function parseContinueAttempt(html) {
+  const source =
+    String(html || '');
+
+  const candidates = [];
+  const seenAttempts =
+    new Set();
+
+  const cleanLabel = value =>
+    String(value || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const scoreCandidate = (path, label) => {
+    const haystack =
+      `${path || ''} ${label || ''}`.toLowerCase();
+
+    let score = 0;
+
+    /*
+     * Явные признаки незавершённой попытки.
+     */
+    if(
+      /continue|resume|продолж|текущ|незаверш|выполня/i.test(
+        haystack
+      )
+    ){
+      score += 120;
+    }
+
+    /*
+     * Сам attempt.php уже сильнее обычной ссылки.
+     */
+    if(
+      /\/attempt\.php(?:\?|$)/i.test(
+        String(path || '')
+      )
+    ){
+      score += 10;
+    }
+
+    /*
+     * Review/finished/completed не должны ошибочно
+     * становиться "Продолжить тест".
+     */
+    if(
+      /review\.php|finished|completed|завершен|завершён|завершено|окончен|просмотр/i.test(
+        haystack
+      )
+    ){
+      score -= 160;
+    }
+
+    return score;
+  };
+
+  const addCandidate = (
+    path,
+    attemptId,
+    label = ''
+  ) => {
+    const id =
+      Number(attemptId || 0) || null;
+
+    if(
+      !id ||
+      !path ||
+      seenAttempts.has(id)
+    ){
+      return;
+    }
+
+    const cleanPath =
+      String(path)
+        .replace(/&amp;/gi, '&')
+        .trim();
+
+    const clean =
+      cleanLabel(label);
+
+    candidates.push({
+      path:cleanPath,
+      attemptId:id,
+      label:clean,
+      score:
+        scoreCandidate(
+          cleanPath,
+          clean
+        )
+    });
+
+    seenAttempts.add(id);
+  };
+
+  /*
+   * Обычные ссылки Campus/Moodle.
+   */
+  for(
+    const match of source.matchAll(
+      /(?:href|data-href|data-url)=["']([^"']*(?:\/mod\/quiz\/)?(?:attempt|review)\.php\?[^"']*)["']/gi
+    )
+  ){
+    const href =
+      match[1] || '';
 
     const attemptId =
       Number(
-        href.match(/[?&]attempt=(\d+)/i)?.[1] || 0
+        href.match(
+          /[?&]attempt=(\d+)/i
+        )?.[1] || 0
       ) || null;
 
-    if (!attemptId) continue;
-
-    const before =
-      source.slice(
-        Math.max(0, match.index - 700),
-        match.index
-      );
-
-    const after =
-      source.slice(
-        match.index,
-        Math.min(
-          source.length,
-          match.index + 700
-        )
-      );
-
-    const label =
-      `${before} ${after}`
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    if (
-      candidates.some(
-        item =>
-          item.attemptId === attemptId
-      )
-    ) {
+    if(!attemptId){
       continue;
     }
 
-    candidates.push({
-      path: href,
+    const holder =
+      source.slice(
+        Math.max(
+          0,
+          match.index - 900
+        ),
+        Math.min(
+          source.length,
+          match.index + 900
+        )
+      );
+
+    addCandidate(
+      href,
       attemptId,
-      label
-    });
+      cleanLabel(holder)
+    );
   }
 
-  if (!candidates.length) return null;
+  /*
+   * Некоторые темы используют onclick вместо href.
+   */
+  for(
+    const match of source.matchAll(
+      /onclick=["']([^"']*(?:attempt|review)\.php[^"']*)["']/gi
+    )
+  ){
+    const code =
+      match[1] || '';
 
+    const path =
+      code.match(
+        /((?:\/mod\/quiz\/)?(?:attempt|review)\.php\?[^"'\\s]+)/i
+      )?.[1] || '';
+
+    const attemptId =
+      Number(
+        code.match(
+          /[?&]attempt=(\d+)/i
+        )?.[1] || 0
+      ) || null;
+
+    if(!attemptId || !path){
+      continue;
+    }
+
+    addCandidate(
+      path,
+      attemptId,
+      code
+    );
+  }
+
+  /*
+   * Некоторые варианты Campus делают Continue через form.
+   */
+  for(
+    const formMatch of source.matchAll(
+      /<form\b([^>]*)>([\s\S]*?)<\/form>/gi
+    )
+  ){
+    const attrs =
+      formMatch[1] || '';
+
+    const chunk =
+      formMatch[2] || '';
+
+    const action =
+      attrs.match(
+        /\baction=["']([^"']*(?:\/mod\/quiz\/)?attempt\.php(?:\?[^"']*)?)["']/i
+      )?.[1] || '';
+
+    if(!action){
+      continue;
+    }
+
+    const attemptId =
+      Number(
+        action.match(
+          /[?&]attempt=(\d+)/i
+        )?.[1] ||
+        chunk.match(
+          /<input\b[^>]*\bname=["']attempt["'][^>]*\bvalue=["'](\d+)["']/i
+        )?.[1] ||
+        0
+      ) || null;
+
+    if(!attemptId){
+      continue;
+    }
+
+    let path =
+      action;
+
+    try{
+      const url =
+        new URL(
+          action,
+          'https://campus.fa.ru'
+        );
+
+      if(
+        !url.searchParams.has(
+          'attempt'
+        )
+      ){
+        url.searchParams.set(
+          'attempt',
+          String(attemptId)
+        );
+      }
+
+      const cmid =
+        chunk.match(
+          /<input\b[^>]*\bname=["']cmid["'][^>]*\bvalue=["']([^"']+)["']/i
+        )?.[1];
+
+      const page =
+        chunk.match(
+          /<input\b[^>]*\bname=["']page["'][^>]*\bvalue=["'](\d+)["']/i
+        )?.[1];
+
+      if(
+        cmid &&
+        !url.searchParams.has('cmid')
+      ){
+        url.searchParams.set(
+          'cmid',
+          cmid
+        );
+      }
+
+      if(
+        page &&
+        !url.searchParams.has('page')
+      ){
+        url.searchParams.set(
+          'page',
+          page
+        );
+      }
+
+      path =
+        url.pathname +
+        url.search;
+
+    }catch{
+      if(
+        !/[?&]attempt=/i.test(
+          path
+        )
+      ){
+        path +=
+          `${path.includes('?') ? '&' : '?'}attempt=${encodeURIComponent(attemptId)}`;
+      }
+    }
+
+    addCandidate(
+      path,
+      attemptId,
+      cleanLabel(chunk)
+    );
+  }
+
+  /*
+   * Последняя защита: ищем сам URL попытки даже если он
+   * спрятан внутри нестандартной разметки.
+   */
+  for(
+    const match of source.matchAll(
+      /((?:\/mod\/quiz\/)?(?:attempt|review)\.php\?[^"'<>\s]*attempt=\d+[^"'<>\s]*)/gi
+    )
+  ){
+    const path =
+      match[1] || '';
+
+    const attemptId =
+      Number(
+        path.match(
+          /[?&]attempt=(\d+)/i
+        )?.[1] || 0
+      ) || null;
+
+    if(!attemptId){
+      continue;
+    }
+
+    const holder =
+      source.slice(
+        Math.max(
+          0,
+          match.index - 500
+        ),
+        Math.min(
+          source.length,
+          match.index + 500
+        )
+      );
+
+    addCandidate(
+      path,
+      attemptId,
+      cleanLabel(holder)
+    );
+  }
+
+  if(!candidates.length){
+    return null;
+  }
+
+  candidates.sort(
+    (a,b)=>
+      b.score - a.score ||
+      a.attemptId - b.attemptId
+  );
+
+  /*
+   * Если остались только review/finished ссылки,
+   * незавершённой попытки нет.
+   */
   return (
-    candidates.find(item =>
-      /continue|продолж|resume|текущ|незаверш/i.test(
-        item.label
-      )
+    candidates.find(
+      item => item.score >= 0
     ) ||
-    candidates[0]
+    null
   );
 }
+
+
 
 export class QuizDriver {
   constructor({ session, trace, formService } = {}) {
