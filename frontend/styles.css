@@ -12719,3 +12719,477 @@ body[data-theme="light"] .nova-quiz-unavailable{
 }
 
 /* NOVA_MESSAGES_FINAL_20260920 END */
+
+
+/* =========================================================
+   NOVA LEARNING MATERIALS
+   ========================================================= */
+
+.nova-learning-material{
+  position:relative;
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+
+  margin:18px 0;
+  padding:23px;
+
+  border:1px solid var(--line);
+  border-radius:22px;
+
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(
+        in srgb,
+        var(--accent) 8%,
+        var(--surface)
+      ),
+      var(--surface-2)
+    );
+
+  box-shadow:
+    0 16px 42px rgba(0,0,0,.09);
+}
+
+.nova-learning-material::after{
+  content:'';
+
+  position:absolute;
+
+  width:210px;
+  height:210px;
+
+  right:-90px;
+  top:-115px;
+
+  border-radius:50%;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 9%,
+      transparent
+    );
+
+  filter:blur(5px);
+
+  pointer-events:none;
+}
+
+.nova-learning-top{
+  position:relative;
+  z-index:1;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+}
+
+.nova-learning-type{
+  display:flex;
+  align-items:center;
+  gap:11px;
+}
+
+.nova-learning-type-icon{
+  width:48px;
+  height:48px;
+
+  flex:0 0 48px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:15px;
+
+  color:var(--accent);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 10%,
+      var(--surface)
+    );
+
+  border:1px solid
+    color-mix(
+      in srgb,
+      var(--accent) 18%,
+      var(--line)
+    );
+}
+
+.nova-learning-type b,
+.nova-learning-type small{
+  display:block;
+}
+
+.nova-learning-type b{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+
+.nova-learning-type small{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.nova-learning-count{
+  position:relative;
+  z-index:1;
+
+  padding:7px 10px;
+
+  border-radius:10px;
+
+  color:var(--muted);
+
+  background:var(--surface-3);
+
+  border:1px solid var(--line);
+
+  font-size:9px;
+  font-weight:800;
+}
+
+.nova-learning-copy{
+  position:relative;
+  z-index:1;
+}
+
+.nova-learning-copy h2{
+  margin:0;
+
+  font-size:22px;
+  line-height:1.12;
+  letter-spacing:-.045em;
+}
+
+.nova-learning-copy p{
+  max-width:820px;
+
+  margin:7px 0 0;
+
+  color:var(--muted);
+
+  font-size:11px;
+  line-height:1.6;
+}
+
+.nova-learning-files{
+  position:relative;
+  z-index:1;
+
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+
+.nova-learning-download{
+  appearance:none;
+  -webkit-appearance:none;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:8px;
+
+  min-height:46px;
+
+  padding:0 16px;
+
+  border:1px solid
+    color-mix(
+      in srgb,
+      var(--accent) 24%,
+      var(--line)
+    );
+
+  border-radius:13px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 9%,
+      var(--surface)
+    );
+
+  color:var(--text);
+
+  font:inherit;
+  font-size:11px;
+  font-weight:850;
+
+  cursor:pointer;
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.nova-learning-download:hover{
+  transform:translateY(-1px);
+
+  border-color:var(--accent);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 15%,
+      var(--surface)
+    );
+
+  box-shadow:
+    0 10px 24px
+      color-mix(
+        in srgb,
+        var(--accent) 10%,
+        transparent
+      );
+}
+
+.nova-learning-download:active{
+  transform:translateY(0);
+}
+
+.nova-learning-download .icon{
+  color:var(--accent);
+}
+
+.nova-learning-files > .nova-learning-download{
+  width:100%;
+}
+
+.nova-learning-files-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  margin-bottom:2px;
+
+  color:var(--muted);
+
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.nova-learning-files-head b{
+  display:grid;
+  place-items:center;
+
+  min-width:24px;
+  height:24px;
+
+  border-radius:8px;
+
+  background:var(--surface-3);
+
+  color:var(--text);
+
+  font-size:9px;
+}
+
+.nova-learning-file-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.nova-learning-file{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  padding:10px;
+
+  border:1px solid var(--line);
+  border-radius:14px;
+
+  background:var(--surface);
+}
+
+.nova-learning-file-info{
+  min-width:0;
+
+  display:flex;
+  align-items:center;
+
+  gap:10px;
+}
+
+.nova-learning-file-info > span:last-child{
+  min-width:0;
+}
+
+.nova-learning-file-info b{
+  display:block;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  font-size:10px;
+}
+
+.nova-learning-file-info small{
+  display:block;
+
+  margin-top:3px;
+
+  color:var(--muted);
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  font-size:8px;
+}
+
+.nova-learning-file-icon{
+  width:35px;
+  height:35px;
+
+  flex:0 0 35px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:10px;
+
+  background:var(--surface-3);
+
+  color:var(--accent);
+
+  border:1px solid var(--line);
+}
+
+.nova-learning-file .nova-learning-download{
+  min-height:36px;
+  padding:0 10px;
+  font-size:9px;
+  flex:0 0 auto;
+}
+
+.nova-learning-empty{
+  display:flex;
+  align-items:center;
+  gap:9px;
+
+  padding:11px 13px;
+
+  border:1px dashed var(--line);
+  border-radius:12px;
+
+  color:var(--muted);
+
+  font-size:9px;
+}
+
+.nova-learning-empty span{
+  color:var(--accent);
+}
+
+.nova-learning-empty p{
+  margin:0;
+}
+
+/* Type accents */
+
+.nova-learning-practice{
+  --learning-accent:var(--accent);
+}
+
+.nova-learning-lecture{
+  --learning-accent:var(--accent);
+}
+
+.nova-learning-lab{
+  --learning-accent:var(--purple);
+}
+
+.nova-learning-presentation{
+  --learning-accent:var(--accent);
+}
+
+.nova-learning-guide{
+  --learning-accent:var(--accent);
+}
+
+.nova-learning-material{
+  --learning-accent:var(--accent);
+}
+
+.nova-learning-practice .nova-learning-type-icon,
+.nova-learning-lab .nova-learning-type-icon{
+  color:var(--learning-accent);
+}
+
+.nova-practice-file{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.nova-practice-file-copy{
+  min-width:0;
+  flex:1;
+}
+
+.nova-practice-download{
+  flex:0 0 auto;
+  min-height:38px;
+}
+
+/* Mobile */
+
+@media(max-width:680px){
+
+  .nova-learning-material{
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .nova-learning-copy h2{
+    font-size:18px;
+  }
+
+  .nova-learning-type-icon{
+    width:42px;
+    height:42px;
+    flex-basis:42px;
+    border-radius:13px;
+  }
+
+  .nova-learning-file{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .nova-learning-file .nova-learning-download{
+    width:100%;
+  }
+
+  .nova-practice-file{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .nova-practice-download{
+    width:100%;
+  }
+}

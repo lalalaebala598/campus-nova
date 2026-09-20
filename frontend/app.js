@@ -2551,7 +2551,359 @@ function activityHtml(result, title) {
   return String(result.html);
 }
 
-function activityTypeLabel(a){const labels={resource:'Материал',file:'Файл',assign:'Задание',quiz:'Тест',page:'Страница',folder:'Папка',url:'Ссылка',forum:'Форум',glossary:'Глоссарий',lanebs:'Campus-активность',znaniumcombook:'Campus-активность'};return labels[a?.ref?.type]||a?.ref?.type||'Активность'}
+function normalizeLearningText(value = ''){
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function detectLearningMaterial(a = {}, result = {}, title = ''){
+  const content = a?.content || {};
+
+  const files = [
+    ...(Array.isArray(content.files) ? content.files : []),
+    ...(Array.isArray(result?.files) ? result.files : []),
+    ...(result?.file ? [result.file] : [])
+  ];
+
+  const fileText = files
+    .map(file => [
+      file?.filename,
+      file?.mimetype,
+      file?.url,
+      file?.fileurl
+    ].map(normalizeLearningText).join(' '))
+    .join(' ');
+
+  const haystack = [
+    title,
+    a?.identity?.name,
+    a?.identity?.shortName,
+    a?.name,
+    content?.name,
+    content?.description,
+    a?.ref?.type,
+    a?.ref?.modname,
+    fileText
+  ]
+    .map(normalizeLearningText)
+    .join(' ');
+
+  /*
+   * Порядок важен:
+   * сначала специальные учебные типы,
+   * потом общий файл/материал.
+   */
+
+  if(
+    /лабораторн|лабораторная|lab\b/.test(haystack)
+  ){
+    return {
+      key:'lab',
+      label:'Лабораторная',
+      shortLabel:'ЛАБОРАТОРНАЯ',
+      buttonLabel:'Скачать лабораторную',
+      icon:'file',
+      tone:'lab'
+    };
+  }
+
+  if(
+    /практическ|практика|практическое занятие|практическая работа/.test(haystack)
+  ){
+    return {
+      key:'practice',
+      label:'Практика',
+      shortLabel:'ПРАКТИКА',
+      buttonLabel:'Скачать практику',
+      icon:'check-square',
+      tone:'practice'
+    };
+  }
+
+  if(
+    /семинар|семинарск/.test(haystack)
+  ){
+    return {
+      key:'seminar',
+      label:'Семинар',
+      shortLabel:'СЕМИНАР',
+      buttonLabel:'Скачать материал',
+      icon:'book',
+      tone:'seminar'
+    };
+  }
+
+  if(
+    /лекц|lecture/.test(haystack)
+  ){
+    return {
+      key:'lecture',
+      label:'Лекция',
+      shortLabel:'ЛЕКЦИЯ',
+      buttonLabel:'Скачать лекцию',
+      icon:'book',
+      tone:'lecture'
+    };
+  }
+
+  if(
+    /презентац|презентация|presentation|слайды|slides/.test(haystack)
+  ){
+    return {
+      key:'presentation',
+      label:'Презентация',
+      shortLabel:'ПРЕЗЕНТАЦИЯ',
+      buttonLabel:'Скачать презентацию',
+      icon:'file',
+      tone:'presentation'
+    };
+  }
+
+  if(
+    /методич|методическое пособие|учебное пособие|manual|guide/.test(haystack)
+  ){
+    return {
+      key:'guide',
+      label:'Учебный материал',
+      shortLabel:'УЧЕБНЫЙ МАТЕРИАЛ',
+      buttonLabel:'Скачать материал',
+      icon:'file',
+      tone:'guide'
+    };
+  }
+
+  if(
+    /файл|file|document|документ|\.pdf\b|\.docx?\b|\.xlsx?\b|\.pptx?\b/.test(haystack)
+  ){
+    return {
+      key:'file',
+      label:'Файл',
+      shortLabel:'ФАЙЛ',
+      buttonLabel:'Скачать файл',
+      icon:'file',
+      tone:'file'
+    };
+  }
+
+  return {
+    key:'material',
+    label:'Материал',
+    shortLabel:'МАТЕРИАЛ',
+    buttonLabel:'Скачать материал',
+    icon:'file',
+    tone:'material'
+  };
+}
+
+function collectActivityFiles(a = {}, result = {}){
+  const all = [
+    ...(Array.isArray(a?.content?.files) ? a.content.files : []),
+    ...(Array.isArray(result?.files) ? result.files : []),
+    ...(result?.file ? [result.file] : [])
+  ];
+
+  const seen = new Set();
+
+  return all.filter(file=>{
+    const path =
+      normalizePath(
+        file?.fileurl ||
+        file?.url ||
+        ''
+      );
+
+    if(!path || seen.has(path)){
+      return false;
+    }
+
+    seen.add(path);
+
+    return true;
+  }).map(file=>({
+    ...file,
+    fileurl:
+      normalizePath(
+        file?.fileurl ||
+        file?.url ||
+        ''
+      )
+  }));
+}
+
+function learningFileLabel(file = {}){
+  const raw =
+    String(
+      file?.filename ||
+      file?.name ||
+      'Файл'
+    ).trim();
+
+  return raw || 'Файл';
+}
+
+function learningFileMeta(file = {}){
+  const values = [];
+
+  if(file?.mimetype){
+    const mime =
+      String(file.mimetype)
+        .split(';')[0]
+        .trim();
+
+    if(mime){
+      values.push(mime);
+    }
+  }
+
+  if(file?.filesize){
+    values.push(
+      formatFileSize(file.filesize)
+    );
+  }
+
+  return values.join(' · ') || 'Файл Campus';
+}
+
+function learningDownloadButton(
+  file,
+  material,
+  multiple = false
+){
+  if(!file?.fileurl){
+    return '';
+  }
+
+  const filename =
+    learningFileLabel(file);
+
+  const label =
+    multiple
+      ? `Скачать ${filename}`
+      : material.buttonLabel;
+
+  return `
+    <button
+      class="nova-learning-download"
+      type="button"
+      data-download="${esc(file.fileurl)}"
+      title="${esc(label)}"
+    >
+      ${icon('download',17)}
+      <span>${esc(label)}</span>
+    </button>
+  `;
+}
+
+function learningFilesMarkup(
+  files,
+  material
+){
+  if(!files.length){
+    return '';
+  }
+
+  if(files.length === 1){
+    return `
+      <div class="nova-learning-files">
+        ${learningDownloadButton(
+          files[0],
+          material
+        )}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="nova-learning-files">
+
+      <div class="nova-learning-files-head">
+        <span>
+          ФАЙЛЫ МАТЕРИАЛА
+        </span>
+
+        <b>
+          ${files.length}
+        </b>
+      </div>
+
+      <div class="nova-learning-file-list">
+        ${
+          files.map(file=>`
+            <div
+              class="nova-learning-file"
+            >
+
+              <div class="nova-learning-file-info">
+
+                <span
+                  class="nova-learning-file-icon"
+                >
+                  ${icon(material.icon,18)}
+                </span>
+
+                <span>
+                  <b>
+                    ${esc(
+                      learningFileLabel(file)
+                    )}
+                  </b>
+
+                  <small>
+                    ${esc(
+                      learningFileMeta(file)
+                    )}
+                  </small>
+                </span>
+
+              </div>
+
+              ${learningDownloadButton(
+                file,
+                material,
+                true
+              )}
+
+            </div>
+          `).join('')
+        }
+      </div>
+
+    </div>
+  `;
+}
+
+function activityTypeLabel(a){
+  const type =
+    detectLearningMaterial(
+      a,
+      {},
+      a?.identity?.name ||
+      ''
+    );
+
+  const labels={
+    resource:type.label,
+    file:type.label,
+    assign:'Задание',
+    quiz:'Тест',
+    page:'Страница',
+    folder:'Папка',
+    url:'Ссылка',
+    forum:'Форум',
+    glossary:'Глоссарий',
+    lanebs:'Campus-активность',
+    znaniumcombook:'Campus-активность'
+  };
+
+  return (
+    labels[a?.ref?.type] ||
+    a?.ref?.type ||
+    'Активность'
+  );
+}
 function prepareCampusActivityHtml(html, title = '') {
   const source = String(html || '');
   if (!source.trim()) return '';
@@ -2818,16 +3170,20 @@ function assignmentSourceMarkup(activity, result) {
               <div class="nova-practice-file-list">
 
                 ${files.map(file => `
-                  <a
+                  <div
                     class="nova-practice-file"
-                    href="${esc(file.fileurl)}"
                   >
                     <span class="nova-practice-file-icon">
                       ${icon('file',19)}
                     </span>
 
                     <span class="nova-practice-file-copy">
-                      <b>${esc(file.filename || 'Файл')}</b>
+                      <b>
+                        ${esc(
+                          file.filename ||
+                          'Файл'
+                        )}
+                      </b>
 
                       <small>
                         ${
@@ -2845,10 +3201,16 @@ function assignmentSourceMarkup(activity, result) {
                       </small>
                     </span>
 
-                    <span class="nova-practice-file-action">
+                    <button
+                      class="nova-learning-download nova-practice-download"
+                      type="button"
+                      data-download="${esc(file.fileurl)}"
+                    >
                       ${icon('download',16)}
-                    </span>
-                  </a>
+                      Скачать практику
+                    </button>
+
+                  </div>
                 `).join('')}
 
               </div>
@@ -4966,47 +5328,101 @@ function activityPage(){
   }
 
 
-  else if(kind === 'resource'){
+  else if(
+    kind === 'resource' ||
+    kind === 'file'
+  ){
+
+    const material =
+      detectLearningMaterial(
+        a,
+        result,
+        title
+      );
+
+    const files =
+      collectActivityFiles(
+        a,
+        result
+      );
+
+    const primaryFile =
+      files[0] || null;
 
     body = `
-      <div class="nova-download-card">
+      <section
+        class="nova-learning-material nova-learning-${esc(material.tone)}"
+      >
 
-        <div class="nova-download-icon">
-          ${icon('download',24)}
+        <div class="nova-learning-top">
+
+          <div class="nova-learning-type">
+
+            <span class="nova-learning-type-icon">
+              ${icon(material.icon,22)}
+            </span>
+
+            <span>
+              <b>
+                ${esc(material.shortLabel)}
+              </b>
+
+              <small>
+                Учебный материал
+              </small>
+            </span>
+
+          </div>
+
+          ${
+            files.length
+              ? `
+                <span class="nova-learning-count">
+                  ${files.length}
+                  ${files.length === 1 ? 'файл' : 'файлов'}
+                </span>
+              `
+              : ''
+          }
+
         </div>
 
-        <div class="nova-download-copy">
-
-          <span class="eyebrow">
-            МАТЕРИАЛ
-          </span>
+        <div class="nova-learning-copy">
 
           <h2>
             ${esc(title)}
           </h2>
 
           <p>
-            Материал доступен через защищённую
-            Campus-сессию.
+            ${
+              files.length
+                ? `Файл готов к скачиванию через защищённую Campus-сессию.`
+                : 'Материал доступен через защищённую Campus-сессию.'
+            }
           </p>
 
         </div>
 
         ${
-          result.file?.fileurl
-            ? `
-              <a
-                class="primary"
-                href="${esc(result.file.fileurl)}"
-              >
-                ${icon('download',16)}
-                Скачать
-              </a>
+          primaryFile
+            ? learningFilesMarkup(
+                files,
+                material
+              )
+            : `
+              <div class="nova-learning-empty">
+                <span>
+                  ${icon('info',16)}
+                </span>
+                <p>
+                  У этой активности пока нет
+                  доступного файла для скачивания.
+                </p>
+              </div>
             `
-            : ''
         }
 
-      </div>
+      </section>
 
       ${
         result.html
