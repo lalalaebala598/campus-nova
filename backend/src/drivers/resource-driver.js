@@ -99,7 +99,7 @@ function extractResourceFiles(parsed = {}) {
    */
   for (
     const match of String(html || '').matchAll(
-      /<a\\b[^>]*href=["']([^"']*(?:\\/pluginfile\\.php|\\/webservice\\/pluginfile\\.php|\\/tokenpluginfile\\.php|\\/draftfile\\.php)[^"']*)["'][^>]*>([\\s\\S]*?)<\\/a>/gi
+      /<a\b[^>]*href=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php|\/draftfile\.php)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
     )
   ) {
     add(
