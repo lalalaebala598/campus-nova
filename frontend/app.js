@@ -3018,10 +3018,21 @@ function collectActivityFiles(
       : [])
   ];
 
+  /*
+   * Structured files come from the activity itself and are
+   * authoritative.
+   *
+   * HTML extraction is a fallback only when Campus did not
+   * provide structured files. This prevents a resource page
+   * from accidentally importing pluginfiles from neighbouring
+   * activities.
+   */
   const fromHtml =
-    extractActivityFilesFromHtml(
-      result?.html || ''
-    );
+    structured.length === 0
+      ? extractActivityFilesFromHtml(
+          result?.html || ''
+        )
+      : [];
 
   const all = [
     ...structured,

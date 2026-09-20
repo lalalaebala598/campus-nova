@@ -1,5 +1,106 @@
 import assert from 'node:assert/strict';
-import { CampusSession, parseCourse } from '../backend/src/campus.js';
+import { CampusSession, parseCourse, parseActivityLinks } from '../backend/src/campus.js';
+
+
+/*
+ * Regression:
+ * files from neighbouring Moodle activities must never leak
+ * into the current activity.
+ */
+const isolatedActivitiesHtml = `
+<section id="section-9" class="section">
+  <h3 class="sectionname">Материалы</h3>
+
+  <li
+    class="activity resource modtype_resource"
+    id="module-901"
+  >
+    <div class="activityinstance">
+      <a href="/mod/resource/view.php?id=901">
+        <span class="instancename">
+          Лекция №2
+        </span>
+      </a>
+    </div>
+
+    <a href="/pluginfile.php/101/resource/901/2.pdf">
+      2.pdf
+    </a>
+  </li>
+
+  <li
+    class="activity resource modtype_resource"
+    id="module-902"
+  >
+    <div class="activityinstance">
+      <a href="/mod/resource/view.php?id=902">
+        <span class="instancename">
+          Лекция №1
+        </span>
+      </a>
+    </div>
+
+    <a href="/pluginfile.php/101/resource/902/1.pdf">
+      1.pdf
+    </a>
+  </li>
+
+  <li
+    class="activity resource modtype_resource"
+    id="module-903"
+  >
+    <div class="activityinstance">
+      <a href="/mod/resource/view.php?id=903">
+        <span class="instancename">
+          Табличные данные в библиотеке pandas
+        </span>
+      </a>
+    </div>
+
+    <a href="/pluginfile.php/101/resource/903/pandas.pdf">
+      pandas.pdf
+    </a>
+  </li>
+</section>
+`;
+
+const isolatedActivities =
+  parseActivityLinks(
+    isolatedActivitiesHtml,
+    101
+  );
+
+const lecture2 =
+  isolatedActivities.find(
+    item => Number(item.cmid) === 901
+  );
+
+assert.ok(
+  lecture2,
+  'Lecture #2 activity must be discovered'
+);
+
+assert.deepEqual(
+  lecture2.contents.map(
+    file => file.filename
+  ),
+  ['2.pdf'],
+  'Lecture #2 must contain only its own file'
+);
+
+const lecture1 =
+  isolatedActivities.find(
+    item => Number(item.cmid) === 902
+  );
+
+assert.deepEqual(
+  lecture1.contents.map(
+    file => file.filename
+  ),
+  ['1.pdf'],
+  'Lecture #1 must contain only its own file'
+);
+
 
 const variedHtml = `<!doctype html><html><head><title>Курс: Информатика</title></head><body>
 <section id="section-1" class="section"><h3 class="sectionname">Организация</h3>

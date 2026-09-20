@@ -258,109 +258,265 @@ function normalizeCourseContents(data, courseId, meta = null) {
   };
 }
 export function parseActivityLinks(html, courseId) {
-  const source = String(html || '');
+  const source =
+    String(html || '');
+
   const out = [];
   const seen = new Set();
 
-  const push = (href, type, id, label, chunk = '') => {
-    const cmid = Number(id || 0);
-    if (!cmid || seen.has(cmid)) return;
-
-    let name = textOnly(label || '')
-      .replace(/\s+/g, ' ')
+  const cleanFileName = value =>
+    decodeHtml(
+      String(value || '')
+    )
+      .replace(/^.*\//, '')
+      .split('?')[0]
       .trim();
 
-    if (!name) return;
+  const extractFiles = chunk => {
+    const files = [];
+    const fileSeen = new Set();
 
-    const contents = [];
-    for (const fm of String(chunk || '').matchAll(
-      /(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi
-    )) {
-      const fileurl = decodeHtml(fm[1]);
-      if (fileurl && !contents.some(f => f.fileurl === fileurl)) {
-        contents.push({
-          type: 'file',
-          filename: decodeURIComponent(fileurl.split('/').pop()?.split('?')[0] || ''),
-          filepath: '/',
-          filesize: 0,
-          fileurl,
-          content: '',
-          sortorder: contents.length,
-          mimetype: ''
-        });
+    for(
+      const match of String(chunk || '').matchAll(
+        /(?:href|src)=["']([^"']*(?:\/pluginfile\.php|\/webservice\/pluginfile\.php|\/tokenpluginfile\.php)[^"']*)["']/gi
+      )
+    ){
+
+      const fileurl =
+        decodeHtml(
+          match[1] || ''
+        );
+
+      if(
+        !fileurl ||
+        fileSeen.has(fileurl)
+      ){
+        continue;
       }
+
+      const filename =
+        cleanFileName(
+          fileurl
+        ) ||
+        'Файл';
+
+      files.push({
+        type:'file',
+        filename,
+        filepath:'/',
+        filesize:0,
+        fileurl,
+        content:'',
+        sortorder:files.length,
+        mimetype:''
+      });
+
+      fileSeen.add(
+        fileurl
+      );
     }
 
-    out.push({
-      id: cmid,
-      cmid,
-      instance: null,
-      type: String(type || 'activity').toLowerCase(),
-      name,
-      url: decodeHtml(href || ''),
-      description: '',
-      visible: true,
-      uservisible: true,
-      contents
-    });
-
-    seen.add(cmid);
+    return files;
   };
 
-  for (const m of source.matchAll(
-    /<a\b[^>]*href=["']([^"']*\/mod\/([a-z0-9_]+)\/view\.php\?[^"']*?\bid=(\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
-  )) {
-    const href = m[1];
-    const type = m[2];
-    const id = m[3];
-    const label = textOnly(m[4]);
-
-    push(
-      href,
-      type,
-      id,
-      label,
-      source.slice(Math.max(0, m.index - 1500), Math.min(source.length, m.index + 3000))
+  /*
+   * IMPORTANT:
+   *
+   * We NEVER collect pluginfile links from an arbitrary
+   * neighbourhood around an activity.
+   *
+   * We first isolate each real Moodle activity block.
+   * Therefore Lecture #2 cannot inherit files from Lecture #1,
+   * Pandas, Numpy or the next activity.
+   */
+  const blocks =
+    activityBlocks(
+      source
     );
-  }
 
-  for (const m of source.matchAll(/<(?:li|div)\b([^>]*)>/gi)) {
-    const attrs = m[1];
+  for(
+    const block of blocks
+  ){
 
-    const id =
-      attrs.match(/\bid=["']module-(\d+)["']/i)?.[1] ||
-      attrs.match(/\bdata-id=["'](\d+)["']/i)?.[1] ||
-      attrs.match(/\bdata-cmid=["'](\d+)["']/i)?.[1];
+    if(
+      !block?.id ||
+      seen.has(
+        Number(block.id)
+      )
+    ){
+      continue;
+    }
 
-    const type =
-      attrs.match(/\bmodtype_([a-z0-9_]+)/i)?.[1] ||
-      attrs.match(/\bdata-modname=["']([^"']+)["']/i)?.[1];
-
-    if (!id || !type) continue;
-
-    const chunk = source.slice(
-      m.index + m[0].length,
-      Math.min(source.length, m.index + 7000)
-    );
+    const chunk =
+      String(
+        block.html || ''
+      );
 
     const href =
-      chunk.match(/<a\b[^>]*href=["']([^"']+)["']/i)?.[1] || '';
+      chunk.match(
+        /<a\b[^>]*href=["']([^"']*\/mod\/([a-z0-9_]+)\/view\.php\?[^"']*?\bid=(\d+)[^"']*)["'][^>]*>/i
+      );
+
+    const fallbackHref =
+      chunk.match(
+        /<a\b[^>]*href=["']([^"']+)["']/i
+      );
+
+    const hrefValue =
+      href?.[1] ||
+      fallbackHref?.[1] ||
+      '';
+
+    const type =
+      (
+        href?.[2] ||
+        block.cls?.match(
+          /\bmodtype_([a-z0-9_]+)\b/i
+        )?.[1] ||
+        'activity'
+      )
+        .toLowerCase();
+
+    const cmid =
+      Number(
+        href?.[3] ||
+        block.id ||
+        0
+      );
+
+    if(!cmid){
+      continue;
+    }
 
     const label =
       textOnly(
         chunk.match(
           /<span[^>]+class=["'][^"']*instancename[^"']*["'][^>]*>([\s\S]*?)<\/span>/i
         )?.[1] ||
-        chunk.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1] ||
-        attrs.match(/\baria-label=["']([^"']+)["']/i)?.[1] ||
+        chunk.match(
+          /<a\b[^>]*>([\s\S]*?)<\/a>/i
+        )?.[1] ||
         ''
+      )
+        .replace(
+          /\s+/g,
+          ' '
+        )
+        .trim();
+
+    const name =
+      label ||
+      `${type} ${cmid}`;
+
+    const contents =
+      extractFiles(
+        chunk
       );
 
-    push(href, type, id, label || type, chunk);
+    out.push({
+      id:cmid,
+      cmid,
+      instance:null,
+
+      type,
+
+      name,
+
+      url:
+        decodeHtml(
+          hrefValue
+        ),
+
+      description:'',
+
+      visible:true,
+      uservisible:true,
+
+      contents
+    });
+
+    seen.add(
+      cmid
+    );
+  }
+
+  /*
+   * If the HTML theme is too unusual for activityBlocks(),
+   * still preserve activity discovery, BUT DO NOT ATTACH
+   * arbitrary nearby pluginfile links.
+   *
+   * This fallback creates activity records with empty
+   * contents. An opened activity can later resolve its own
+   * files from its dedicated page.
+   */
+  if(!out.length){
+
+    for(
+      const m of source.matchAll(
+        /<a\b[^>]*href=["']([^"']*\/mod\/([a-z0-9_]+)\/view\.php\?[^"']*?\bid=(\d+)[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+      )
+    ){
+
+      const hrefValue =
+        decodeHtml(
+          m[1]
+        );
+
+      const type =
+        String(
+          m[2] ||
+          'activity'
+        ).toLowerCase();
+
+      const cmid =
+        Number(
+          m[3] ||
+          0
+        );
+
+      if(
+        !cmid ||
+        seen.has(cmid)
+      ){
+        continue;
+      }
+
+      const name =
+        textOnly(
+          m[4]
+        )
+          .replace(
+            /\s+/g,
+            ' '
+          )
+          .trim();
+
+      if(!name){
+        continue;
+      }
+
+      out.push({
+        id:cmid,
+        cmid,
+        instance:null,
+        type,
+        name,
+        url:hrefValue,
+        description:'',
+        visible:true,
+        uservisible:true,
+        contents:[]
+      });
+
+      seen.add(
+        cmid
+      );
+    }
   }
 
   return out;
 }
+
 
 function parseCourse(html, courseId, baseUrl = CAMPUS_ORIGIN) {
   const source = String(html || '');
