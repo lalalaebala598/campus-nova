@@ -3004,27 +3004,128 @@ function learningFileLabel(file = {}){
   return raw || 'Файл';
 }
 
+function learningFileType(file = {}){
+  const filename =
+    String(
+      file?.filename ||
+      file?.name ||
+      ''
+    ).toLowerCase();
+
+  const mime =
+    String(
+      file?.mimetype ||
+      ''
+    ).toLowerCase();
+
+  if(
+    filename.endsWith('.pdf') ||
+    mime.includes('pdf')
+  ){
+    return 'PDF';
+  }
+
+  if(
+    filename.endsWith('.doc') ||
+    mime.includes('msword')
+  ){
+    return 'DOC';
+  }
+
+  if(
+    filename.endsWith('.docx') ||
+    mime.includes('wordprocessingml')
+  ){
+    return 'DOCX';
+  }
+
+  if(
+    filename.endsWith('.xls') ||
+    mime.includes('ms-excel')
+  ){
+    return 'XLS';
+  }
+
+  if(
+    filename.endsWith('.xlsx') ||
+    mime.includes('spreadsheetml')
+  ){
+    return 'XLSX';
+  }
+
+  if(
+    filename.endsWith('.ppt') ||
+    mime.includes('ms-powerpoint')
+  ){
+    return 'PPT';
+  }
+
+  if(
+    filename.endsWith('.pptx') ||
+    mime.includes('presentationml')
+  ){
+    return 'PPTX';
+  }
+
+  if(
+    filename.endsWith('.zip') ||
+    mime.includes('zip')
+  ){
+    return 'ZIP';
+  }
+
+  if(
+    filename.endsWith('.rar') ||
+    mime.includes('rar')
+  ){
+    return 'RAR';
+  }
+
+  if(
+    filename.endsWith('.7z') ||
+    mime.includes('7z')
+  ){
+    return '7Z';
+  }
+
+  if(mime){
+    const slash = mime.lastIndexOf('/');
+
+    if(slash >= 0){
+      return (
+        mime
+          .slice(slash + 1)
+          .split(';')[0]
+          .toUpperCase()
+      );
+    }
+  }
+
+  return 'ФАЙЛ';
+}
+
 function learningFileMeta(file = {}){
   const values = [];
 
-  if(file?.mimetype){
-    const mime =
-      String(file.mimetype)
-        .split(';')[0]
-        .trim();
+  const type =
+    learningFileType(file);
 
-    if(mime){
-      values.push(mime);
-    }
+  if(type){
+    values.push(type);
   }
 
   if(file?.filesize){
     values.push(
-      formatFileSize(file.filesize)
+      formatFileSize(
+        file.filesize
+      )
     );
   }
 
-  return values.join(' · ') || 'Файл Campus';
+  return (
+    values.join(' · ') ||
+    'Файл Campus'
+  );
 }
 
 function learningDownloadButton(
@@ -3041,7 +3142,7 @@ function learningDownloadButton(
 
   const label =
     multiple
-      ? `Скачать ${filename}`
+      ? 'Скачать'
       : material.buttonLabel;
 
   return `
@@ -3049,7 +3150,12 @@ function learningDownloadButton(
       class="nova-learning-download"
       type="button"
       data-download="${esc(file.fileurl)}"
-      title="${esc(label)}"
+      data-download-filename="${esc(filename)}"
+      title="${esc(
+        multiple
+          ? `Скачать ${filename}`
+          : label
+      )}"
     >
       ${icon('download',17)}
       <span>${esc(label)}</span>
@@ -6422,7 +6528,18 @@ function bind(){
   bindQuizStart();
   bindQuizContinue();
   $$('[data-view]').forEach(el=>el.addEventListener('click',e=>{if(el.hasAttribute('data-activity'))return;if(e.target.closest('[data-download]'))return;const p=el.dataset.view;if(p)openCampusPath(p)}));
-  $$('[data-download]').forEach(el=>el.addEventListener('click',()=>downloadCampus(el.dataset.download)));
+  $$('[data-download]').forEach(el=>el.addEventListener('click',()=>{
+    const path =
+      el.dataset.download || '';
+
+    const filename =
+      el.dataset.downloadFilename || '';
+
+    downloadCampus(
+      path,
+      filename
+    );
+  }));
   $$('[data-conversation]').forEach(el=>el.addEventListener('click',()=>openConversation(el.dataset.conversation)));
   $$('[data-month]').forEach(el=>el.addEventListener('click',()=>changeMonth(Number(el.dataset.month))));
   $$('[data-day]').forEach(el=>el.addEventListener('click',()=>selectDay(el.dataset.day)));
