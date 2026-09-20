@@ -581,17 +581,17 @@ async function api(req, res, route, q) {
         const title =
           (
             responseHtml.match(
-              /<title[^>]*>([\\s\\S]*?)<\\/title>/i
+              /<title[^>]*>([\s\S]*?)<\/title>/i
             )?.[1] ||
             responseHtml.match(
-              /<h1[^>]*>([\\s\\S]*?)<\\/h1>/i
+              /<h1[^>]*>([\s\S]*?)<\/h1>/i
             )?.[1] ||
             'Campus'
           )
             .replace(/<[^>]+>/g, ' ')
             .replace(/&nbsp;/gi, ' ')
             .replace(/&amp;/gi, '&')
-            .replace(/\\s+/g, ' ')
+            .replace(/\s+/g, ' ')
             .trim();
 
         const parsed = {
