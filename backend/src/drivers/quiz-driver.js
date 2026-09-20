@@ -9,6 +9,49 @@ function parseStartForm(html) {
   return { action, cmid: cmid ? Number(cmid) : null, hasSesskey };
 }
 
+function parseContinueAttempt(html) {
+  const source = String(html || '');
+  const matches = [
+    ...source.matchAll(
+      /<a\b[^>]*href=["']([^"']*(?:\/mod\/quiz\/)?attempt\.php\?[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+    )
+  ];
+
+  const candidates = [];
+
+  for (const match of matches) {
+    const href = match[1] || '';
+    const label = String(match[2] || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const attemptId =
+      Number(
+        href.match(/[?&]attempt=(\d+)/i)?.[1] || 0
+      ) || null;
+
+    if (!attemptId) continue;
+
+    candidates.push({
+      path: href,
+      attemptId,
+      label
+    });
+  }
+
+  if (!candidates.length) return null;
+
+  const preferred =
+    candidates.find(item =>
+      /continue|продолж|попыт/i.test(item.label)
+    ) ||
+    candidates[0];
+
+  return preferred;
+}
+
 export class QuizDriver {
   constructor({ session, trace, formService } = {}) {
     this.session = session;
@@ -37,14 +80,48 @@ export class QuizDriver {
     if (!html) throw activityError('Не удалось открыть тест.', 'QUIZ_EMPTY', 'PARSER');
     const title = result.parsed?.title || textOnly(html.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/i)?.[1] || activity.identity.name);
     const startForm = parseStartForm(html);
-    const capabilities = { ...this.getCapabilities(activity), canStart: startForm ? true : null };
-    this.trace?.stage(options.parentTraceId, 'DRIVER_PARSED', { parser: 'moodle.html.quiz.v1', title, startForm: Boolean(startForm), startCmid: startForm?.cmid ?? null });
+    const continueAttempt = parseContinueAttempt(html);
+
+    const capabilities = {
+      ...this.getCapabilities(activity),
+      canStart: startForm ? true : null,
+      canAttempt: Boolean(continueAttempt)
+    };
+
+    this.trace?.stage(
+      options.parentTraceId,
+      'DRIVER_PARSED',
+      {
+        parser: 'moodle.html.quiz.v1',
+        title,
+        startForm: Boolean(startForm),
+        startCmid: startForm?.cmid ?? null,
+        continueAttempt: Boolean(continueAttempt),
+        attemptId: continueAttempt?.attemptId ?? null
+      }
+    );
+
     return {
-      kind: 'quiz', title, html, activityRef: activity.ref,
-      access: { startForm },
-      attempts: [],
+      kind: 'quiz',
+      title,
+      html,
+      activityRef: activity.ref,
+      access: {
+        startForm,
+        continueAttempt
+      },
+      attempts: continueAttempt
+        ? [{
+            id: continueAttempt.attemptId,
+            status: 'inprogress',
+            path: continueAttempt.path
+          }]
+        : [],
       capabilities,
-      source: { transport: 'WEB_FORM', operation: 'quiz.view' },
+      source: {
+        transport: 'WEB_FORM',
+        operation: 'quiz.view'
+      },
     };
   }
 

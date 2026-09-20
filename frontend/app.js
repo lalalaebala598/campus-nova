@@ -2454,6 +2454,9 @@ function firstCampusFile(html) {
 function bindQuizStart() {
   const button = $('#quiz-start-button');
   if (!button) return;
+  if (button.dataset.novaBound === '1') return;
+
+  button.dataset.novaBound = '1';
 
   button.addEventListener('click', async () => {
     if (button.disabled) return;
@@ -2465,6 +2468,44 @@ function bindQuizStart() {
 
     try {
       await executeActivityAction('start');
+    } finally {
+      if (document.body.contains(button)) {
+        button.disabled = false;
+        button.innerHTML = original;
+      }
+    }
+  });
+}
+
+function bindQuizContinue() {
+  const button = $('#quiz-continue-button');
+  if (!button) return;
+  if (button.dataset.novaBound === '1') return;
+
+  button.dataset.novaBound = '1';
+
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
+
+    const target =
+      button.dataset.quizPath || '';
+
+    if (!target) {
+      toast(
+        'Не удалось определить незавершённую попытку.',
+        'error'
+      );
+      return;
+    }
+
+    button.disabled = true;
+    const original = button.innerHTML;
+
+    button.innerHTML =
+      `${icon('spinner',16)} Открываем…`;
+
+    try {
+      await loadNovaQuizPage(target);
     } finally {
       if (document.body.contains(button)) {
         button.disabled = false;
@@ -3151,6 +3192,71 @@ function extractQuizNavigation(html = '', currentPath = '') {
   return items;
 }
 
+function mergeQuizNavigation(
+  existing = [],
+  html = '',
+  currentPath = ''
+) {
+  const merged = new Map();
+
+  for (const item of Array.isArray(existing) ? existing : []) {
+    const page = Number(item?.page);
+    const itemPath = normalizePath(item?.path || '');
+
+    if (!Number.isInteger(page) || !itemPath) {
+      continue;
+    }
+
+    merged.set(page, {
+      ...item,
+      page,
+      path: itemPath,
+      label:
+        Number(item?.label) ||
+        page + 1
+    });
+  }
+
+  const discovered =
+    extractQuizNavigation(
+      html,
+      currentPath
+    );
+
+  for (const item of discovered) {
+    const page = Number(item?.page);
+    const itemPath = normalizePath(item?.path || '');
+
+    if (!Number.isInteger(page) || !itemPath) {
+      continue;
+    }
+
+    merged.set(page, {
+      ...item,
+      page,
+      path: itemPath,
+      label:
+        Number(item?.label) ||
+        page + 1
+    });
+  }
+
+  const currentPage =
+    Number(
+      String(currentPath || '')
+        .match(/[?&]page=(\d+)/i)?.[1] || 0
+    );
+
+  return [...merged.values()]
+    .sort((a,b)=>a.page-b.page)
+    .map(item=>({
+      ...item,
+      current:
+        item.page === currentPage ||
+        normalizePath(item.path) === normalizePath(currentPath)
+    }));
+}
+
 function quizQuestionNumbers(html = '') {
   const doc = new DOMParser().parseFromString(
     String(html || ''),
@@ -3339,7 +3445,6 @@ function prepareQuizAttemptHtml(html = '', title = '') {
 
   root.querySelectorAll(
     [
-      '.submitbtns',
       '.quizsummary',
       '.quizreviewsummary',
       '.quizattemptnavigation'
@@ -3356,7 +3461,8 @@ function quizAttemptMeta(result = {}) {
     '';
 
   const nav =
-    extractQuizNavigation(
+    mergeQuizNavigation(
+      result.quizNavigation || [],
       result.html || '',
       path
     );
@@ -3631,6 +3737,10 @@ async function loadNovaQuizPage(path) {
     const previous =
       state.data.activity.result || {};
 
+    const nextPath =
+      d.page?.path ||
+      normalized;
+
     state.data.activity.result = {
       ...previous,
       kind:'quiz-action',
@@ -3642,11 +3752,15 @@ async function loadNovaQuizPage(path) {
         d.page?.html ||
         '',
       attemptPath:
-        d.page?.path ||
-        normalized,
+        nextPath,
       redirectedPath:
-        d.page?.path ||
-        normalized
+        nextPath,
+      quizNavigation:
+        mergeQuizNavigation(
+          previous.quizNavigation || [],
+          d.page?.html || '',
+          nextPath
+        )
     };
 
     state.status.activity='success';
@@ -3688,11 +3802,46 @@ function quizSubmitter(form, action) {
   if (!matcher) return null;
 
   return (
-    controls.find(control=>
-      matcher.test(
+    controls.find(control=>{
+      const name =
+        String(
+          control.getAttribute('name') || ''
+        ).toLowerCase();
+
+      if (
+        action === 'previous' &&
+        (
+          name === 'previous' ||
+          name === 'prev'
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        action === 'next' &&
+        (
+          name === 'next' ||
+          name === 'nextpage'
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        action === 'finish' &&
+        (
+          name === 'finish' ||
+          name === 'submitallandfinish'
+        )
+      ) {
+        return true;
+      }
+
+      return matcher.test(
         `${control.getAttribute('name') || ''} ${control.getAttribute('value') || ''} ${control.textContent || ''}`
-      )
-    ) ||
+      );
+    }) ||
     null
   );
 }
@@ -3791,6 +3940,11 @@ async function submitNovaQuizControl(action) {
     const previous =
       current.result || {};
 
+    const responsePath =
+      response.page.path ||
+      response.redirectedPath ||
+      path;
+
     state.data.activity = {
       activity:current.activity,
       result:{
@@ -3805,13 +3959,15 @@ async function submitNovaQuizControl(action) {
           response.page.html ||
           '',
         attemptPath:
-          response.page.path ||
-          response.redirectedPath ||
-          path,
+          responsePath,
         redirectedPath:
-          response.page.path ||
-          response.redirectedPath ||
-          path,
+          responsePath,
+        quizNavigation:
+          mergeQuizNavigation(
+            previous.quizNavigation || [],
+            response.page.html || '',
+            responsePath
+          ),
         confirmed:
           response.success !== false
       }
@@ -4586,13 +4742,23 @@ function activityPage(){
       result?.access?.startForm ||
       null;
 
+    const continueAttempt =
+      result?.access?.continueAttempt ||
+      null;
+
+    const canContinue =
+      Boolean(
+        continueAttempt?.path
+      );
+
     const canStart =
       Boolean(
         startForm?.action &&
         /startattempt\.php/i.test(
           String(startForm.action)
         )
-      );
+      ) &&
+      !canContinue;
 
     body = `
       <section class="nova-quiz-intro nova-quiz-launch-card">
@@ -4613,7 +4779,9 @@ function activityPage(){
 
           <p>
             ${
-              canStart
+              canContinue
+                ? 'У тебя есть незавершённая попытка. Можно продолжить её с сохранёнными ответами.'
+                : canStart
                 ? 'Тест готов к прохождению. После запуска откроется настоящая попытка Campus.'
                 : 'Campus сейчас не разрешает открыть попытку этого теста.'
             }
@@ -4628,13 +4796,13 @@ function activityPage(){
             </span>
 
             <span class="${
-              canStart
+              canContinue || canStart
                 ? 'available'
                 : 'unavailable'
             }">
 
               ${icon(
-                canStart
+                canContinue || canStart
                   ? 'check'
                   : 'close',
                 13
@@ -4643,7 +4811,9 @@ function activityPage(){
               <b>Статус</b>
 
               ${
-                canStart
+                canContinue
+                  ? 'Есть незавершённая попытка'
+                  : canStart
                   ? 'Доступен'
                   : 'Недоступен'
               }
@@ -4655,7 +4825,19 @@ function activityPage(){
         </div>
 
         ${
-          canStart
+          canContinue
+            ? `
+              <button
+                class="primary nova-quiz-start"
+                id="quiz-continue-button"
+                data-quiz-path="${esc(continueAttempt.path)}"
+                type="button"
+              >
+                ${icon('play',16)}
+                Продолжить тест
+              </button>
+            `
+            : canStart
             ? `
               <button
                 class="primary nova-quiz-start"
@@ -5227,6 +5409,8 @@ function bind(){
   $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
   $$('[data-activity]').forEach(el=>el.addEventListener('click',e=>{ if(e.target.closest('[data-download]')) return; const raw=el.dataset.activity; if(raw) { try { openActivity(JSON.parse(decodeURIComponent(raw))); } catch {} } }));
   $$('[data-activity-action]').forEach(el=>el.addEventListener('click',()=>executeActivityAction(el.dataset.activityAction)));
+  bindQuizStart();
+  bindQuizContinue();
   $$('[data-view]').forEach(el=>el.addEventListener('click',e=>{if(el.hasAttribute('data-activity'))return;if(e.target.closest('[data-download]'))return;const p=el.dataset.view;if(p)openCampusPath(p)}));
   $$('[data-download]').forEach(el=>el.addEventListener('click',()=>downloadCampus(el.dataset.download)));
   $$('[data-conversation]').forEach(el=>el.addEventListener('click',()=>openConversation(el.dataset.conversation)));
