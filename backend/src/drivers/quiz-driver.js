@@ -11,21 +11,12 @@ function parseStartForm(html) {
 
 function parseContinueAttempt(html) {
   const source = String(html || '');
-  const matches = [
-    ...source.matchAll(
-      /<a\b[^>]*href=["']([^"']*(?:\/mod\/quiz\/)?attempt\.php\?[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
-    )
-  ];
-
   const candidates = [];
 
-  for (const match of matches) {
+  for (const match of source.matchAll(
+    /(?:href|data-href|data-url)=["']([^"']*(?:\/mod\/quiz\/)?attempt\.php\?[^"']*)["']/gi
+  )) {
     const href = match[1] || '';
-    const label = String(match[2] || '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
 
     const attemptId =
       Number(
@@ -33,6 +24,37 @@ function parseContinueAttempt(html) {
       ) || null;
 
     if (!attemptId) continue;
+
+    const before =
+      source.slice(
+        Math.max(0, match.index - 700),
+        match.index
+      );
+
+    const after =
+      source.slice(
+        match.index,
+        Math.min(
+          source.length,
+          match.index + 700
+        )
+      );
+
+    const label =
+      `${before} ${after}`
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (
+      candidates.some(
+        item =>
+          item.attemptId === attemptId
+      )
+    ) {
+      continue;
+    }
 
     candidates.push({
       path: href,
@@ -43,13 +65,14 @@ function parseContinueAttempt(html) {
 
   if (!candidates.length) return null;
 
-  const preferred =
+  return (
     candidates.find(item =>
-      /continue|продолж|попыт/i.test(item.label)
+      /continue|продолж|resume|текущ|незаверш/i.test(
+        item.label
+      )
     ) ||
-    candidates[0];
-
-  return preferred;
+    candidates[0]
+  );
 }
 
 export class QuizDriver {

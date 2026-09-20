@@ -2704,7 +2704,12 @@ function prepareCampusActivityHtml(html, title = '') {
     }
   });
 
-  return root.innerHTML.trim();
+  const output =
+    String(root.tagName || '').toLowerCase() === 'form'
+      ? root.outerHTML
+      : root.innerHTML;
+
+  return output.trim();
 }
 
 
@@ -3861,6 +3866,17 @@ async function submitNovaQuizControl(action) {
     );
 
   if (!form) {
+    console.error(
+      '[Nova][Quiz] response form not found',
+      {
+        action,
+        attemptPath:
+          current.result?.attemptPath ||
+          current.result?.redirectedPath ||
+          null
+      }
+    );
+
     toast(
       'Не удалось найти форму попытки Campus.',
       'error'
@@ -3868,132 +3884,100 @@ async function submitNovaQuizControl(action) {
     return;
   }
 
-  const path =
-    normalizePath(
-      form.getAttribute('action') ||
-      current.result?.attemptPath ||
-      current.result?.redirectedPath ||
-      ''
-    );
-
-  if (!path) {
-    toast(
-      'Не удалось определить адрес ответа Campus.',
-      'error'
-    );
-    return;
-  }
-
-  const data =
-    new FormData(form);
-
   const submitter =
     quizSubmitter(
       form,
       action
     );
 
+  console.info(
+    '[Nova][Quiz] submit',
+    {
+      action,
+      formAction:
+        form.getAttribute('action') || null,
+      submitter: submitter
+        ? {
+            tag: submitter.tagName,
+            type:
+              submitter.getAttribute('type'),
+            name:
+              submitter.getAttribute('name'),
+            value:
+              submitter.getAttribute('value'),
+            text:
+              submitter.textContent?.trim()
+          }
+        : null
+    }
+  );
+
+  /*
+   * Best path:
+   * ask the browser to perform the real Moodle form submit
+   * using the actual Moodle submit button.
+   *
+   * This preserves native HTML semantics and lets the
+   * existing handleCampusForm(e) receive e.submitter.
+   */
   if (
-    submitter?.name &&
-    !data.has(submitter.name)
+    submitter &&
+    typeof form.requestSubmit === 'function'
   ) {
-    data.append(
-      submitter.name,
-      submitter.value || ''
-    );
-  }
-
-  const body =
-    new URLSearchParams();
-
-  for (const [key,value] of data.entries()) {
-    if (
-      typeof value === 'string'
-    ) {
-      body.append(
-        key,
-        value
-      );
-    }
-  }
-
-  try {
-    const response =
-      await api(
-        `/api/campus/action?path=${encodeURIComponent(path)}`,
-        {
-          method:'POST',
-          headers:{
-            'content-type':
-              'application/x-www-form-urlencoded'
-          },
-          body
-        }
-      );
-
-    if (!response.page) {
-      throw new Error(
-        'Campus не вернул страницу попытки.'
-      );
-    }
-
-    const previous =
-      current.result || {};
-
-    const responsePath =
-      response.page.path ||
-      response.redirectedPath ||
-      path;
-
-    state.data.activity = {
-      activity:current.activity,
-      result:{
-        ...previous,
-        kind:'quiz-action',
-        title:
-          response.page.title ||
-          previous.title ||
-          current.activity?.identity?.name ||
-          'Тест',
-        html:
-          response.page.html ||
-          '',
-        attemptPath:
-          responsePath,
-        redirectedPath:
-          responsePath,
-        quizNavigation:
-          mergeQuizNavigation(
-            previous.quizNavigation || [],
-            response.page.html || '',
-            responsePath
-          ),
-        confirmed:
-          response.success !== false
-      }
-    };
-
-    state.status.activity='success';
-    state.errors.activity=null;
-
-    render();
-    bindCampusContent();
-
-    toast(
-      action === 'finish'
-        ? 'Команда завершения отправлена в Campus.'
-        : action === 'next'
-        ? 'Ответ сохранён. Следующий вопрос.'
-        : 'Ответ сохранён. Предыдущий вопрос.',
-      'success'
+    form.requestSubmit(
+      submitter
     );
 
-  } catch (error) {
+    return;
+  }
+
+  /*
+   * Fallback for Campus variants where the submit button
+   * itself is unnamed or not exposed to the parser.
+   *
+   * Moodle's standard quiz contracts use these field names.
+   */
+  const fallbackNames = {
+    previous: 'previous',
+    next: 'next',
+    finish: 'finish'
+  };
+
+  const fallbackName =
+    fallbackNames[action];
+
+  if (
+    !fallbackName ||
+    typeof form.requestSubmit !== 'function'
+  ) {
     toast(
-      error?.message ||
-      'Не удалось сохранить ответ в Campus.',
+      'Campus не передал кнопку управления этой попыткой.',
       'error'
     );
+    return;
+  }
+
+  const hidden =
+    document.createElement('input');
+
+  hidden.type = 'hidden';
+  hidden.name = fallbackName;
+  hidden.value = '1';
+
+  form.appendChild(hidden);
+
+  console.warn(
+    '[Nova][Quiz] fallback submitter',
+    {
+      action,
+      name: fallbackName
+    }
+  );
+
+  try {
+    form.requestSubmit();
+  } finally {
+    hidden.remove();
   }
 }
 
