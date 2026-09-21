@@ -1083,3 +1083,83 @@
     transition:none!important;
   }
 }
+
+
+/* =========================================================
+   NOVA 14.0 · AMBIENT COMMAND HERO
+   No stock photos. No external media.
+   ========================================================= */
+
+.nova-ambient-hero{
+  min-height:310px!important;
+  height:clamp(310px,26vw,390px)!important;
+  position:relative!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
+  border-radius:28px!important;
+  border:1px solid rgba(74,195,255,.16)!important;
+  background:
+    radial-gradient(circle at 76% 22%,rgba(52,193,255,.13),transparent 24%),
+    radial-gradient(circle at 28% 100%,rgba(99,88,255,.11),transparent 31%),
+    linear-gradient(135deg,#07101b 0%,#0b1420 48%,#09111d 100%)!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.045)!important;
+}
+body[data-theme="light"] .nova-ambient-hero{
+  background:
+    radial-gradient(circle at 76% 22%,rgba(8,145,240,.14),transparent 24%),
+    radial-gradient(circle at 28% 100%,rgba(95,88,255,.09),transparent 31%),
+    linear-gradient(135deg,#edf6ff 0%,#f8fbff 48%,#eef5ff 100%)!important;
+}
+.nova-ambient-field{position:absolute!important;inset:0!important;overflow:hidden!important;z-index:-3!important}
+.nova-ambient-blob{position:absolute!important;display:block!important;border-radius:50%!important;filter:blur(18px)!important;opacity:.76!important;will-change:transform!important}
+.nova-ambient-blob-a{width:380px!important;height:380px!important;left:44%!important;top:-170px!important;background:radial-gradient(circle,rgba(25,190,255,.44),rgba(25,190,255,0) 68%)!important;animation:novaAmbientFloatA 13s ease-in-out infinite alternate!important}
+.nova-ambient-blob-b{width:310px!important;height:310px!important;right:-76px!important;top:38px!important;background:radial-gradient(circle,rgba(101,92,255,.42),rgba(101,92,255,0) 69%)!important;animation:novaAmbientFloatB 17s ease-in-out infinite alternate!important}
+.nova-ambient-blob-c{width:270px!important;height:270px!important;left:26%!important;bottom:-155px!important;background:radial-gradient(circle,rgba(39,221,183,.24),rgba(39,221,183,0) 70%)!important;animation:novaAmbientFloatC 15s ease-in-out infinite alternate!important}
+.nova-ambient-orbit{position:absolute!important;left:68%!important;top:50%!important;width:420px!important;height:236px!important;margin:-118px 0 0 -210px!important;border:1px solid rgba(112,207,255,.16)!important;border-radius:50%!important;box-shadow:0 0 50px rgba(24,183,255,.045)!important}
+.nova-ambient-orbit-a{transform:rotate(-19deg)!important;animation:novaAmbientOrbitA 16s linear infinite!important}
+.nova-ambient-orbit-b{width:315px!important;height:172px!important;margin:-86px 0 0 -158px!important;border-style:dashed!important;border-color:rgba(126,114,255,.16)!important;transform:rotate(23deg)!important;animation:novaAmbientOrbitB 12s linear infinite reverse!important}
+.nova-ambient-orbit-c{width:530px!important;height:300px!important;margin:-150px 0 0 -265px!important;border-color:rgba(39,221,183,.07)!important;transform:rotate(8deg)!important;animation:novaAmbientOrbitC 22s linear infinite!important}
+.nova-ambient-node{position:absolute!important;width:7px!important;height:7px!important;border-radius:50%!important;background:#4edbff!important;box-shadow:0 0 18px rgba(78,219,255,.78)!important;z-index:2!important}
+.nova-ambient-node-a{left:calc(68% + 153px)!important;top:calc(50% - 106px)!important;animation:novaAmbientNodeA 16s linear infinite!important}
+.nova-ambient-node-b{left:calc(68% - 119px)!important;top:calc(50% + 64px)!important;background:#8c7cff!important;box-shadow:0 0 18px rgba(140,124,255,.62)!important;animation:novaAmbientNodeB 12s linear infinite reverse!important}
+.nova-ambient-node-c{left:calc(68% + 24px)!important;top:calc(50% + 128px)!important;width:5px!important;height:5px!important;background:#4fe0be!important;box-shadow:0 0 14px rgba(79,224,190,.54)!important;animation:novaAmbientPulse 3.6s ease-in-out infinite!important}
+.nova-ambient-scan{position:absolute!important;top:-20%!important;left:62%!important;width:120px!important;height:140%!important;transform:rotate(21deg)!important;background:linear-gradient(180deg,transparent,rgba(105,218,255,.05),transparent)!important;filter:blur(12px)!important;animation:novaAmbientScan 8s ease-in-out infinite!important}
+.nova-ambient-grid{position:absolute!important;inset:0!important;opacity:.18!important;background-image:linear-gradient(rgba(120,210,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(120,210,255,.055) 1px,transparent 1px)!important;background-size:34px 34px!important;mask-image:linear-gradient(90deg,transparent 0%,black 46%,black 100%)!important;-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 46%,black 100%)!important;animation:novaAmbientGrid 20s linear infinite!important}
+.nova-ambient-overlay{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;background:radial-gradient(circle at 75% 50%,transparent 0%,rgba(5,13,22,.04) 34%,rgba(5,13,22,.33) 100%),linear-gradient(90deg,rgba(4,11,18,.96) 0%,rgba(4,11,18,.78) 32%,rgba(4,11,18,.28) 68%,rgba(4,11,18,.44) 100%),linear-gradient(180deg,rgba(4,11,18,.08),rgba(4,11,18,.16) 58%,rgba(4,11,18,.72) 100%)!important}
+body[data-theme="light"] .nova-ambient-overlay{background:radial-gradient(circle at 75% 50%,transparent 0%,rgba(246,251,255,.02) 38%,rgba(230,241,250,.18) 100%),linear-gradient(90deg,rgba(8,28,48,.62) 0%,rgba(8,28,48,.38) 38%,rgba(8,28,48,.10) 70%,rgba(8,28,48,.20) 100%),linear-gradient(180deg,rgba(8,28,48,.04),rgba(8,28,48,.08) 58%,rgba(8,28,48,.38) 100%)!important}
+.nova-ambient-hero .hero-brand,.nova-ambient-hero .hero-date,.nova-ambient-hero .hero-copy,.nova-ambient-hero .hero-stats,.nova-ambient-next{z-index:4!important}
+.nova-ambient-hero .hero-copy{left:31px!important;right:360px!important;bottom:36px!important}
+.nova-ambient-hero .hero-copy h2{font-size:clamp(36px,4.2vw,58px)!important;line-height:.98!important;max-width:760px!important;text-wrap:balance!important}
+.nova-ambient-hero .hero-copy p{font-size:14px!important;max-width:660px!important}
+.nova-ambient-next{position:absolute!important;right:24px!important;top:50%!important;width:230px!important;min-height:112px!important;transform:translateY(-50%)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:6px!important;padding:17px!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:19px!important;background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025))!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 42px rgba(0,0,0,.16)!important}
+.nova-ambient-next:before{content:""!important;position:absolute!important;inset:0!important;border-radius:inherit!important;background:radial-gradient(circle at 84% 16%,rgba(35,197,255,.20),transparent 42%)!important;pointer-events:none!important}
+.nova-ambient-next-kicker{position:relative!important;color:#79dfff!important;font-size:7px!important;font-weight:900!important;letter-spacing:.14em!important}
+.nova-ambient-next strong{position:relative!important;color:#fff!important;font-size:32px!important;line-height:1!important;letter-spacing:-.055em!important}
+.nova-ambient-next > span:last-child{position:relative!important;color:rgba(255,255,255,.62)!important;font-size:8px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.nova-ambient-hero .hero-stats{right:24px!important;bottom:22px!important;gap:14px!important;padding:11px 14px!important;border-radius:15px!important;background:rgba(3,10,17,.31)!important}
+.nova-command-page .nova-command-panel{overflow:hidden!important}
+@keyframes novaAmbientFloatA{from{transform:translate3d(-22px,12px,0) scale(1)}to{transform:translate3d(34px,30px,0) scale(1.08)}}
+@keyframes novaAmbientFloatB{from{transform:translate3d(12px,-18px,0) scale(1)}to{transform:translate3d(-30px,26px,0) scale(1.1)}}
+@keyframes novaAmbientFloatC{from{transform:translate3d(-20px,12px,0) scale(1)}to{transform:translate3d(30px,-25px,0) scale(1.06)}}
+@keyframes novaAmbientOrbitA{from{transform:rotate(-19deg) rotate(0deg)}to{transform:rotate(-19deg) rotate(360deg)}}
+@keyframes novaAmbientOrbitB{from{transform:rotate(23deg) rotate(0deg)}to{transform:rotate(23deg) rotate(-360deg)}}
+@keyframes novaAmbientOrbitC{from{transform:rotate(8deg) rotate(0deg)}to{transform:rotate(8deg) rotate(360deg)}}
+@keyframes novaAmbientNodeA{from{transform:rotate(0deg) translateX(210px)}to{transform:rotate(360deg) translateX(210px)}}
+@keyframes novaAmbientNodeB{from{transform:rotate(0deg) translateX(160px)}to{transform:rotate(-360deg) translateX(160px)}}
+@keyframes novaAmbientPulse{0%,100%{transform:scale(.8);opacity:.45}50%{transform:scale(1.8);opacity:1}}
+@keyframes novaAmbientScan{0%{transform:translateX(-110px) rotate(21deg);opacity:0}28%{opacity:.7}58%{opacity:.25}100%{transform:translateX(180px) rotate(21deg);opacity:0}}
+@keyframes novaAmbientGrid{from{transform:translate3d(0,0,0)}to{transform:translate3d(34px,0,0)}}
+@media(max-width:1100px){
+  .nova-ambient-next{width:210px!important}
+  .nova-ambient-hero .hero-copy{right:300px!important}
+}
+@media(max-width:760px){
+  .nova-ambient-hero{min-height:380px!important;height:auto!important}
+  .nova-ambient-hero .hero-copy{left:20px!important;right:20px!important;bottom:126px!important}
+  .nova-ambient-next{left:20px!important;right:auto!important;top:auto!important;bottom:20px!important;width:calc(100% - 40px)!important;min-height:86px!important;transform:none!important}
+  .nova-ambient-hero .hero-stats{display:none!important}
+  .nova-ambient-orbit{left:78%!important;top:32%!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .nova-ambient-blob,.nova-ambient-orbit,.nova-ambient-node,.nova-ambient-scan,.nova-ambient-grid{animation:none!important}
+}

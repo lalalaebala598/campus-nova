@@ -779,69 +779,20 @@ function statePanel(kind,service,retry=true){
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
 function hero(){
-
-  const calendar =
-    state.data.calendar || {};
-
-  const campusEvents =
-    flattenCalendar(
-      calendar
-    );
-
-  const now =
-    new Date();
-
-  const todayKey =
-    `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
-
-  const campusTodayEvents =
-    campusEvents.filter(
-      event =>
-        dateKey(
-          event.timestart
-        ) === todayKey
-    );
-
-  const schedule =
-    state.scheduleImport;
-
-  const novaTodayEvents =
-    typeof novaScheduleTodayLessons === 'function'
-      ? novaScheduleTodayLessons()
-      : [];
-
-  const novaRemainingToday =
-    novaTodayEvents.filter(
-      lesson =>
-        Number(
-          lesson?.endMinutes || 0
-        ) >
-        (
-          now.getHours() * 60 +
-          now.getMinutes()
-        )
-    );
-
-  const novaUpcoming =
-    typeof novaScheduleUpcomingLessons === 'function'
-      ? novaScheduleUpcomingLessons(1)
-      : [];
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting =
+    hour < 6 ? 'Доброй ночи' :
+    hour < 12 ? 'Доброе утро' :
+    hour < 18 ? 'Добрый день' :
+    'Добрый вечер';
 
   const scheduleIsCurrent =
     Boolean(
-      schedule &&
+      state.scheduleImport &&
       typeof novaScheduleIsCurrent === 'function' &&
       novaScheduleIsCurrent()
     );
-
-  const heroScheduleEvents =
-    scheduleIsCurrent
-      ? (
-          novaRemainingToday.length
-            ? novaRemainingToday
-            : novaUpcoming
-        )
-      : campusTodayEvents;
 
   const nextLesson =
     scheduleIsCurrent &&
@@ -850,29 +801,9 @@ function hero(){
       : null;
 
   const tasks =
-    Array.isArray(
-      state.data.tasks
-    )
+    Array.isArray(state.data.tasks)
       ? state.data.tasks
       : [];
-
-  const hour =
-    now.getHours();
-
-  const greeting =
-    hour < 6
-      ? 'Доброй ночи'
-      : hour < 12
-        ? 'Доброе утро'
-        : hour < 18
-          ? 'Добрый день'
-          : 'Добрый вечер';
-
-  const photos = [
-    'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&fm=jpg&q=86&w=1400',
-    'https://images.unsplash.com/photo-1583373834259-46cc92173cb7?auto=format&fit=crop&fm=jpg&q=86&w=1400',
-    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&fm=jpg&q=86&w=1400'
-  ];
 
   const dateText =
     now.toLocaleDateString(
@@ -884,218 +815,456 @@ function hero(){
       }
     );
 
-  const heroLabel =
-    scheduleIsCurrent
-      ? (
-          nextLesson
-            ? (
-                nextLesson.isTomorrow
-                  ? 'ЗАВТРА · БЛИЖАЙШАЯ ПАРА'
-                  : nextLesson.isToday
-                    ? 'БЛИЖАЙШАЯ ПАРА'
-                    : 'БЛИЖАЙШЕЕ ЗАНЯТИЕ'
-              )
-            : 'РАСПИСАНИЕ'
-        )
-      : 'ЛИЧНЫЙ КАБИНЕТ';
-
-  const heroTitle =
-    scheduleIsCurrent && nextLesson
+  const label =
+    nextLesson
       ? (
           nextLesson.isTomorrow
-            ? `Завтра в ${nextLesson.start || '--:--'}`
+            ? 'ЗАВТРА · БЛИЖАЙШАЯ ПАРА'
             : nextLesson.isToday
-              ? `Следующая пара в ${nextLesson.start || '--:--'}`
-              : `Ближайшая пара`
+              ? 'БЛИЖАЙШАЯ ПАРА'
+              : 'БЛИЖАЙШЕЕ ЗАНЯТИЕ'
         )
-      : `${greeting}, ${firstName()}.`;
+      : 'NOVA · COMMAND CENTER';
 
-  const heroSub =
-    scheduleIsCurrent && nextLesson
+  const title =
+    nextLesson
       ? (
-          nextLesson.subject ||
-          'Учебное занятие'
+          nextLesson.isTomorrow
+            ? 'Завтра в ' + (nextLesson.start || '--:--')
+            : nextLesson.isToday
+              ? 'Следующая пара в ' + (nextLesson.start || '--:--')
+              : 'Ближайшее занятие'
         )
-      : 'Всё необходимое для учёбы уже здесь.';
+      : greeting + ', ' + firstName() + '.';
 
-  const scheduleCountLabel =
-    !scheduleIsCurrent
-      ? (
-          campusTodayEvents.length === 1
-            ? 'событие сегодня'
-            : 'событий сегодня'
-        )
-      : (
-          heroScheduleEvents.length === 1
-            ? 'ближайшее занятие'
-            : 'ближайших занятий'
-        );
+  const subtitle =
+    nextLesson
+      ? (nextLesson.subject || 'Учебное занятие')
+      : 'Учебный день собран в одном живом пространстве.';
 
-  const secondaryLabel =
-    scheduleIsCurrent
-      ? (
-          nextLesson
-            ? (
-                nextLesson.isTomorrow
-                  ? 'Завтра'
-                  : nextLesson.isToday
-                    ? 'Сегодня'
-                    : 'Дальше'
-              )
-            : 'Всё расписание'
-        )
-      : 'Расписание';
+  const taskCount =
+    tasks.length;
+
+  const courseCount =
+    Array.isArray(state.data.courses)
+      ? state.data.courses.length
+      : 0;
+
+  const unreadCount =
+    (state.data.messages?.conversations || [])
+      .reduce(
+        (sum,c) =>
+          sum +
+          Number(
+            c?.unreadcount ||
+            c?.unreadCount ||
+            0
+          ),
+        0
+      );
+
+  const nextMeta = [
+    nextLesson?.room
+      ? 'ауд. ' + nextLesson.room
+      : '',
+    nextLesson?.teacher || ''
+  ].filter(Boolean).join(' · ');
 
   return `
-    <section class="hero dashboard-hero">
+    <section class="hero dashboard-hero nova-ambient-hero ${nextLesson?.isTomorrow ? 'is-tomorrow' : ''} ${nextLesson?.isToday ? 'is-today' : ''}">
 
-      <div class="hero-media" aria-hidden="true">
-
-        ${photos.map(
-          (src,index)=>`
-            <img
-              class="hero-photo hero-photo-${index}"
-              src="${src}"
-              alt=""
-              loading="${index === 0 ? 'eager' : 'lazy'}"
-              decoding="async"
-            >
-          `
-        ).join('')}
-
-        <div class="hero-media-glass"></div>
-
+      <div class="nova-ambient-field" aria-hidden="true">
+        <span class="nova-ambient-blob nova-ambient-blob-a"></span>
+        <span class="nova-ambient-blob nova-ambient-blob-b"></span>
+        <span class="nova-ambient-blob nova-ambient-blob-c"></span>
+        <span class="nova-ambient-orbit nova-ambient-orbit-a"></span>
+        <span class="nova-ambient-orbit nova-ambient-orbit-b"></span>
+        <span class="nova-ambient-orbit nova-ambient-orbit-c"></span>
+        <span class="nova-ambient-node nova-ambient-node-a"></span>
+        <span class="nova-ambient-node nova-ambient-node-b"></span>
+        <span class="nova-ambient-node nova-ambient-node-c"></span>
+        <span class="nova-ambient-scan"></span>
+        <span class="nova-ambient-grid"></span>
       </div>
 
-      <div class="hero-overlay"></div>
+      <div class="nova-ambient-overlay" aria-hidden="true"></div>
 
       <div class="hero-brand">
-
         ${icon('university',23)}
-
         <span>
-          <b>
-            Финансовый университет
-          </b>
-
-          <small>
-            Краснодарский филиал
-          </small>
+          <b>Финансовый университет</b>
+          <small>Краснодарский филиал</small>
         </span>
-
       </div>
 
       <div class="hero-date">
-
         ${icon('calendar',15)}
-
-        <span>
-          ${esc(dateText)}
-        </span>
-
+        <span>${esc(dateText)}</span>
       </div>
 
       <div class="hero-copy">
-
-        <div class="eyebrow">
-          ${esc(heroLabel)}
-        </div>
-
-        <h2>
-          ${esc(heroTitle)}
-        </h2>
-
-        <p>
-          ${esc(heroSub)}
-        </p>
-
+        <div class="eyebrow">${esc(label)}</div>
+        <h2>${esc(title)}</h2>
+        <p>${esc(subtitle)}</p>
       </div>
 
-      ${
-        scheduleIsCurrent && nextLesson
-          ? `
-            <div class="hero-next-card">
-
-              <span class="hero-next-kicker">
-                ${esc(secondaryLabel)}
-              </span>
-
-              <strong>
-                ${esc(
-                  nextLesson.start ||
-                  '--:--'
-                )}
-              </strong>
-
-              <span>
-                ${esc(
-                  [
-                    nextLesson.room
-                      ? `ауд. ${nextLesson.room}`
-                      : '',
-                    nextLesson.teacher || ''
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                )}
-              </span>
-
-            </div>
-          `
-          : ''
-      }
+      <div class="nova-ambient-next">
+        <span class="nova-ambient-next-kicker">
+          ${nextLesson ? 'СЛЕДУЮЩЕЕ ДЕЙСТВИЕ' : 'NOVA'}
+        </span>
+        <strong>
+          ${esc(nextLesson?.start || (taskCount ? String(taskCount) : '—'))}
+        </strong>
+        <span>
+          ${esc(
+            nextLesson
+              ? (nextMeta || 'Расписание')
+              : 'Учебный центр'
+          )}
+        </span>
+      </div>
 
       <div class="hero-stats">
-
         <div class="hero-stat">
-
-          <strong>
-            ${heroScheduleEvents.length}
-          </strong>
-
-          <span>
-            ${esc(scheduleCountLabel)}
-          </span>
-
+          <strong>${taskCount}</strong>
+          <span>${taskCount === 1 ? 'активное задание' : 'активных заданий'}</span>
         </div>
-
         <div class="hero-stat-divider"></div>
-
         <div class="hero-stat">
-
-          <strong>
-            ${tasks.length}
-          </strong>
-
-          <span>
-            ${
-              tasks.length === 1
-                ? 'активное задание'
-                : 'активных заданий'
-            }
-          </span>
-
+          <strong>${courseCount}</strong>
+          <span>${courseCount === 1 ? 'курс' : 'курсов'}</span>
         </div>
-
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <strong>${unreadCount}</strong>
+          <span>${unreadCount === 1 ? 'сообщение' : 'сообщений'}</span>
+        </div>
       </div>
-
-      <div class="hero-quote">
-
-        <span class="hero-quote-label">
-          NOVA
-        </span>
-
-        <strong>
-          Знания сегодня.<br>
-          Возможности завтра.
-        </strong>
-
-      </div>
-
     </section>
   `;
 }
 
+function novaDashboardTaskDue(task){
+  return Number(
+    task?.due ||
+    task?.deadline ||
+    task?.content?.due?.timestamp ||
+    activityDue(task) ||
+    0
+  );
+}
+
+function novaDashboardDeadlineInfo(ts){
+  const value = Number(ts || 0);
+  if(!value){
+    return {
+      tone:'later',
+      label:'Без срока'
+    };
+  }
+
+  const due =
+    new Date(value * 1000);
+
+  const now =
+    new Date();
+
+  const startToday =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
+  const startDue =
+    new Date(
+      due.getFullYear(),
+      due.getMonth(),
+      due.getDate()
+    );
+
+  const dayDiff =
+    Math.round(
+      (startDue - startToday) /
+      86400000
+    );
+
+  if(due.getTime() < now.getTime()){
+    return {
+      tone:'overdue',
+      label:'Просрочено'
+    };
+  }
+
+  if(dayDiff === 0){
+    return {
+      tone:'today',
+      label:'Сегодня · ' + formatTime(ts)
+    };
+  }
+
+  if(dayDiff === 1){
+    return {
+      tone:'tomorrow',
+      label:'Завтра · ' + formatTime(ts)
+    };
+  }
+
+  if(dayDiff <= 3){
+    return {
+      tone:'soon',
+      label:'Через ' + dayDiff + ' дн. · ' + formatDate(ts)
+    };
+  }
+
+  return {
+    tone:'later',
+    label:formatLong(ts)
+  };
+}
+
+function novaDashboardDeadlineRows(tasks, limit=6){
+  return (tasks || [])
+    .map(task => ({
+      task,
+      due:novaDashboardTaskDue(task)
+    }))
+    .filter(item => item.due > 0)
+    .sort((a,b) => a.due - b.due)
+    .slice(0,limit);
+}
+
+function novaDashboardNextAction(tasks){
+  const now =
+    Date.now() / 1000;
+
+  const taskItems =
+    (tasks || [])
+      .map(task => ({
+        task,
+        due:novaDashboardTaskDue(task)
+      }))
+      .filter(
+        item =>
+          item.due > 0
+      )
+      .sort(
+        (a,b) => {
+          const aOverdue =
+            a.due < now ? 0 : 1;
+          const bOverdue =
+            b.due < now ? 0 : 1;
+
+          if(aOverdue !== bOverdue){
+            return aOverdue - bOverdue;
+          }
+
+          return a.due - b.due;
+        }
+      );
+
+  if(taskItems.length){
+    return {
+      kind:'task',
+      task:taskItems[0].task,
+      due:taskItems[0].due
+    };
+  }
+
+  if(
+    state.scheduleImport &&
+    novaScheduleIsCurrent() &&
+    typeof novaScheduleNextLesson === 'function'
+  ){
+    const next =
+      novaScheduleNextLesson();
+
+    if(next){
+      return {
+        kind:'lesson',
+        lesson:next
+      };
+    }
+  }
+
+  return null;
+}
+
+function novaDashboardAgendaRows(){
+  const now =
+    new Date();
+
+  const todayKey =
+    [
+      now.getFullYear(),
+      String(now.getMonth()+1).padStart(2,'0'),
+      String(now.getDate()).padStart(2,'0')
+    ].join('-');
+
+  if(
+    state.scheduleImport &&
+    novaScheduleIsCurrent() &&
+    typeof novaScheduleTodayLessons === 'function'
+  ){
+    return novaScheduleTodayLessons()
+      .slice()
+      .sort(
+        (a,b) =>
+          Number(a?.startMinutes || 0) -
+          Number(b?.startMinutes || 0)
+      )
+      .slice(0,8)
+      .map(lesson => ({
+        type:'lesson',
+        time:lesson.start || '--:--',
+        end:lesson.end || '',
+        title:lesson.subject || 'Занятие',
+        meta:[
+          lesson.room ? 'ауд. ' + lesson.room : '',
+          lesson.teacher || ''
+        ].filter(Boolean).join(' · '),
+        action:'schedule'
+      }));
+  }
+
+  const events =
+    flattenCalendar(
+      state.data.calendar || {}
+    )
+      .filter(
+        event =>
+          dateKey(event.timestart) === todayKey
+      )
+      .sort(
+        (a,b) =>
+          Number(a.timestart || 0) -
+          Number(b.timestart || 0)
+      )
+      .slice(0,8);
+
+  return events.map(event => ({
+    type:'event',
+    time:formatTime(event.timestart),
+    end:'',
+    title:event.name || 'Событие',
+    meta:event.course?.fullname || event.course?.shortname || 'Campus',
+    action:'calendar'
+  }));
+}
+
+function novaDashboardUnreadMessages(){
+  return (state.data.messages?.conversations || [])
+    .reduce(
+      (sum,item) =>
+        sum +
+        Number(
+          item?.unreadcount ||
+          item?.unreadCount ||
+          0
+        ),
+      0
+    );
+}
+
+function novaDashboardAverage(grades){
+  const values =
+    (grades || [])
+      .map(
+        item =>
+          parseFloat(
+            String(
+              item?.grade ?? ''
+            ).replace(',','.')
+          )
+      )
+      .filter(Number.isFinite);
+
+  return values.length
+    ? (
+        values.reduce(
+          (sum,value) =>
+            sum + value,
+          0
+        ) / values.length
+      )
+        .toFixed(1)
+        .replace('.',',')
+    : '—';
+}
+
+function novaDashboardProgressCourses(courses, limit=6){
+  return (courses || [])
+    .map(course => ({
+      course,
+      progress:Number.isFinite(Number(course?.progress))
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              Number(course.progress)
+            )
+          )
+        : null
+    }))
+    .filter(item => item.course)
+    .slice(0,limit);
+}
+
+function novaDashboardImportantItems(tasks, grades){
+  const items=[];
+  const unread=novaDashboardUnreadMessages();
+
+  if(unread){
+    items.push({
+      icon:'message',
+      tone:'message',
+      title:'Непрочитанные сообщения',
+      meta:`${unread} ${unread === 1 ? 'новое сообщение' : 'новых сообщений'}`,
+      go:'messages'
+    });
+  }
+
+  const deadlines =
+    novaDashboardDeadlineRows(tasks,1)[0];
+
+  if(deadlines){
+    const info =
+      novaDashboardDeadlineInfo(
+        deadlines.due
+      );
+
+    items.push({
+      icon:'check-square',
+      tone:'task',
+      title:deadlines.task?.name || 'Ближайшее задание',
+      meta:info.label,
+      activity:deadlines.task
+    });
+  }
+
+  if((grades || []).length){
+    const grade=grades[0];
+    items.push({
+      icon:'chart',
+      tone:'grade',
+      title:grade?.course || grade?.name || 'Последняя оценка',
+      meta:'Оценка: ' + (grade?.grade || '—'),
+      go:'grades'
+    });
+  }
+
+  if(!items.length){
+    items.push({
+      icon:'sparkle',
+      tone:'message',
+      title:'Всё спокойно',
+      meta:'Новых критичных событий сейчас нет.',
+      go:'dashboard'
+    });
+  }
+
+  return items.slice(0,4);
+}
 function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
 
 function novaScheduleTodayLessons() {
@@ -1777,143 +1946,547 @@ function novaNextLessonPanel(){
 }
 
 function dashboard(){
-  const courses=Array.isArray(state.data.courses)?state.data.courses:[];
-  const calendar=state.data.calendar||{};
-  const events=flattenCalendar(calendar).sort((a,b)=>Number(a.timestart)-Number(b.timestart));
-  const today=new Date(); const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-  const campusTodayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
-  const novaTodayEvents=novaScheduleTodayLessons();
-  const todayEvents=
-    state.scheduleImport && novaScheduleIsCurrent()
-      ? novaTodayEvents
-      : campusTodayEvents;
-  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[]; const grades=Array.isArray(state.data.grades)?state.data.grades:[];
-  const nums=grades.map(x=>parseFloat(String(x.grade||'').replace(',','.'))).filter(Number.isFinite); const avg=nums.length?(nums.reduce((x,y)=>x+y,0)/nums.length).toFixed(1).replace('.',','):'—';
-  const block=(service,html)=>state.status[service]==='loading'?'<div class="block-loading">Загружаем…</div>':state.status[service]==='error'?`<div class="block-error">${icon('info',14)}<span>${esc(state.errors?.[service]||'Не удалось загрузить блок.')}</span></div>`:html;
-  if(state.status.dashboard==='loading') return `<section class="page dashboard-page">${hero()}<div class="dashboard-surface">${skeletonGrid(4)}</div></section>`;
-  return `<section class="page dashboard-page">${hero()}
-    <div class="metrics">${metric(
-  'calendar',
-  novaScheduleFocusLabel(),
-  state.scheduleImport &&
-  novaScheduleIsCurrent()
-    ? novaScheduleUpcomingLessons(99).length
-    : (
-        ['loading','error'].includes(
-          state.status.calendar
+  const courses =
+    Array.isArray(state.data.courses)
+      ? state.data.courses
+      : [];
+
+  const tasks =
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : [];
+
+  const grades =
+    Array.isArray(state.data.grades)
+      ? state.data.grades
+      : [];
+
+  const agenda =
+    novaDashboardAgendaRows();
+
+  const nextAction =
+    novaDashboardNextAction(tasks);
+
+  const deadlineRows =
+    novaDashboardDeadlineRows(tasks,6);
+
+  const progressCourses =
+    novaDashboardProgressCourses(courses,6);
+
+  const importantItems =
+    novaDashboardImportantItems(
+      tasks,
+      grades
+    );
+
+  const unread =
+    novaDashboardUnreadMessages();
+
+  const avg =
+    novaDashboardAverage(grades);
+
+  const completedProgress =
+    progressCourses.filter(
+      item =>
+        item.progress !== null
+    );
+
+  const progressAvg =
+    completedProgress.length
+      ? Math.round(
+          completedProgress.reduce(
+            (sum,item) =>
+              sum + item.progress,
+            0
+          ) /
+          completedProgress.length
         )
-          ? '—'
-          : todayEvents.length
-      ),
-  'Посмотреть',
-  'schedule',
-  'blue'
-)}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
-    <div class="dashboard-layout"><div class="dash-main">
-      ${
-        state.scheduleImport
-          ? Panel({
-              title:novaScheduleDashboardTitle(),
-              iconName:'calendar',
-              action:'Все занятия',
-              go:'schedule',
-              children:novaScheduleDashboardContent()
-            })
-          : Panel({
-              title:'Расписание на сегодня',
-              iconName:'calendar',
-              action:'Все занятия',
-              go:'schedule',
-              children:block(
-                'calendar',
-                todayEvents.length
-                  ? `<div class="timeline">${todayEvents.slice(0,6).map((e,i)=>`<button class="timeline-row" data-view="${esc(e.url||'')}" data-route-url><span class="timeline-line"><i class="dot dot-${i%4}"></i></span><time>${formatTime(e.timestart)}</time><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.course?.fullname||e.course?.shortname||'Campus')}</small></span>${icon('arrow',14)}</button>`).join('')}</div>`
-                  : '<div class="inline-empty">На сегодня занятий нет.</div>'
-              )
-            })
-      }
-      ${novaNextLessonPanel()}
-      ${Panel({title:'Последние курсы',iconName:'grid',action:'Все курсы',go:'courses',children:block('courses',`<div class="mini-courses">${courses.slice(0,4).map(miniCourse).join('')||'<div class="inline-empty">Курсов сейчас нет.</div>'}</div>`)})}
-      ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
-      ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
-      ${Panel({wide:true,title:'Последние оценки',iconName:'chart',action:'Все оценки',go:'grades',children:block('grades',`<div class="compact-list">${grades.slice(0,5).map(gradeRow).join('')||'<div class="inline-empty">Оценок пока нет.</div>'}</div>`)})}
-    </div><aside class="dash-side">${CalendarWidget()}<section class="side-card"><div class="panel-title"><span>${icon('sparkle',16)} Быстрые действия</span></div><div class="quick-actions">
-  <button class="quick-action" data-go="files" aria-label="Открыть файлы">
-    <span class="quick-action-icon">${icon('download',19)}</span>
-    <span class="quick-action-copy">
-      <b>Файлы</b>
-      <small>Материалы курса</small>
-    </span>
-    <span class="quick-action-arrow">${icon('arrow',14)}</span>
-  </button>
+      : 0;
 
-  <button class="quick-action" data-go="messages" aria-label="Открыть сообщения">
-    <span class="quick-action-icon">${icon('message',19)}</span>
-    <span class="quick-action-copy">
-      <b>Сообщения</b>
-      <small>Переписка Campus</small>
-    </span>
-    <span class="quick-action-arrow">${icon('arrow',14)}</span>
-  </button>
+  const actionMarkup =
+    nextAction
+      ? (
+          nextAction.kind === 'task'
+            ? (() => {
+                const task =
+                  nextAction.task;
 
-  <button class="quick-action" data-go="tasks" aria-label="Открыть задания">
-    <span class="quick-action-icon">${icon('check-square',19)}</span>
-    <span class="quick-action-copy">
-      <b>Задания</b>
-      <small>Что нужно сдать</small>
-    </span>
-    <span class="quick-action-arrow">${icon('arrow',14)}</span>
-  </button>
+                const info =
+                  novaDashboardDeadlineInfo(
+                    nextAction.due
+                  );
 
-  <button class="quick-action" data-go="tests" aria-label="Открыть тесты">
-    <span class="quick-action-icon">${icon('quiz',19)}</span>
-    <span class="quick-action-copy">
-      <b>Тесты</b>
-      <small>Пройти проверку</small>
-    </span>
-    <span class="quick-action-arrow">${icon('arrow',14)}</span>
-  </button>
-</div></section><button
-  type="button"
-  class="quote-card"
-  data-go="courses"
-  aria-label="Открыть мои курсы"
->
-  <span class="quote-card-orb quote-card-orb-a" aria-hidden="true"></span>
-  <span class="quote-card-orb quote-card-orb-b" aria-hidden="true"></span>
+                return `
+                  <button
+                    class="nova-command-action"
+                    type="button"
+                    data-activity="${activityRefAttr(task)}"
+                  >
+                    <span class="nova-command-action-icon tone-${esc(info.tone)}">
+                      ${icon('check-square',20)}
+                    </span>
 
-  <span class="quote-card-head">
-    <span class="quote-card-kicker">
-      ${icon('university',12)}
-      NOVA · CAMPUS
-    </span>
+                    <span class="nova-command-action-main">
+                      <span class="nova-command-action-kicker">
+                        ${esc(info.label)}
+                      </span>
 
-    <span class="quote-card-status">
-      Готово к учёбе
-    </span>
-  </span>
+                      <b>
+                        ${esc(
+                          task?.name ||
+                          'Ближайшее задание'
+                        )}
+                      </b>
 
-  <span class="quote-card-copy">
-    <b>
-      Всё для учёбы.<br>
-      <em>В одном месте.</em>
-    </b>
+                      <small>
+                        ${esc(
+                          activityCourseName(task)
+                        )}
+                      </small>
+                    </span>
 
-    <small>
-      Данные остаются в Campus. Nova меняет только опыт.
-    </small>
-  </span>
+                    <span class="nova-command-action-side">
+                      <strong>${esc(info.label)}</strong>
+                      <span>${icon('arrow',15)}</span>
+                    </span>
+                  </button>
+                `;
+              })()
+            : `
+                <button
+                  class="nova-command-action"
+                  type="button"
+                  data-go="schedule"
+                >
+                  <span class="nova-command-action-icon tone-tomorrow">
+                    ${icon('clock',20)}
+                  </span>
 
-  <span class="quote-card-footer">
-    <span>Открыть мои курсы</span>
+                  <span class="nova-command-action-main">
+                    <span class="nova-command-action-kicker">
+                      ${
+                        nextAction.lesson?.isTomorrow
+                          ? 'ЗАВТРА'
+                          : 'СЛЕДУЮЩАЯ ПАРА'
+                      }
+                    </span>
 
-    <span class="quote-card-action">
-      ${icon('arrow',18)}
-    </span>
-  </span>
-</button></aside></div></section>`;
+                    <b>
+                      ${esc(
+                        nextAction.lesson?.subject ||
+                        'Ближайшее занятие'
+                      )}
+                    </b>
+
+                    <small>
+                      ${esc(
+                        [
+                          nextAction.lesson?.start || '',
+                          nextAction.lesson?.room
+                            ? 'ауд. ' + nextAction.lesson.room
+                            : '',
+                          nextAction.lesson?.teacher || ''
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                      )}
+                    </small>
+                  </span>
+
+                  <span class="nova-command-action-side">
+                    <strong>
+                      ${esc(
+                        nextAction.lesson?.start ||
+                        '--:--'
+                      )}
+                    </strong>
+                    <span>${icon('arrow',15)}</span>
+                  </span>
+                </button>
+              `
+        )
+      : `
+          <div class="nova-command-empty">
+            <span>${icon('check',18)}</span>
+            <div>
+              <b>Сейчас всё спокойно</b>
+              <small>Новых задач с дедлайном и ближайших занятий нет.</small>
+            </div>
+          </div>
+        `;
+
+  const agendaMarkup =
+    agenda.length
+      ? agenda.map(row => `
+          <button
+            class="nova-command-agenda-row"
+            type="button"
+            data-go="${esc(row.action === 'calendar' ? 'calendar' : 'schedule')}"
+          >
+            <span class="nova-command-agenda-time">
+              <b>${esc(row.time)}</b>
+              <small>${esc(row.end || 'сегодня')}</small>
+            </span>
+
+            <span class="nova-command-agenda-line"></span>
+
+            <span class="nova-command-agenda-copy">
+              <b>${esc(row.title)}</b>
+              <small>${esc(row.meta || 'Campus')}</small>
+            </span>
+
+            <span class="nova-command-agenda-arrow">
+              ${icon('arrow',13)}
+            </span>
+          </button>
+        `).join('')
+      : `
+          <div class="nova-command-empty compact">
+            <span>${icon('calendar',17)}</span>
+            <div>
+              <b>Сегодня занятий нет</b>
+              <small>Можно спокойно заняться ближайшими заданиями.</small>
+            </div>
+          </div>
+        `;
+
+  const deadlinesMarkup =
+    deadlineRows.length
+      ? deadlineRows.map(item => {
+          const info =
+            novaDashboardDeadlineInfo(
+              item.due
+            );
+
+          return `
+            <button
+              class="nova-command-deadline tone-${esc(info.tone)}"
+              type="button"
+              data-activity="${activityRefAttr(item.task)}"
+            >
+              <span class="nova-command-deadline-status"></span>
+
+              <span class="nova-command-deadline-main">
+                <b>
+                  ${esc(
+                    item.task?.name ||
+                    'Задание'
+                  )}
+                </b>
+
+                <small>
+                  ${esc(
+                    activityCourseName(item.task)
+                  )}
+                </small>
+              </span>
+
+              <span class="nova-command-deadline-time">
+                ${esc(info.label)}
+              </span>
+
+              <span class="nova-command-deadline-arrow">
+                ${icon('arrow',12)}
+              </span>
+            </button>
+          `;
+        }).join('')
+      : `
+          <div class="nova-command-empty compact">
+            <span>${icon('check',17)}</span>
+            <div>
+              <b>Дедлайнов не найдено</b>
+              <small>Сроки появятся здесь автоматически из учебных активностей.</small>
+            </div>
+          </div>
+        `;
+
+  const progressMarkup =
+    progressCourses.length
+      ? progressCourses.map(item => {
+          const course =
+            item.course;
+
+          const progress =
+            item.progress === null
+              ? 0
+              : Math.round(item.progress);
+
+          return `
+            <button
+              class="nova-command-course-progress"
+              type="button"
+              data-go="course"
+              data-param="${esc(course?.id || '')}"
+            >
+              <span class="nova-command-course-head">
+                <b>
+                  ${esc(
+                    course?.fullnamedisplay ||
+                    course?.fullname ||
+                    course?.shortname ||
+                    'Курс'
+                  )}
+                </b>
+                <strong>
+                  ${
+                    item.progress === null
+                      ? '—'
+                      : progress + '%'
+                  }
+                </strong>
+              </span>
+
+              <span class="nova-command-progress-track">
+                <i style="width:${progress}%"></i>
+              </span>
+            </button>
+          `;
+        }).join('')
+      : `
+          <div class="nova-command-empty compact">
+            <span>${icon('grid',17)}</span>
+            <div>
+              <b>Курсы пока не загружены</b>
+              <small>После подключения Campus здесь появится прогресс.</small>
+            </div>
+          </div>
+        `;
+
+  const importantMarkup =
+    importantItems.map(item => `
+      <button
+        class="nova-command-important"
+        type="button"
+        ${item.activity
+          ? `data-activity="${activityRefAttr(item.activity)}"`
+          : `data-go="${esc(item.go || 'dashboard')}"`
+        }
+      >
+        <span class="nova-command-important-icon ${esc(item.tone)}">
+          ${icon(item.icon,16)}
+        </span>
+
+        <span>
+          <b>${esc(item.title)}</b>
+          <small>${esc(item.meta)}</small>
+        </span>
+
+        ${icon('arrow',12)}
+      </button>
+    `).join('');
+
+  if(state.status.dashboard === 'loading'){
+    return `
+      <section class="page nova-command-page">
+        ${hero()}
+        <div class="nova-command-panel">
+          <div class="skeleton-card" style="height:150px"></div>
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="page nova-command-page">
+
+      <header class="nova-command-header">
+        <div>
+          <span class="nova-command-kicker">
+            CAMPUS NOVA · COMMAND CENTER
+          </span>
+
+          <h1>
+            Привет, <span>${esc(firstName())}</span>
+          </h1>
+
+          <p>
+            Твой учебный день, дедлайны и ближайшие действия в одном месте.
+          </p>
+        </div>
+
+        <div class="nova-command-header-stats">
+          <span>
+            <b>${tasks.length}</b>
+            <small>заданий</small>
+          </span>
+
+          <span>
+            <b>${courses.length}</b>
+            <small>курсов</small>
+          </span>
+
+          <span>
+            <b>${unread}</b>
+            <small>сообщений</small>
+          </span>
+        </div>
+      </header>
+
+      ${hero()}
+
+      <div class="nova-command-grid">
+
+        <div class="nova-command-main">
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>ПРИОРИТЕТ</span>
+                <h2>Что делать сейчас</h2>
+              </div>
+              <span class="nova-command-live">
+                <i></i>
+                LIVE
+              </span>
+            </div>
+
+            ${actionMarkup}
+          </section>
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>РАСПИСАНИЕ</span>
+                <h2>Твой день</h2>
+              </div>
+              <button
+                class="panel-action"
+                type="button"
+                data-go="schedule"
+              >
+                Всё расписание ${icon('arrow',13)}
+              </button>
+            </div>
+
+            <div class="nova-command-agenda">
+              ${agendaMarkup}
+            </div>
+          </section>
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>СРОКИ</span>
+                <h2>Требует внимания</h2>
+              </div>
+              <button
+                class="panel-action"
+                type="button"
+                data-go="tasks"
+              >
+                Все задания ${icon('arrow',13)}
+              </button>
+            </div>
+
+            <div class="nova-command-deadlines">
+              ${deadlinesMarkup}
+            </div>
+          </section>
+
+        </div>
+
+        <aside class="nova-command-side">
+
+          <section class="nova-command-panel nova-command-pulse">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>СОСТОЯНИЕ</span>
+                <h2>Учебный пульс</h2>
+              </div>
+            </div>
+
+            <div class="nova-command-pulse-stats">
+              <div>
+                <b>${tasks.length}</b>
+                <small>заданий</small>
+              </div>
+
+              <div>
+                <b>${avg}</b>
+                <small>средний балл</small>
+              </div>
+
+              <div>
+                <b>${progressAvg}%</b>
+                <small>ср. прогресс</small>
+              </div>
+            </div>
+          </section>
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>ПРОГРЕСС</span>
+                <h2>Мои курсы</h2>
+              </div>
+              <button
+                class="panel-action"
+                type="button"
+                data-go="courses"
+              >
+                Все курсы ${icon('arrow',13)}
+              </button>
+            </div>
+
+            <div class="nova-command-progress-list">
+              ${progressMarkup}
+            </div>
+          </section>
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>АКЦЕНТ</span>
+                <h2>Важное</h2>
+              </div>
+            </div>
+
+            <div class="nova-command-important-list">
+              ${importantMarkup}
+            </div>
+          </section>
+
+          <section class="nova-command-panel">
+            <div class="nova-command-panel-head">
+              <div>
+                <span>БЫСТРЫЙ ДОСТУП</span>
+                <h2>Открыть раздел</h2>
+              </div>
+            </div>
+
+            <div class="nova-command-quick-grid">
+              <button class="nova-command-quick" type="button" data-go="courses">
+                ${icon('grid',18)}
+                <b>Курсы</b>
+                <small>Все предметы</small>
+              </button>
+
+              <button class="nova-command-quick" type="button" data-go="schedule">
+                ${icon('clock',18)}
+                <b>Расписание</b>
+                <small>Пары и время</small>
+              </button>
+
+              <button class="nova-command-quick" type="button" data-go="tasks">
+                ${icon('check-square',18)}
+                <b>Задания</b>
+                <small>Что сдавать</small>
+              </button>
+
+              <button class="nova-command-quick" type="button" data-go="tests">
+                ${icon('quiz',18)}
+                <b>Тесты</b>
+                <small>Проверка знаний</small>
+              </button>
+            </div>
+          </section>
+
+        </aside>
+      </div>
+    </section>
+  `;
 }
-
 function Panel({title,iconName='grid',action='',go='',wide=false,children}){return `<section class="panel ${wide?'wide':''}"><div class="panel-head"><div><h2>${icon(iconName,16)} ${esc(title)}</h2><small>Актуальные данные</small></div>${action?`<button class="panel-action" data-go="${go}">${esc(action)} ${icon('arrow',13)}</button>`:''}</div>${children}</section>`}
 function miniCourse(c){const p=Number.isFinite(Number(c.progress))?Math.max(0,Math.min(100,Number(c.progress))):null;return `<button class="mini-course" data-go="course" data-param="${esc(c.id)}"><span class="course-thumb" style="${c.courseimage?`background-image:url('${String(c.courseimage).replace(/'/g,'%27')}')`:''}">${c.courseimage?'':icon('grid',20)}</span><span><b>${esc(c.fullnamedisplay||c.fullname||'Курс')}</b><small>${esc(c.shortname||'')}</small>${p!==null?`<i><em style="width:${p}%"></em></i>`:''}</span>${p!==null?`<strong>${p}%</strong>`:''}</button>`}
 
