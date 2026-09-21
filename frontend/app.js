@@ -17,7 +17,8 @@ const state = {
   pageCache: new Map(),
   requests: {},
   routeEpoch: 0,
-  courseView: localStorage.getItem('nova-course-view') || 'cards'
+  courseView: localStorage.getItem('nova-course-view') || 'cards',
+  quizNavigationCache: new Map()
 };
 
 const NAV = [
@@ -28,6 +29,50 @@ const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
 const esc = (s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const text = (s='')=>String(s).replace(/\s+/g,' ').trim();
+
+function messageText(value = '') {
+  let source =
+    String(value ?? '').trim();
+
+  /*
+   * Moodle иногда возвращает текст сообщения
+   * вместе с HTML-разметкой или HTML,
+   * закодированным как обычный текст.
+   */
+  for(let i = 0; i < 2; i++){
+    const doc =
+      new DOMParser().parseFromString(
+        source,
+        'text/html'
+      );
+
+    const decoded =
+      doc.body?.textContent ?? source;
+
+    if(decoded === source){
+      break;
+    }
+
+    source = decoded;
+  }
+
+  return source
+    .replace(
+      /[<‹]\s*\/?\s*p\b[^>›]*[>›]/gi,
+      ' '
+    )
+    .replace(
+      /[<‹]\s*\/?\s*\/?p\s*[>›]/gi,
+      ' '
+    )
+    .replace(
+      /\s+/g,
+      ' '
+    )
+    .trim();
+}
+
+
 
 const novaFrame=(callback)=>{
   if(typeof window!=='undefined' &&
@@ -210,7 +255,31 @@ function themeToggle(){
   });
 }
 function setTheme(){document.body.dataset.theme=state.theme;const root=document.documentElement;if(root){root.dataset.theme=state.theme;root.style.colorScheme=state.theme}}
-function brand(){return `<div class="brand"><span class="brand-mark">${icon('university',22)}</span><span><b>Campus <em>FA</em></b><small>Nova</small></span></div>`}
+function brand(){
+  const host =
+    state.campusUrl
+      ? campusHost()
+      : 'campus.fa.ru';
+
+  return `
+    <div class="brand">
+      <span class="brand-mark">
+        ${icon('university',22)}
+      </span>
+
+      <span class="brand-copy">
+        <span class="brand-topline">
+          <b>Campus <em>FA</em></b>
+        </span>
+
+        <small class="brand-hostline">
+          <span>${esc(host)}</span>
+          <span class="beta-badge">BETA 1.0</span>
+        </small>
+      </span>
+    </div>
+  `;
+}
 /* NOVA_ACCOUNT_INLINE_STYLES_20260919 */
 
 function injectNovaAccountInlineStyles(){
@@ -1148,53 +1217,61 @@ function tasksPage(){
               <div class="course-group-body">
 
                 ${
-                  group.items.map(a=>{
-                    const due=activityDue(a);
+                  group.items.map(a=>`
+                    <button
+                      class="
+                        material-card
+                        task-card
+                        material-tone-${esc(
+                          learningMaterialVisual(a).tone
+                        )}
+                      "
+                      data-activity="${activityRefAttr(a)}"
+                    >
 
-                    return `
-                      <button
-                        class="task-card"
-                        data-activity="${activityRefAttr(a)}"
-                      >
+                      <span class="material-card-icon">
 
-                        <span class="task-kind assign">
-                          ${icon('check-square',18)}
+                        <span class="material-card-icon-core">
+                          ${icon(
+                            learningMaterialVisual(a).icon,
+                            19
+                          )}
                         </span>
 
-                        <span class="task-card-main">
-                          <b>
-                            ${esc(
-                              a.identity?.name||
-                              'Задание'
-                            )}
-                          </b>
+                        <small class="material-card-kind">
+                          ${esc(
+                            learningMaterialVisual(a).shortLabel ||
+                            learningMaterialVisual(a).label ||
+                            'МАТЕРИАЛ'
+                          )}
+                        </small>
 
-                          <small>
-                            ${
-                              due
-                                ? `Срок сдачи · ${esc(formatLong(due))}`
-                                : 'Срок не указан'
-                            }
-                          </small>
-                        </span>
+                      </span>
 
-                        ${
-                          due
-                            ? `
-                              <time>
-                                ${esc(formatDate(due))}
-                              </time>
-                            `
-                            : ''
-                        }
+                      <span class="material-card-main">
 
-                        <span class="task-card-arrow">
-                          ${icon('arrow',16)}
-                        </span>
+                        <b>
+                          ${esc(
+                            a.identity?.name ||
+                            'Материал'
+                          )}
+                        </b>
 
-                      </button>
-                    `;
-                  }).join('')
+                        <small>
+                          ${esc(
+                            a.ref?.type ||
+                            'material'
+                          )}
+                        </small>
+
+                      </span>
+
+                      <span class="material-card-arrow">
+                        ${icon('arrow',16)}
+                      </span>
+
+                    </button>
+                  `).join('')
                 }
 
               </div>
@@ -1997,8 +2074,9 @@ function messagesPage(){
                   String(state.selectedConversation);
 
                 const preview =
-                  text(
+                  messageText(
                     c.messages?.[0]?.text ||
+                    c.messages?.[0]?.message ||
                     'Нет сообщений'
                   ).slice(0,64);
 
@@ -2207,6 +2285,12 @@ function filesPage(){
                         ''
                       );
 
+                    const visual=
+                      learningFileVisual(f);
+
+                    const fileType=
+                      learningFileType(f);
+
                     const size=
                       f.filesize
                         ? formatBytes(f.filesize)
@@ -2220,8 +2304,11 @@ function filesPage(){
                           data-activity="${ref}"
                         >
 
-                          <span class="nova-file-icon">
-                            ${icon('file',19)}
+                          <span
+                            class="nova-file-icon tone-${visual.tone}"
+                            data-file-type="${esc(fileType)}"
+                          >
+                            ${icon(visual.icon,19)}
                           </span>
 
                           <span class="nova-file-copy">
@@ -2231,11 +2318,9 @@ function filesPage(){
                             </b>
 
                             <small>
-                              ${
-                                type
-                                  ? esc(type)
-                                  : 'Файл Campus'
-                              }
+                              <span class="nova-file-type">
+                                ${esc(fileType)}
+                              </span>
 
                               ${
                                 size
@@ -2335,12 +2420,12 @@ function materialsPage(){
     `;
   }
 
-  const items=
+  const items =
     Array.isArray(state.data.materials)
       ? state.data.materials
       : [];
 
-  const groups=
+  const groups =
     groupByCourse(
       items,
       activityCourseName
@@ -2385,47 +2470,66 @@ function materialsPage(){
               <div class="course-group-body">
 
                 ${
-                  group.items.map(a=>`
-                    <button
-                      class="material-card task-card"
-                      data-activity="${activityRefAttr(a)}"
-                    >
+                  group.items.map(a=>{
+                    const material =
+                      learningMaterialVisual(a);
 
-                      <span class="material-card-icon">
-                        ${icon(
-                          a.ref?.type==='folder'
-                            ? 'folder'
-                            : 'file',
-                          19
-                        )}
-                      </span>
-
-                      <span class="material-card-main">
-
-                        <b>
-                          ${esc(
-                            a.identity?.name||
-                            'Материал'
+                    return `
+                      <button
+                        class="
+                          material-card
+                          task-card
+                          material-tone-${esc(
+                            material.tone || 'material'
                           )}
-                        </b>
+                        "
+                        data-activity="${activityRefAttr(a)}"
+                      >
 
-                        <small>
-                          ${
-                            esc(
-                              a.ref?.type||
+                        <span class="material-card-icon">
+
+                          <span class="material-card-icon-core">
+                            ${icon(
+                              material.icon || 'file',
+                              19
+                            )}
+                          </span>
+
+                          <small class="material-card-kind">
+                            ${esc(
+                              material.shortLabel ||
+                              material.label ||
+                              'МАТЕРИАЛ'
+                            )}
+                          </small>
+
+                        </span>
+
+                        <span class="material-card-main">
+
+                          <b>
+                            ${esc(
+                              a.identity?.name ||
+                              'Материал'
+                            )}
+                          </b>
+
+                          <small>
+                            ${esc(
+                              a.ref?.type ||
                               'material'
-                            )
-                          }
-                        </small>
+                            )}
+                          </small>
 
-                      </span>
+                        </span>
 
-                      <span class="material-card-arrow">
-                        ${icon('arrow',16)}
-                      </span>
+                        <span class="material-card-arrow">
+                          ${icon('arrow',16)}
+                        </span>
 
-                    </button>
-                  `).join('')
+                      </button>
+                    `;
+                  }).join('')
                 }
 
               </div>
@@ -2460,6 +2564,7 @@ function materialsPage(){
     </section>
   `;
 }
+
 function firstCampusFile(html) {
   const source = String(html || '');
   const doc = new DOMParser().parseFromString(source, 'text/html');
@@ -3143,6 +3248,34 @@ function learningFileLabel(file = {}){
 }
 
 
+
+function learningMaterialVisual(a = {}) {
+  const material =
+    detectLearningMaterial(
+      a,
+      {},
+      a?.identity?.name || ''
+    );
+
+  return {
+    ...material,
+    icon:
+      material?.icon ||
+      (
+        a?.ref?.type === 'folder'
+          ? 'folder'
+          : 'file'
+      ),
+    tone:
+      material?.tone ||
+      (
+        a?.ref?.type === 'folder'
+          ? 'folder'
+          : 'material'
+      )
+  };
+}
+
 function learningMaterialDescription(
   material,
   files = []
@@ -3244,6 +3377,58 @@ function learningFileType(
   }
 
   return 'ФАЙЛ';
+}
+
+
+function learningFileVisual(file = {}) {
+  const type =
+    learningFileType(file);
+
+  const map = {
+    PDF: {
+      tone: 'pdf',
+      icon: 'file'
+    },
+    DOCX: {
+      tone: 'word',
+      icon: 'file'
+    },
+    DOC: {
+      tone: 'word',
+      icon: 'file'
+    },
+    XLSX: {
+      tone: 'excel',
+      icon: 'chart'
+    },
+    XLS: {
+      tone: 'excel',
+      icon: 'chart'
+    },
+    PPTX: {
+      tone: 'powerpoint',
+      icon: 'file'
+    },
+    PPT: {
+      tone: 'powerpoint',
+      icon: 'file'
+    },
+    ZIP: {
+      tone: 'archive',
+      icon: 'folder'
+    },
+    RAR: {
+      tone: 'archive',
+      icon: 'folder'
+    }
+  };
+
+  return (
+    map[type] || {
+      tone: 'file',
+      icon: 'file'
+    }
+  );
 }
 
 function learningFileMeta(file = {}){
@@ -4894,6 +5079,60 @@ function quizActionAvailable(html = '', action = '') {
   });
 }
 
+
+function quizNavigationKey(result = {}) {
+  const path =
+    result.attemptPath ||
+    result.redirectedPath ||
+    '';
+
+  if(path){
+    const normalized = normalizePath(path);
+
+    const match =
+      normalized.match(
+        /[?&]attempt=(\d+)/i
+      );
+
+    if(match?.[1]){
+      return `attempt:${match[1]}`;
+    }
+  }
+
+  const ref =
+    result.activityRef ||
+    result.activity?.identity?.reference ||
+    '';
+
+  return ref
+    ? `activity:${ref}`
+    : 'quiz:current';
+}
+
+function rememberQuizNavigation(result = {}) {
+  const key =
+    quizNavigationKey(result);
+
+  const merged =
+    mergeQuizNavigation(
+      state.quizNavigationCache.get(key) || [],
+      result.quizNavigation || [],
+      result.html || '',
+      result.attemptPath ||
+        result.redirectedPath ||
+        ''
+    );
+
+  if(merged.length){
+    state.quizNavigationCache.set(
+      key,
+      merged
+    );
+  }
+
+  return merged;
+}
+
 function quizAttemptMeta(result = {}) {
   const path =
     result.attemptPath ||
@@ -5185,7 +5424,32 @@ async function loadNovaQuizPage(path) {
     return;
   }
 
-  try{
+  const quizContent =
+    document.querySelector(
+      '.nova-quiz-content'
+    );
+
+  const nextButton =
+    document.querySelector(
+      '[data-quiz-control="next"]'
+    );
+
+  if(quizContent){
+    quizContent.classList.add(
+      'nova-quiz-loading'
+    );
+  }
+
+  if(nextButton){
+    nextButton.disabled = true;
+    nextButton.classList.add(
+      'is-loading'
+    );
+    nextButton.innerHTML =
+      `${icon('spinner',16)} Загружаем…`;
+  }
+
+  try {
     const d =
       await api(
         `/api/page?path=${encodeURIComponent(normalized)}`
@@ -5202,17 +5466,28 @@ async function loadNovaQuizPage(path) {
     const previous =
       state.data.activity.result || {};
 
-    state.data.activity.result =
+    const nextResult =
       updateQuizResultFromPage(
         d.page,
         previous,
         normalized
       );
 
-    state.status.activity='success';
-    state.errors.activity=null;
+    state.data.activity.result =
+      nextResult;
+
+    rememberQuizNavigation(
+      nextResult
+    );
+
+    state.status.activity =
+      'success';
+
+    state.errors.activity =
+      null;
 
     render();
+
     bindCampusContent();
 
     toast(
@@ -5220,191 +5495,42 @@ async function loadNovaQuizPage(path) {
       'success'
     );
 
-  }catch(error){
+  } catch(error) {
+
     toast(
       error?.message ||
-      'Не удалось открыть вопрос.',
+        'Не удалось открыть вопрос.',
       'error'
     );
-  }
-}
 
-function updateQuizResultFromPage(
-  page,
-  previous = {},
-  fallbackPath = ''
-){
-  const nextPath =
-    page?.path ||
-    previous.attemptPath ||
-    previous.redirectedPath ||
-    fallbackPath ||
-    '';
+  } finally {
 
-  return {
-    ...previous,
-    kind:'quiz-action',
-    title:
-      page?.title ||
-      previous.title ||
-      'Тест',
-    html:
-      page?.html ||
-      '',
-    attemptPath:
-      nextPath,
-    redirectedPath:
-      nextPath,
-    quizNavigation:
-      mergeQuizNavigation(
-        previous.quizNavigation || [],
-        page?.html || '',
-        nextPath
-      )
-  };
-}
+    const loadingContent =
+      document.querySelector(
+        '.nova-quiz-content'
+      );
 
-function quizSubmitter(form, action) {
-  const controls = [
-    ...form.querySelectorAll(
-      'button,input[type="submit"],input[type="image"]'
-    )
-  ].filter(control=>{
-    if(control.disabled) return false;
-
-    if(control.tagName === 'INPUT'){
-      return /^(submit|image)$/i.test(
-        control.getAttribute('type') || ''
+    if(loadingContent){
+      loadingContent.classList.remove(
+        'nova-quiz-loading'
       );
     }
 
-    const type =
-      String(
-        control.getAttribute('type') ||
-        'submit'
-      ).toLowerCase();
-
-    return type === 'submit';
-  });
-
-  const patterns = {
-    previous:/previous|prev|назад|предыдущ|back/i,
-    next:/next|далее|следующ|вперёд|вперед/i,
-    finish:/finish|submitallandfinish|заверш|законч|сдать|отправ/i
-  };
-
-  const matcher =
-    patterns[action];
-
-  if(!matcher) return null;
-
-  return (
-    controls.find(control=>{
-      const name =
-        String(
-          control.getAttribute('name') || ''
-        ).toLowerCase();
-
-      if(
-        action === 'previous' &&
-        (
-          name === 'previous' ||
-          name === 'prev'
-        )
-      ){
-        return true;
-      }
-
-      if(
-        action === 'next' &&
-        (
-          name === 'next' ||
-          name === 'nextpage'
-        )
-      ){
-        return true;
-      }
-
-      if(
-        action === 'finish' &&
-        (
-          name === 'finish' ||
-          name === 'submitallandfinish'
-        )
-      ){
-        return true;
-      }
-
-      return matcher.test(
-        `${control.getAttribute('name') || ''} ${control.getAttribute('value') || ''} ${control.textContent || ''}`
+    const next =
+      document.querySelector(
+        '[data-quiz-control="next"]'
       );
-    }) ||
-    null
-  );
-}
 
-function quizFormPayload(form, submitter, action) {
-  const fd =
-    new FormData(form);
-
-  /*
-   * Кнопка Nova находится снаружи настоящей Moodle form,
-   * поэтому реальный submitter надо добавить вручную.
-   */
-  if(submitter?.name){
-    /*
-     * Если hidden input имеет такое же имя, duplicate-поле
-     * может ломать Moodle action routing.
-     */
-    fd.set(
-      submitter.name,
-      submitter.value ||
-      submitter.textContent?.trim() ||
-      ''
-    );
-  }else{
-    const fallbackName = {
-      previous:'previous',
-      next:'next',
-      finish:'finish'
-    }[action];
-
-    if(
-      fallbackName &&
-      !fd.has(fallbackName)
-    ){
-      fd.append(
-        fallbackName,
-        '1'
+    if(next){
+      next.classList.remove(
+        'is-loading'
       );
+
+      next.disabled = false;
     }
   }
-
-  const body =
-    new URLSearchParams();
-
-  for(const [name,value] of fd.entries()){
-    if(
-      typeof File !== 'undefined' &&
-      value instanceof File
-    ){
-      if(value.size > 0){
-        throw new Error(
-          'Campus передал файл внутри формы теста. Такой ответ нельзя отправить через текущий quiz-поток.'
-        );
-      }
-
-      continue;
-    }
-
-    body.append(
-      name,
-      String(value)
-    );
-  }
-
-  return body;
 }
+
 
 async function submitNovaQuizControl(action) {
   const current =
@@ -8200,7 +8326,7 @@ async function openConversation(id){
   try{const d=await api(`/api/messages/conversation?id=${encodeURIComponent(id)}`);if(state.requests.conversation!==seq||state.route!=='messages'||String(state.selectedConversation)!==String(id))return;view.innerHTML=conversationMarkup(d.conversation);bindMessageForm()}
   catch(e){if(state.requests.conversation!==seq)return;view.innerHTML=statePanel('error','messages',false);}
 }
-function conversationMarkup(c){const msgs=[...(c?.messages||[])].sort((a,b)=>Number(a.timecreated||0)-Number(b.timecreated||0));const title=c?.name||c?.members?.find?.(m=>String(m.id)!==String(state.user?.id))?.fullname||'Диалог';return `<div class="conversation"><div class="conversation-head"><span class="avatar large">${esc(title.slice(0,1))}</span><div><h2>${esc(title)}</h2><p>${msgs.length} ${msgs.length===1?'сообщение':'сообщений'}</p></div></div><div class="conversation-body">${msgs.map(m=>`<div class="bubble ${String(m.userid||m.user?.id)===String(state.user?.id)?'mine':''}"><p>${esc(text(m.text||m.message||''))}</p><small>${m.timecreated?formatLong(m.timecreated)+' · '+formatTime(m.timecreated):''}</small></div>`).join('')||'<div class="inline-empty">История переписки пуста.</div>'}</div><form id="message-form" class="message-form"><textarea name="text" rows="1" required placeholder="Написать сообщение…"></textarea><button class="primary" type="submit" title="Отправить">${icon('send',18)}</button></form></div>`}
+function conversationMarkup(c){const msgs=[...(c?.messages||[])].sort((a,b)=>Number(a.timecreated||0)-Number(b.timecreated||0));const title=c?.name||c?.members?.find?.(m=>String(m.id)!==String(state.user?.id))?.fullname||'Диалог';return `<div class="conversation"><div class="conversation-head"><span class="avatar large">${esc(title.slice(0,1))}</span><div><h2>${esc(title)}</h2><p>${msgs.length} ${msgs.length===1?'сообщение':'сообщений'}</p></div></div><div class="conversation-body">${msgs.map(m=>`<div class="bubble ${String(m.userid||m.user?.id)===String(state.user?.id)?'mine':''}"><p>${esc(messageText(m.text||m.message||''))}</p><small>${m.timecreated?formatLong(m.timecreated)+' · '+formatTime(m.timecreated):''}</small></div>`).join('')||'<div class="inline-empty">История переписки пуста.</div>'}</div><form id="message-form" class="message-form"><textarea name="text" rows="1" required placeholder="Написать сообщение…"></textarea><button class="primary" type="submit" title="Отправить">${icon('send',18)}</button></form></div>`}
 function bindMessageForm(){$('#message-form')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button');const tx=form.querySelector('textarea');const value=tx.value.trim();if(!value)return;btn.disabled=true;try{await api('/api/messages/send',{method:'POST',body:JSON.stringify({conversationId:state.selectedConversation,text:value})});tx.value='';await openConversation(state.selectedConversation);toast('Сообщение отправлено','success')}catch(ex){toast(ex.message,'error')}finally{btn.disabled=false}})}
 window.addEventListener('popstate',()=>{
   state.routeEpoch++;

@@ -627,3 +627,231 @@ body[data-theme="light"]
 
   border-color:#e2e9f1 !important;
 }
+
+
+/* Campus Nova quiz loading */
+.nova-quiz-content{
+  position:relative;
+  transition:opacity .18s ease, transform .18s ease;
+}
+
+.nova-quiz-content.nova-quiz-loading{
+  opacity:.55;
+  pointer-events:none;
+  transform:translateY(2px);
+}
+
+.nova-quiz-content.nova-quiz-loading::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  backdrop-filter:blur(2px);
+}
+
+[data-quiz-control].is-loading{
+  cursor:wait;
+}
+
+[data-quiz-control].is-loading svg{
+  animation:nova-spin .8s linear infinite;
+}
+
+@keyframes nova-spin{
+  to{transform:rotate(360deg)}
+}
+
+/* =========================================================
+   FILE TYPE COLORS
+   ========================================================= */
+
+.nova-file-icon{
+  position:relative !important;
+  overflow:hidden !important;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease !important;
+}
+
+.nova-file-icon::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    145deg,
+    rgba(255,255,255,.10),
+    transparent 55%
+  );
+}
+
+.nova-file-icon.tone-pdf{
+  color:#ff6675 !important;
+  background:rgba(255,76,96,.10) !important;
+  border-color:rgba(255,76,96,.22) !important;
+}
+
+.nova-file-icon.tone-word{
+  color:#4d9cff !important;
+  background:rgba(77,156,255,.10) !important;
+  border-color:rgba(77,156,255,.22) !important;
+}
+
+.nova-file-icon.tone-excel{
+  color:#46d58d !important;
+  background:rgba(70,213,141,.10) !important;
+  border-color:rgba(70,213,141,.22) !important;
+}
+
+.nova-file-icon.tone-powerpoint{
+  color:#ff9a52 !important;
+  background:rgba(255,154,82,.10) !important;
+  border-color:rgba(255,154,82,.22) !important;
+}
+
+.nova-file-icon.tone-archive{
+  color:#ae83ff !important;
+  background:rgba(174,131,255,.10) !important;
+  border-color:rgba(174,131,255,.22) !important;
+}
+
+.nova-file-icon.tone-file{
+  color:#18b7ff !important;
+  background:rgba(24,183,255,.09) !important;
+  border-color:rgba(24,183,255,.17) !important;
+}
+
+.nova-file-icon .icon{
+  color:inherit !important;
+  position:relative;
+  z-index:2;
+}
+
+.nova-file-type{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:2px 5px;
+  border-radius:5px;
+  background:rgba(255,255,255,.045);
+  color:inherit;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.05em;
+}
+
+/* =========================================================
+   MATERIAL TYPE COLORS
+   ========================================================= */
+
+.material-card-icon{
+  position:relative !important;
+  min-width:52px !important;
+  width:52px !important;
+  height:52px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.material-card-icon-core{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease !important;
+}
+
+.material-card-kind{
+  position:absolute;
+  left:31px;
+  bottom:-3px;
+  padding:3px 5px;
+  border-radius:6px;
+  background:rgba(7,12,20,.92);
+  border:1px solid rgba(255,255,255,.08);
+  color:#9aa8bc;
+  font-size:6px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.05em;
+  white-space:nowrap;
+}
+
+.material-card:hover .material-card-icon-core{
+  transform:translateY(-2px) scale(1.03);
+}
+
+.material-tone-lecture .material-card-icon-core{
+  color:#62a8ff;
+  background:rgba(98,168,255,.10);
+  border-color:rgba(98,168,255,.22);
+}
+
+.material-tone-practice .material-card-icon-core{
+  color:#5be39a;
+  background:rgba(91,227,154,.10);
+  border-color:rgba(91,227,154,.22);
+}
+
+.material-tone-lab .material-card-icon-core{
+  color:#ff7f9a;
+  background:rgba(255,127,154,.10);
+  border-color:rgba(255,127,154,.22);
+}
+
+.material-tone-seminar .material-card-icon-core{
+  color:#b18cff;
+  background:rgba(177,140,255,.10);
+  border-color:rgba(177,140,255,.22);
+}
+
+.material-tone-presentation .material-card-icon-core{
+  color:#ffad63;
+  background:rgba(255,173,99,.10);
+  border-color:rgba(255,173,99,.22);
+}
+
+.material-tone-guide .material-card-icon-core{
+  color:#18c8d9;
+  background:rgba(24,200,217,.10);
+  border-color:rgba(24,200,217,.22);
+}
+
+.material-tone-material .material-card-icon-core{
+  color:#18b7ff;
+  background:rgba(24,183,255,.10);
+  border-color:rgba(24,183,255,.20);
+}
+
+.material-tone-folder .material-card-icon-core{
+  color:#ffd166;
+  background:rgba(255,209,102,.10);
+  border-color:rgba(255,209,102,.20);
+}
+
+.material-card-icon-core .icon{
+  color:inherit !important;
+}
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+body[data-theme="light"] .material-card-kind{
+  background:rgba(255,255,255,.94);
+  border-color:#dce5ef;
+  color:#61738a;
+}
+
+body[data-theme="light"] .nova-file-type{
+  background:rgba(15,31,48,.055);
+}
+
