@@ -4,6 +4,7 @@ import path from 'node:path';
 import url from 'node:url';
 import { fileURLToPath } from 'node:url';
 import { CampusSession, CAMPUS_ORIGIN, makeSessionId, sanitizeCampusHtml } from './campus.js';
+import { parseScheduleMessage } from './schedule-parser.js';
 
 const ROOT = path.resolve(path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'));
 const FRONTEND = path.join(ROOT, 'frontend');
@@ -534,6 +535,38 @@ async function api(req, res, route, q) {
   try {
     if (route === '/api/health' && req.method === 'GET') return json(res, 200, { ok: true, version: APP_VERSION, defaultCampus: CAMPUS_ORIGIN });
     if (route === '/api/demo/snapshot' && req.method === 'GET') return json(res, 200, snapshot);
+    if (route === '/api/schedule/parse' && req.method === 'POST') {
+      const body = await bodyJson(req);
+
+      try {
+        const schedule =
+          parseScheduleMessage(
+            body?.text || ''
+          );
+
+        return json(
+          res,
+          200,
+          {
+            ok: true,
+            schedule
+          }
+        );
+
+      } catch (error) {
+        return json(
+          res,
+          422,
+          {
+            ok: false,
+            error:
+              error?.message ||
+              'Не удалось распознать расписание.'
+          }
+        );
+      }
+    }
+
     if (route === '/api/auth/status' && req.method === 'GET') {
       const s = getSession(req);
       const snapshot = s?.campus?.safeSessionSnapshot?.() || null;

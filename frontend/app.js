@@ -18,7 +18,16 @@ const state = {
   requests: {},
   routeEpoch: 0,
   courseView: localStorage.getItem('nova-course-view') || 'cards',
-  quizNavigationCache: new Map()
+  quizNavigationCache: new Map(),
+  scheduleImport: (() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('nova-schedule') || 'null'
+      );
+    } catch {
+      return null;
+    }
+  })()
 };
 
 const NAV = [
@@ -774,7 +783,12 @@ function hero(){
   const events=flattenCalendar(calendar);
   const now=new Date();
   const todayKey=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
-  const todayEvents=events.filter(event=>dateKey(event.timestart)===todayKey);
+  const campusTodayEvents=events.filter(event=>dateKey(event.timestart)===todayKey);
+  const novaTodayEvents=novaScheduleTodayLessons();
+  const todayEvents=
+    state.scheduleImport && novaScheduleIsCurrent()
+      ? novaTodayEvents
+      : campusTodayEvents;
   const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
   const hour=now.getHours();
   const greeting=hour<12?'Доброе утро':hour<18?'Добрый день':'Добрый вечер';
@@ -852,11 +866,463 @@ function hero(){
 }
 
 function metric(iconName,label,value,sub,route,cls){return `<button class="metric ${cls}" data-go="${route}"><span class="metric-icon">${icon(iconName,22)}</span><span><small>${esc(label)}</small><strong>${esc(String(value))}</strong><em>${esc(sub)} ${icon('arrow',13)}</em></span></button>`}
+
+function novaScheduleTodayLessons() {
+  const schedule =
+    state.scheduleImport;
+
+  const lessons =
+    Array.isArray(
+      schedule?.lessons
+    )
+      ? schedule.lessons
+      : [];
+
+  const today =
+    new Date();
+
+  const todayKey = [
+    today.getFullYear(),
+    String(today.getMonth() + 1)
+      .padStart(2, '0'),
+    String(today.getDate())
+      .padStart(2, '0')
+  ].join('-');
+
+  return lessons
+    .filter(
+      lesson =>
+        String(
+          lesson?.date || ''
+        ).slice(0, 10) === todayKey
+    )
+    .sort(
+      (a, b) =>
+        Number(
+          a?.startMinutes || 0
+        ) -
+        Number(
+          b?.startMinutes || 0
+        )
+    );
+}
+
+function novaScheduleNextLesson() {
+  const lessons =
+    novaScheduleTodayLessons();
+
+  if(!lessons.length){
+    return null;
+  }
+
+  const now =
+    new Date();
+
+  const currentMinutes =
+    now.getHours() * 60 +
+    now.getMinutes();
+
+  return (
+    lessons.find(
+      lesson =>
+        Number(
+          lesson?.endMinutes || 0
+        ) > currentMinutes
+    ) ||
+    null
+  );
+}
+
+function novaScheduleIsCurrent() {
+  const schedule =
+    state.scheduleImport;
+
+  const start =
+    String(
+      schedule?.period?.startDate || ''
+    );
+
+  const end =
+    String(
+      schedule?.period?.endDate || ''
+    );
+
+  if(!start || !end){
+    return false;
+  }
+
+  const today =
+    novaScheduleTodayLessons();
+
+  if(today.length){
+    return true;
+  }
+
+  const now =
+    new Date();
+
+  const key = [
+    now.getFullYear(),
+    String(
+      now.getMonth() + 1
+    ).padStart(2, '0'),
+    String(
+      now.getDate()
+    ).padStart(2, '0')
+  ].join('-');
+
+  return (
+    key >= start &&
+    key <= end
+  );
+}
+
+function novaScheduleDashboardLesson(
+  lesson
+){
+  const type =
+    scheduleTypeClass(
+      lesson?.type
+    );
+
+  const meta = [
+    lesson?.room
+      ? `ауд. ${lesson.room}`
+      : '',
+    lesson?.teacher || ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return `
+    <button
+      class="
+        nova-dashboard-schedule-row
+        schedule-tone-${esc(type)}
+      "
+      data-go="schedule"
+      type="button"
+    >
+
+      <span class="nova-dashboard-schedule-time">
+        <b>
+          ${esc(
+            lesson?.start || '--:--'
+          )}
+        </b>
+
+        <small>
+          ${esc(
+            lesson?.end || '--:--'
+          )}
+        </small>
+      </span>
+
+      <span class="nova-dashboard-schedule-accent"></span>
+
+      <span class="nova-dashboard-schedule-main">
+
+        <b>
+          ${esc(
+            lesson?.subject ||
+            'Занятие'
+          )}
+        </b>
+
+        <small>
+          ${
+            meta
+              ? esc(meta)
+              : scheduleTypeLabel(
+                  lesson?.type
+                )
+          }
+        </small>
+
+      </span>
+
+      <span class="nova-dashboard-schedule-arrow">
+        ${icon('arrow',14)}
+      </span>
+
+    </button>
+  `;
+}
+
+function novaScheduleDashboardContent() {
+  const schedule =
+    state.scheduleImport;
+
+  if(!schedule){
+    return `
+      <div class="nova-dashboard-schedule-empty">
+
+        <span class="nova-dashboard-schedule-empty-icon">
+          ${icon('calendar',19)}
+        </span>
+
+        <div>
+          <b>
+            Добавь расписание
+          </b>
+
+          <small>
+            Nova сможет показывать пары
+            и связывать их с учебными делами.
+          </small>
+        </div>
+
+        <button
+          class="secondary"
+          type="button"
+          data-schedule-action="import"
+        >
+          Добавить
+        </button>
+
+      </div>
+    `;
+  }
+
+  const lessons =
+    novaScheduleTodayLessons();
+
+  const next =
+    novaScheduleNextLesson();
+
+  if(!novaScheduleIsCurrent()){
+    return `
+      <div class="nova-dashboard-schedule-empty">
+
+        <span class="nova-dashboard-schedule-empty-icon warning">
+          ${icon('refresh',19)}
+        </span>
+
+        <div>
+          <b>
+            Новая учебная неделя
+          </b>
+
+          <small>
+            Старое расписание закончилось.
+            Вставь новое сообщение от бота.
+          </small>
+        </div>
+
+        <button
+          class="secondary"
+          type="button"
+          data-schedule-action="import"
+        >
+          Обновить
+        </button>
+
+      </div>
+    `;
+  }
+
+  return `
+    <div class="nova-dashboard-schedule-meta">
+
+      <span>
+        ${
+          lessons.length
+            ? `${lessons.length} ${lessons.length === 1 ? 'пара' : 'пар'} сегодня`
+            : 'Сегодня занятий нет'
+        }
+      </span>
+
+      ${
+        next
+          ? `
+            <b>
+              Следующая · ${esc(
+                next.start
+              )}
+            </b>
+          `
+          : ''
+      }
+
+    </div>
+
+    <div class="nova-dashboard-schedule-list">
+
+      ${
+        lessons.length
+          ? lessons
+              .slice(0, 5)
+              .map(
+                novaScheduleDashboardLesson
+              )
+              .join('')
+          : `
+              <div class="inline-empty">
+                Сегодня по расписанию занятий нет.
+              </div>
+            `
+      }
+
+    </div>
+  `;
+}
+
+function novaNextLessonPanel() {
+  const schedule =
+    state.scheduleImport;
+
+  const next =
+    novaScheduleNextLesson();
+
+  if(!schedule || !novaScheduleIsCurrent()){
+    return Panel({
+      title:'Расписание',
+      iconName:'calendar',
+      action:'Добавить',
+      children:`
+        <div class="nova-dashboard-next-empty">
+
+          <span>
+            ${icon('calendar',18)}
+          </span>
+
+          <div>
+            <b>
+              Расписание пока не добавлено
+            </b>
+
+            <small>
+              Добавь неделю из @finashkakrd_bot,
+              и Nova сможет ориентироваться
+              по твоим парам.
+            </small>
+          </div>
+
+          <button
+            class="secondary"
+            type="button"
+            data-schedule-action="import"
+          >
+            ${icon('plus',14)}
+            Добавить
+          </button>
+
+        </div>
+      `
+    });
+  }
+
+  if(!next){
+    return Panel({
+      title:'Следующая пара',
+      iconName:'clock',
+      action:'Расписание',
+      go:'schedule',
+      children:`
+        <div class="nova-dashboard-next-empty">
+
+          <span>
+            ${icon('check',18)}
+          </span>
+
+          <div>
+            <b>
+              На сегодня всё
+            </b>
+
+            <small>
+              Следующие занятия будут
+              в следующем учебном дне.
+            </small>
+          </div>
+
+        </div>
+      `
+    });
+  }
+
+  return Panel({
+    title:'Следующая пара',
+    iconName:'clock',
+    action:'Всё расписание',
+    go:'schedule',
+    children:`
+      <div class="nova-next-lesson">
+
+        <div class="nova-next-lesson-time">
+          <b>
+            ${esc(
+              next.start
+            )}
+          </b>
+
+          <small>
+            ${esc(
+              next.end
+            )}
+          </small>
+        </div>
+
+        <div class="nova-next-lesson-main">
+
+          <span class="nova-next-lesson-kicker">
+            ${
+              next.typeLabel
+                ? esc(next.typeLabel)
+                : ''
+            }
+            ${
+              next.pairNumber
+                ? ` · ${next.pairNumber} пара`
+                : ''
+            }
+          </span>
+
+          <b>
+            ${esc(
+              next.subject ||
+              'Занятие'
+            )}
+          </b>
+
+          <small>
+            ${
+              [
+                next.room
+                  ? `ауд. ${next.room}`
+                  : '',
+                next.teacher || ''
+              ]
+                .filter(Boolean)
+                .join(' · ') ||
+              scheduleTypeLabel(
+                next.type
+              )
+            }
+          </small>
+
+        </div>
+
+        <span class="nova-next-lesson-arrow">
+          ${icon('arrow',15)}
+        </span>
+
+      </div>
+    `
+  });
+}
+
 function dashboard(){
   const courses=Array.isArray(state.data.courses)?state.data.courses:[];
   const calendar=state.data.calendar||{};
   const events=flattenCalendar(calendar).sort((a,b)=>Number(a.timestart)-Number(b.timestart));
-  const today=new Date(); const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`; const todayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
+  const today=new Date(); const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+  const campusTodayEvents=events.filter(e=>dateKey(e.timestart)===todayKey);
+  const novaTodayEvents=novaScheduleTodayLessons();
+  const todayEvents=
+    state.scheduleImport && novaScheduleIsCurrent()
+      ? novaTodayEvents
+      : campusTodayEvents;
   const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[]; const grades=Array.isArray(state.data.grades)?state.data.grades:[];
   const nums=grades.map(x=>parseFloat(String(x.grade||'').replace(',','.'))).filter(Number.isFinite); const avg=nums.length?(nums.reduce((x,y)=>x+y,0)/nums.length).toFixed(1).replace('.',','):'—';
   const block=(service,html)=>state.status[service]==='loading'?'<div class="block-loading">Загружаем…</div>':state.status[service]==='error'?`<div class="block-error">${icon('info',14)}<span>${esc(state.errors?.[service]||'Не удалось загрузить блок.')}</span></div>`:html;
@@ -864,7 +1330,29 @@ function dashboard(){
   return `<section class="page dashboard-page">${hero()}
     <div class="metrics">${metric('calendar','Занятий сегодня',['loading','error'].includes(state.status.calendar)?'—':todayEvents.length,'Посмотреть','schedule','blue')}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
     <div class="dashboard-layout"><div class="dash-main">
-      ${Panel({title:'Расписание на сегодня',iconName:'calendar',action:'Все занятия',go:'schedule',children:block('calendar',todayEvents.length?`<div class="timeline">${todayEvents.slice(0,6).map((e,i)=>`<button class="timeline-row" data-view="${esc(e.url||'')}" data-route-url><span class="timeline-line"><i class="dot dot-${i%4}"></i></span><time>${formatTime(e.timestart)}</time><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.course?.fullname||e.course?.shortname||'Campus')}</small></span>${icon('arrow',14)}</button>`).join('')}</div>`:'<div class="inline-empty">На сегодня занятий нет.</div>')})}
+      ${
+        state.scheduleImport
+          ? Panel({
+              title:'Расписание на сегодня',
+              iconName:'calendar',
+              action:'Все занятия',
+              go:'schedule',
+              children:novaScheduleDashboardContent()
+            })
+          : Panel({
+              title:'Расписание на сегодня',
+              iconName:'calendar',
+              action:'Все занятия',
+              go:'schedule',
+              children:block(
+                'calendar',
+                todayEvents.length
+                  ? `<div class="timeline">${todayEvents.slice(0,6).map((e,i)=>`<button class="timeline-row" data-view="${esc(e.url||'')}" data-route-url><span class="timeline-line"><i class="dot dot-${i%4}"></i></span><time>${formatTime(e.timestart)}</time><span><b>${esc(e.name||'Событие')}</b><small>${esc(e.course?.fullname||e.course?.shortname||'Campus')}</small></span>${icon('arrow',14)}</button>`).join('')}</div>`
+                  : '<div class="inline-empty">На сегодня занятий нет.</div>'
+              )
+            })
+      }
+      ${novaNextLessonPanel()}
       ${Panel({title:'Последние курсы',iconName:'grid',action:'Все курсы',go:'courses',children:block('courses',`<div class="mini-courses">${courses.slice(0,4).map(miniCourse).join('')||'<div class="inline-empty">Курсов сейчас нет.</div>'}</div>`)})}
       ${Panel({title:'Объявления',iconName:'message',action:'Все события',go:'calendar',children:block('calendar',`<div class="announcement-list">${events.filter(e=>/объяв|announcement|новость/i.test(e.name||'')).slice(0,4).map(ann).join('')||'<div class="inline-empty">Новых объявлений нет.</div>'}</div>`)})}
       ${Panel({wide:true,title:'Мои задания',iconName:'check-square',action:'Все задания',go:'tasks',children:block('tasks',`<div class="compact-list">${tasks.slice(0,5).map(taskRow).join('')||'<div class="inline-empty">Новых заданий нет.</div>'}</div>`)})}
@@ -1454,12 +1942,827 @@ function testsPage(){
     </section>
   `;
 }
-function schedulePage(){
-  if(state.status.schedule==='loading') return `<section class="page">${PageHead({eyebrow:'РАСПИСАНИЕ',title:'Расписание',sub:'События выбранного дня.'})}${skeletonGrid(4)}</section>`;
-  if(state.status.schedule==='error') return `<section class="page">${PageHead({eyebrow:'РАСПИСАНИЕ',title:'Расписание',sub:'Не удалось загрузить расписание.'})}${statePanel('error','schedule')}</section>`;
-  const events=flattenCalendar(state.data.schedule||{}).filter(e=>dateKey(e.timestart)===selectedKey()).sort((a,b)=>Number(a.timestart)-Number(b.timestart));
-  return `<section class="page">${PageHead({eyebrow:'РАСПИСАНИЕ',title:'Расписание',sub:formatLong(new Date(state.year,state.month-1,state.selectedDay).getTime()/1000),children:`<button class="secondary" data-go="calendar">${icon('calendar',16)} Открыть календарь</button>`})}<div class="schedule-list">${events.map(e=>`<button class="schedule-card" data-view="${esc(e.url||'')}" data-route-url><time>${formatTime(e.timestart)}</time><span class="schedule-dot"></span><div><b>${esc(e.name||'Событие')}</b><small>${esc(e.location||e.course?.fullname||'')}</small></div>${icon('arrow',16)}</button>`).join('')||'<div class="inline-empty">На выбранную дату занятий нет.</div>'}</div></section>`;
+
+function scheduleDateKey(date = '') {
+  return String(date || '').slice(0, 10);
 }
+
+function schedulePeriodText(schedule = {}) {
+  const start =
+    schedule?.period?.startDate || '';
+
+  const end =
+    schedule?.period?.endDate || '';
+
+  if(!start || !end){
+    return 'Период не указан';
+  }
+
+  const format = value => {
+    const parts =
+      String(value).split('-');
+
+    if(parts.length !== 3){
+      return value;
+    }
+
+    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+  };
+
+  return `${format(start)}–${format(end)}`;
+}
+
+function scheduleDayText(date = '') {
+  const parsed =
+    new Date(`${date}T12:00:00`);
+
+  if(Number.isNaN(parsed.getTime())){
+    return date;
+  }
+
+  return parsed.toLocaleDateString(
+    'ru-RU',
+    {
+      weekday:'long',
+      day:'numeric',
+      month:'long'
+    }
+  );
+}
+
+function scheduleTodayKey() {
+  const now = new Date();
+
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1)
+      .padStart(2, '0'),
+    String(now.getDate())
+      .padStart(2, '0')
+  ].join('-');
+}
+
+function saveImportedSchedule(schedule) {
+  const value = {
+    ...schedule,
+    importedAt: Date.now()
+  };
+
+  state.scheduleImport =
+    value;
+
+  localStorage.setItem(
+    'nova-schedule',
+    JSON.stringify(value)
+  );
+
+  return value;
+}
+
+function clearImportedSchedule() {
+  state.scheduleImport = null;
+
+  localStorage.removeItem(
+    'nova-schedule'
+  );
+}
+
+function scheduleTypeLabel(type = '') {
+  const labels = {
+    practice: 'Практика',
+    lecture: 'Лекция',
+    lab: 'Лабораторная',
+    seminar: 'Семинар',
+    computer: 'Практика',
+    unknown: 'Занятие'
+  };
+
+  return labels[type] ||
+    'Занятие';
+}
+
+function scheduleTypeClass(type = '') {
+  const allowed = new Set([
+    'practice',
+    'lecture',
+    'lab',
+    'seminar',
+    'computer',
+    'unknown'
+  ]);
+
+  return allowed.has(type)
+    ? type
+    : 'unknown';
+}
+
+function scheduleImportModal() {
+  return `
+    <div
+      class="modal-backdrop nova-schedule-backdrop"
+      id="nova-schedule-import-modal"
+    >
+
+      <div
+        class="
+          modal
+          nova-schedule-modal
+        "
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nova-schedule-title"
+      >
+
+        <div class="modal-head">
+
+          <div>
+            <span class="eyebrow">
+              РАСПИСАНИЕ
+            </span>
+
+            <h2 id="nova-schedule-title">
+              Добавить расписание
+            </h2>
+          </div>
+
+          <button
+            class="icon-btn"
+            type="button"
+            id="nova-schedule-close"
+            aria-label="Закрыть"
+          >
+            ${icon('close',17)}
+          </button>
+
+        </div>
+
+        <div class="nova-schedule-steps">
+
+          <div class="nova-schedule-step">
+            <span>1</span>
+
+            <div>
+              <b>
+                Открой университетского бота
+              </b>
+
+              <small>
+                @finashkakrd_bot
+              </small>
+            </div>
+
+            <a
+              class="nova-schedule-telegram"
+              href="https://t.me/finashkakrd_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Открыть ↗
+            </a>
+          </div>
+
+          <div class="nova-schedule-step">
+            <span>2</span>
+
+            <div>
+              <b>
+                Выбери курс и группу
+              </b>
+
+              <small>
+                Затем нажми «Расписание на неделю».
+              </small>
+            </div>
+          </div>
+
+          <div class="nova-schedule-step">
+            <span>3</span>
+
+            <div>
+              <b>
+                Скопируй всё сообщение
+              </b>
+
+              <small>
+                От первой строки до количества пар.
+              </small>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="nova-schedule-ai-note">
+          ${icon('sparkle',15)}
+
+          <div>
+            <b>
+              Nova разберёт его сама
+            </b>
+
+            <small>
+              Дни, время, предметы, преподавателей,
+              аудитории и типы занятий.
+            </small>
+          </div>
+        </div>
+
+        <label class="nova-schedule-input-label">
+          Вставь сообщение Telegram
+
+          <textarea
+            id="nova-schedule-text"
+            rows="12"
+            placeholder="Вставь сюда сообщение от @finashkakrd_bot…"
+          ></textarea>
+        </label>
+
+        <div
+          id="nova-schedule-import-error"
+          class="nova-schedule-error"
+        ></div>
+
+        <div class="nova-schedule-footer">
+
+          <small>
+            Обновлять расписание нужно примерно раз в неделю.
+            Это занимает несколько секунд.
+          </small>
+
+          <button
+            class="primary"
+            type="button"
+            id="nova-schedule-import-submit"
+          >
+            ${icon('upload',16)}
+            Импортировать
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+function closeScheduleImport() {
+  const root =
+    document.querySelector(
+      '#nova-schedule-import-modal'
+    );
+
+  if(!root){
+    return;
+  }
+
+  root.classList.add(
+    'is-closing'
+  );
+
+  novaFrame(() =>
+    root.remove()
+  );
+}
+
+function openScheduleImport() {
+  if(
+    document.querySelector(
+      '#nova-schedule-import-modal'
+    )
+  ){
+    return;
+  }
+
+  const root =
+    document.createElement('div');
+
+  root.innerHTML =
+    scheduleImportModal();
+
+  const modal =
+    root.firstElementChild;
+
+  document.body.append(
+    modal
+  );
+
+  const textarea =
+    document.querySelector(
+      '#nova-schedule-text'
+    );
+
+  const submit =
+    document.querySelector(
+      '#nova-schedule-import-submit'
+    );
+
+  const error =
+    document.querySelector(
+      '#nova-schedule-import-error'
+    );
+
+  const close = () =>
+    closeScheduleImport();
+
+  document
+    .querySelector(
+      '#nova-schedule-close'
+    )
+    ?.addEventListener(
+      'click',
+      close
+    );
+
+  modal.addEventListener(
+    'click',
+    event => {
+      if(event.target === modal){
+        close();
+      }
+    }
+  );
+
+  const escHandler =
+    event => {
+      if(event.key === 'Escape'){
+        close();
+
+        document.removeEventListener(
+          'keydown',
+          escHandler
+        );
+      }
+    };
+
+  document.addEventListener(
+    'keydown',
+    escHandler
+  );
+
+  textarea?.focus();
+
+  submit?.addEventListener(
+    'click',
+    async() => {
+      const source =
+        textarea?.value?.trim() || '';
+
+      error.textContent = '';
+
+      if(!source){
+        error.textContent =
+          'Вставь сообщение с расписанием.';
+        textarea?.focus();
+        return;
+      }
+
+      const original =
+        submit.innerHTML;
+
+      submit.disabled = true;
+
+      submit.innerHTML =
+        `${icon('spinner',16)}
+         Распознаём…`;
+
+      try {
+        const response =
+          await api(
+            '/api/schedule/parse',
+            {
+              method:'POST',
+              body:JSON.stringify({
+                text:source
+              })
+            }
+          );
+
+        if(!response?.schedule){
+          throw new Error(
+            'Nova не получила распознанное расписание.'
+          );
+        }
+
+        const saved =
+          saveImportedSchedule(
+            response.schedule
+          );
+
+        close();
+
+        state.status.schedule =
+          'success';
+
+        render();
+
+        toast(
+          `Расписание добавлено · ${saved.stats.lessons} пар.`,
+          'success'
+        );
+
+      } catch(errorValue) {
+
+        error.textContent =
+          errorValue?.message ||
+          'Не удалось распознать расписание.';
+
+      } finally {
+
+        if(
+          document.body.contains(
+            submit
+          )
+        ){
+          submit.disabled = false;
+          submit.innerHTML =
+            original;
+        }
+      }
+    }
+  );
+}
+
+function scheduleLessonMarkup(
+  lesson,
+  todayKey
+){
+  const type =
+    scheduleTypeClass(
+      lesson?.type
+    );
+
+  const today =
+    scheduleDateKey(
+      lesson?.date
+    ) === todayKey;
+
+  const meta = [
+    lesson?.room
+      ? `ауд. ${lesson.room}`
+      : '',
+    lesson?.teacher || ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return `
+    <article
+      class="
+        nova-schedule-lesson
+        schedule-tone-${esc(type)}
+        ${today ? 'is-today' : ''}
+      "
+    >
+
+      <div class="nova-schedule-lesson-time">
+        <b>
+          ${esc(lesson?.start || '--:--')}
+        </b>
+
+        <small>
+          ${esc(lesson?.end || '--:--')}
+        </small>
+      </div>
+
+      <div class="nova-schedule-lesson-line"></div>
+
+      <div class="nova-schedule-lesson-main">
+
+        <div class="nova-schedule-lesson-title">
+          <b>
+            ${esc(
+              lesson?.subject ||
+              'Занятие'
+            )}
+          </b>
+
+          ${
+            lesson?.typeLabel
+              ? `
+                <span class="nova-schedule-lesson-emoji">
+                  ${esc(
+                    lesson.typeLabel
+                  )}
+                </span>
+              `
+              : ''
+          }
+        </div>
+
+        <span class="nova-schedule-lesson-type">
+          ${esc(
+            scheduleTypeLabel(
+              lesson?.type
+            )
+          )}
+        </span>
+
+        ${
+          meta
+            ? `
+              <small class="nova-schedule-lesson-meta">
+                ${icon('user',11)}
+                ${esc(meta)}
+              </small>
+            `
+            : ''
+        }
+
+      </div>
+
+      ${
+        lesson?.pairNumber
+          ? `
+            <span class="nova-schedule-pair">
+              ${lesson.pairNumber} пара
+            </span>
+          `
+          : ''
+      }
+
+    </article>
+  `;
+}
+
+function schedulePage(){
+
+  const schedule =
+    state.scheduleImport;
+
+  if(!schedule){
+
+    return `
+      <section
+        class="
+          page
+          schedule-page
+          nova-schedule-empty-page
+        "
+      >
+
+        ${PageHead({
+          eyebrow:'РАСПИСАНИЕ',
+          title:'Расписание',
+          sub:'Добавь неделю из университетского Telegram-бота.'
+        })}
+
+        <div class="nova-schedule-empty">
+
+          <div class="nova-schedule-empty-icon">
+            ${icon('calendar',28)}
+          </div>
+
+          <span class="eyebrow">
+            НЕТ РАСПИСАНИЯ
+          </span>
+
+          <h2>
+            Дай Nova своё расписание
+          </h2>
+
+          <p>
+            Открой @finashkakrd_bot, выбери свой курс
+            и группу, нажми «Расписание на неделю»,
+            скопируй сообщение и вставь его сюда.
+          </p>
+
+          <button
+            class="primary"
+            type="button"
+            data-schedule-action="import"
+          >
+            ${icon('calendar',17)}
+            Добавить расписание
+          </button>
+
+          <small class="nova-schedule-empty-note">
+            Обновлять нужно раз в неделю.
+            Зато потом Nova сможет связывать пары
+            с заданиями, тестами и материалами из Campus.
+          </small>
+
+        </div>
+
+      </section>
+    `;
+  }
+
+  const lessons =
+    Array.isArray(
+      schedule.lessons
+    )
+      ? schedule.lessons
+      : [];
+
+  const todayKey =
+    scheduleTodayKey();
+
+  const grouped =
+    new Map();
+
+  for(const lesson of lessons){
+    const key =
+      scheduleDateKey(
+        lesson?.date
+      );
+
+    if(!grouped.has(key)){
+      grouped.set(
+        key,
+        []
+      );
+    }
+
+    grouped
+      .get(key)
+      .push(lesson);
+  }
+
+  const days =
+    [...grouped.entries()]
+      .sort(
+        (a,b) =>
+          a[0].localeCompare(b[0])
+      );
+
+  const education =
+    schedule.education || {};
+
+  return `
+    <section class="page schedule-page">
+
+      ${PageHead({
+        eyebrow:'РАСПИСАНИЕ',
+        title:'Расписание',
+        sub:
+          `${schedulePeriodText(schedule)} · ` +
+          `${education.course || '—'} курс · ` +
+          `${education.program || 'Направление'} · ` +
+          `Группа ${education.group || '—'}`,
+        children:`
+          <div class="nova-schedule-actions">
+
+            <button
+              class="secondary"
+              type="button"
+              data-schedule-action="import"
+            >
+              ${icon('refresh',16)}
+              Обновить
+            </button>
+
+            <button
+              class="icon-btn"
+              type="button"
+              data-schedule-action="clear"
+              title="Удалить расписание"
+              aria-label="Удалить расписание"
+            >
+              ${icon('x',16)}
+            </button>
+
+          </div>
+        `
+      })}
+
+      <div class="nova-schedule-summary">
+
+        <div class="nova-schedule-summary-main">
+
+          <span class="nova-schedule-summary-icon">
+            ${icon('calendar',20)}
+          </span>
+
+          <div>
+            <b>
+              ${esc(
+                schedule.period?.label ||
+                'Учебная неделя'
+              )}
+            </b>
+
+            <small>
+              Источник · @finashkakrd_bot
+            </small>
+          </div>
+
+        </div>
+
+        <div class="nova-schedule-summary-stats">
+
+          <span>
+            <b>
+              ${schedule.stats?.lessons || lessons.length}
+            </b>
+            <small>пар</small>
+          </span>
+
+          <span>
+            <b>
+              ${schedule.stats?.days || days.length}
+            </b>
+            <small>дней</small>
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="nova-schedule-week">
+
+        ${
+          days.map(
+            ([date, dayLessons]) => `
+              <section
+                class="
+                  nova-schedule-day
+                  ${date === todayKey ? 'is-today' : ''}
+                "
+              >
+
+                <div class="nova-schedule-day-head">
+
+                  <div>
+                    <span>
+                      ${esc(
+                        scheduleDayText(date)
+                      )}
+                    </span>
+
+                    ${
+                      date === todayKey
+                        ? `
+                          <b>
+                            Сегодня
+                          </b>
+                        `
+                        : ''
+                    }
+                  </div>
+
+                  <small>
+                    ${dayLessons.length}
+                    ${dayLessons.length === 1 ? 'пара' : 'пар'}
+                  </small>
+
+                </div>
+
+                <div class="nova-schedule-day-list">
+
+                  ${
+                    dayLessons
+                      .sort(
+                        (a,b) =>
+                          Number(
+                            a.startMinutes || 0
+                          ) -
+                          Number(
+                            b.startMinutes || 0
+                          )
+                      )
+                      .map(
+                        lesson =>
+                          scheduleLessonMarkup(
+                            lesson,
+                            todayKey
+                          )
+                      )
+                      .join('')
+                  }
+
+                </div>
+
+              </section>
+            `
+          ).join('')
+        }
+
+      </div>
+
+      <div class="nova-schedule-footnote">
+
+        ${icon('info',14)}
+
+        <span>
+          Последнее обновление:
+          ${esc(
+            schedule.importedAt
+              ? formatLong(
+                  Math.floor(
+                    schedule.importedAt / 1000
+                  )
+                )
+              : 'только что'
+          )}.
+          Новое расписание можно загрузить в любой момент.
+        </span>
+
+      </div>
+
+    </section>
+  `;
+}
+
 function calendarPage(){
   if(state.status.calendar==='loading'){
     return `
@@ -7490,7 +8793,10 @@ async function loadRouteData(force=false,epoch=state.routeEpoch){
   if(r==='grades')return loadData('grades',force,epoch);
   if(r==='tasks')return loadData('tasks',force,epoch);
   if(r==='calendar')return loadData('calendar',force,epoch);
-  if(r==='schedule')return loadData('schedule',force,epoch);
+  if(r==='schedule'){
+    state.status.schedule='success';
+    return;
+  }
   if(r==='messages')return loadData('messages',force,epoch);
   if(r==='files')return loadData('files',force,epoch);
   if(r==='tests')return loadData('tests',force,epoch);

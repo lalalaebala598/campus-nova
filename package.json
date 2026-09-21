@@ -9,6 +9,6 @@
   "scripts": {
     "start": "node backend/src/server.js",
     "dev": "node backend/src/server.js",
-    "test": "node tests/auth-websession.mjs && node tests/navigation.mjs && node tests/foundation.mjs && node tests/adapter.mjs && node tests/course-graph.mjs && node tests/activity-engine.mjs && node tests/v24-global-workflows.mjs && node tests/global-activities.mjs && node tests/smoke.mjs && node tests/quality.mjs && node tests/integration.mjs && node tests/course-flow.mjs && node tests/course-browser.mjs && node tests/runtime.mjs && node tests/live-data-hybrid.mjs && node tests/server-runtime.mjs"
+    "test": "node tests/auth-websession.mjs && node tests/navigation.mjs && node tests/foundation.mjs && node tests/adapter.mjs && node tests/course-graph.mjs && node tests/activity-engine.mjs && node tests/v24-global-workflows.mjs && node tests/global-activities.mjs && node tests/smoke.mjs && node tests/quality.mjs && node tests/integration.mjs && node tests/course-flow.mjs && node tests/course-browser.mjs && node tests/runtime.mjs && node tests/live-data-hybrid.mjs && node tests/server-runtime.mjs && node tests/schedule-parser.mjs"
   }
 }

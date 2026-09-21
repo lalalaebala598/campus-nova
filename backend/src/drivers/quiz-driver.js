@@ -15,8 +15,6 @@ function parseContinueAttempt(html) {
     String(html || '');
 
   const candidates = [];
-  const seenAttempts =
-    new Set();
 
   const cleanLabel = value =>
     String(value || '')
@@ -79,8 +77,7 @@ function parseContinueAttempt(html) {
 
     if(
       !id ||
-      !path ||
-      seenAttempts.has(id)
+      !path
     ){
       return;
     }
@@ -93,7 +90,7 @@ function parseContinueAttempt(html) {
     const clean =
       cleanLabel(label);
 
-    candidates.push({
+    const candidate = {
       path:cleanPath,
       attemptId:id,
       label:clean,
@@ -102,9 +99,34 @@ function parseContinueAttempt(html) {
           cleanPath,
           clean
         )
-    });
+    };
 
-    seenAttempts.add(id);
+    const existingIndex =
+      candidates.findIndex(
+        item =>
+          item.attemptId === id
+      );
+
+    /*
+     * Один attempt может встречаться как
+     * Continue, Resume, Review и т.д.
+     *
+     * Не отдаём первый случайный URL.
+     * Сохраняем самый сильный кандидат.
+     */
+    if(existingIndex >= 0){
+      if(
+        candidate.score >
+        candidates[existingIndex].score
+      ){
+        candidates[existingIndex] =
+          candidate;
+      }
+
+      return;
+    }
+
+    candidates.push(candidate);
   };
 
   /*
@@ -351,7 +373,11 @@ function parseContinueAttempt(html) {
    */
   return (
     candidates.find(
-      item => item.score >= 0
+      item =>
+        item.score >= 0 &&
+        /(?:^|\/)attempt\.php(?:\?|$)/i.test(
+          String(item.path || '')
+        )
     ) ||
     null
   );
