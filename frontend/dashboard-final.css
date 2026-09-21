@@ -5358,3 +5358,960 @@ body[data-theme="light"] .nova-course-progress-track{
     opacity:1;
   }
 }
+
+
+/* =========================================================
+   NOVA 17.0 · UNIFIED VISUAL SYSTEM
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   DESIGN TOKENS
+   --------------------------------------------------------- */
+
+:root{
+  --nova-space-1:4px;
+  --nova-space-2:7px;
+  --nova-space-3:10px;
+  --nova-space-4:13px;
+  --nova-space-5:16px;
+  --nova-space-6:20px;
+  --nova-space-7:24px;
+  --nova-space-8:30px;
+
+  --nova-radius-xs:9px;
+  --nova-radius-sm:12px;
+  --nova-radius-md:15px;
+  --nova-radius-lg:19px;
+  --nova-radius-xl:23px;
+  --nova-radius-xxl:28px;
+
+  --nova-control-height:40px;
+
+  --nova-shadow-card:
+    0 12px 36px
+    rgba(0,0,0,.065);
+
+  --nova-shadow-float:
+    0 18px 48px
+    rgba(0,0,0,.11);
+}
+
+body[data-theme="light"]{
+  --nova-shadow-card:
+    0 12px 34px
+    rgba(37,69,99,.055);
+
+  --nova-shadow-float:
+    0 18px 50px
+    rgba(37,69,99,.09);
+}
+
+/* ---------------------------------------------------------
+   GLOBAL BOX MODEL / CONTROLS
+   --------------------------------------------------------- */
+
+button,
+input,
+textarea,
+select{
+  font-family:inherit!important;
+  box-sizing:border-box!important;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent!important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible{
+  outline:
+    2px solid
+    color-mix(
+      in srgb,
+      var(--accent) 60%,
+      transparent
+    )!important;
+
+  outline-offset:2px!important;
+}
+
+/* единая геометрия интерактивных контролов */
+
+.icon-btn,
+.secondary,
+.primary,
+.panel-action,
+.back-button,
+.theme-row{
+  min-height:40px!important;
+
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  gap:7px!important;
+
+  margin:0!important;
+
+  vertical-align:middle!important;
+
+  white-space:nowrap!important;
+}
+
+.icon-btn{
+  width:40px!important;
+  padding:0!important;
+}
+
+.secondary,
+.primary{
+  padding:
+    0
+    13px!important;
+
+  border-radius:
+    var(--nova-radius-sm)!important;
+}
+
+.panel-action{
+  padding:
+    7px
+    9px!important;
+
+  min-height:32px!important;
+}
+
+/* не допускаем случайного сдвига текста внутри кнопок */
+
+.icon-btn>.icon,
+.secondary>.icon,
+.primary>.icon,
+.panel-action>.icon,
+.back-button>.icon,
+.theme-row>.icon{
+  margin:0!important;
+  flex:0 0 auto!important;
+}
+
+/* ---------------------------------------------------------
+   TOPBAR
+   --------------------------------------------------------- */
+
+.topbar{
+  padding:
+    0
+    clamp(
+      18px,
+      2.2vw,
+      30px
+    )!important;
+}
+
+.crumb{
+  min-width:180px!important;
+  height:40px!important;
+}
+
+.top-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+
+  gap:8px!important;
+
+  min-height:42px!important;
+}
+
+/* ---------------------------------------------------------
+   SEARCH
+   --------------------------------------------------------- */
+
+.nova-global-search-wrap{
+  flex:0 1 470px!important;
+  min-width:220px!important;
+}
+
+.nova-search-input-shell{
+  width:100%!important;
+}
+
+.nova-search-input-shell .search{
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+
+.nova-search-submit{
+  display:grid!important;
+  place-items:center!important;
+}
+
+.search input{
+  min-width:0!important;
+}
+
+.search kbd{
+  flex:0 0 auto!important;
+}
+
+/* ---------------------------------------------------------
+   PROFILE
+   --------------------------------------------------------- */
+
+.profile-menu{
+  flex:0 0 auto!important;
+}
+
+.profile-chip{
+  min-height:40px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  margin:0!important;
+}
+
+/* ---------------------------------------------------------
+   PAGE HEAD
+   --------------------------------------------------------- */
+
+.page{
+  width:100%!important;
+}
+
+.page-head{
+  align-items:flex-end!important;
+
+  margin-bottom:
+    var(--nova-space-6)!important;
+}
+
+.page-head>div:first-child{
+  min-width:0!important;
+}
+
+.page-head .eyebrow{
+  margin-bottom:8px!important;
+}
+
+.page-head h1{
+  margin:0!important;
+
+  font-size:
+    clamp(
+      30px,
+      3.3vw,
+      44px
+    )!important;
+
+  line-height:.98!important;
+
+  letter-spacing:-.055em!important;
+}
+
+.page-head p{
+  max-width:760px!important;
+  margin-top:9px!important;
+
+  font-size:11px!important;
+  line-height:1.45!important;
+}
+
+/* ---------------------------------------------------------
+   CARDS
+   --------------------------------------------------------- */
+
+.panel,
+.side-card,
+.files-card,
+.table-card,
+.content-card,
+.profile-card,
+.calendar-card,
+.events-card,
+.course-group,
+.messages-shell{
+  border-radius:
+    var(--nova-radius-xl)!important;
+
+  box-shadow:
+    var(--nova-shadow-card)!important;
+}
+
+/* единый hover без скачков */
+
+.course-card,
+.task-card,
+.test-card,
+.material-card,
+.activity,
+.event-card,
+.schedule-card,
+.nova-file-main,
+.metric,
+.nova-command-action,
+.nova-command-deadline,
+.nova-command-important,
+.nova-command-quick,
+.nova-update-row{
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background-color .18s ease,
+    box-shadow .18s ease!important;
+
+  transform:translateZ(0)!important;
+}
+
+/* ---------------------------------------------------------
+   COURSE CARDS
+   --------------------------------------------------------- */
+
+.course-grid{
+  gap:
+    clamp(
+      10px,
+      1vw,
+      14px
+    )!important;
+}
+
+.course-card{
+  overflow:hidden!important;
+
+  border-radius:
+    var(--nova-radius-xl)!important;
+
+  box-shadow:
+    var(--nova-shadow-card)!important;
+}
+
+.course-card:hover{
+  transform:
+    translateY(-3px)!important;
+
+  box-shadow:
+    var(--nova-shadow-float)!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 22%,
+      var(--line)
+    )!important;
+}
+
+.course-card-body{
+  padding:
+    15px!important;
+}
+
+.course-card h3{
+  line-height:
+    1.17!important;
+}
+
+.course-card p{
+  line-height:
+    1.4!important;
+}
+
+/* ---------------------------------------------------------
+   GROUPED LEARNING PAGES
+   --------------------------------------------------------- */
+
+.course-groups{
+  display:grid!important;
+  gap:10px!important;
+}
+
+.course-group{
+  overflow:hidden!important;
+}
+
+.course-group>summary,
+.course-group-head{
+  min-height:58px!important;
+}
+
+.task-card,
+.test-card,
+.material-card,
+.activity{
+  min-height:58px!important;
+
+  border-radius:
+    var(--nova-radius-md)!important;
+}
+
+.task-card:hover,
+.test-card:hover,
+.material-card:hover,
+.activity:hover{
+  transform:
+    translateX(2px)!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 18%,
+      var(--line)
+    )!important;
+}
+
+/* ---------------------------------------------------------
+   FILES
+   --------------------------------------------------------- */
+
+.nova-file-row{
+  display:grid!important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    40px!important;
+
+  align-items:center!important;
+
+  gap:7px!important;
+}
+
+.nova-file-main{
+  min-width:0!important;
+
+  min-height:60px!important;
+
+  border-radius:
+    var(--nova-radius-md)!important;
+}
+
+.nova-file-download{
+  width:40px!important;
+  height:40px!important;
+
+  padding:0!important;
+}
+
+/* ---------------------------------------------------------
+   TABLES
+   --------------------------------------------------------- */
+
+.table-card{
+  overflow:hidden!important;
+}
+
+.table-card table{
+  width:100%!important;
+  border-collapse:collapse!important;
+}
+
+.table-card th,
+.table-card td{
+  vertical-align:middle!important;
+}
+
+.table-card th{
+  height:42px!important;
+
+  font-size:8px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+
+.table-card td{
+  min-height:50px!important;
+}
+
+/* ---------------------------------------------------------
+   MESSAGES
+   --------------------------------------------------------- */
+
+.messages-shell{
+  overflow:hidden!important;
+
+  border-radius:
+    var(--nova-radius-xl)!important;
+}
+
+.conversation-list{
+  min-width:0!important;
+}
+
+.conversation-list-head,
+.conversation-item{
+  box-sizing:border-box!important;
+}
+
+.conversation-item{
+  min-height:62px!important;
+}
+
+.conversation-item-main{
+  min-width:0!important;
+}
+
+.conversation-item-top{
+  min-width:0!important;
+}
+
+.conversation-item-top b,
+.conversation-item-main>small{
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.conversation-view{
+  min-width:0!important;
+}
+
+/* ---------------------------------------------------------
+   CALENDAR
+   --------------------------------------------------------- */
+
+.calendar-card,
+.events-card{
+  overflow:hidden!important;
+}
+
+.event-card{
+  border-radius:
+    var(--nova-radius-md)!important;
+}
+
+.event-card:hover{
+  transform:
+    translateY(-2px)!important;
+
+  box-shadow:
+    var(--nova-shadow-card)!important;
+}
+
+/* ---------------------------------------------------------
+   COURSE OS
+   --------------------------------------------------------- */
+
+.nova-course-page{
+  max-width:1500px!important;
+}
+
+.nova-course-hero{
+  border-radius:
+    var(--nova-radius-xxl)!important;
+}
+
+.nova-course-stat-grid{
+  gap:8px!important;
+}
+
+.nova-course-stat-grid>div{
+  border-radius:
+    var(--nova-radius-lg)!important;
+
+  box-shadow:
+    var(--nova-shadow-card)!important;
+}
+
+.nova-course-layout{
+  align-items:start!important;
+}
+
+.nova-course-side-card{
+  border-radius:
+    var(--nova-radius-lg)!important;
+}
+
+.nova-course-section{
+  border-radius:
+    var(--nova-radius-lg)!important;
+}
+
+.nova-course-section summary{
+  min-height:66px!important;
+}
+
+/* ---------------------------------------------------------
+   DASHBOARD
+   --------------------------------------------------------- */
+
+.nova-command-page{
+  max-width:1600px!important;
+}
+
+.nova-command-header{
+  align-items:flex-end!important;
+
+  margin-bottom:
+    var(--nova-space-6)!important;
+}
+
+.nova-command-header h1{
+  margin:0!important;
+
+  line-height:.95!important;
+
+  letter-spacing:-.06em!important;
+}
+
+.nova-command-header p{
+  max-width:650px!important;
+
+  line-height:1.45!important;
+}
+
+.nova-command-header-stats{
+  align-items:stretch!important;
+}
+
+.nova-command-header-stats span{
+  min-width:76px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+
+  border-radius:
+    var(--nova-radius-md)!important;
+}
+
+/* панели command center */
+
+.nova-command-panel{
+  border-radius:
+    var(--nova-radius-xl)!important;
+
+  box-shadow:
+    var(--nova-shadow-card)!important;
+}
+
+.nova-command-panel-head{
+  align-items:center!important;
+}
+
+.nova-command-panel-head h2{
+  line-height:1.05!important;
+}
+
+.nova-command-live{
+  flex:0 0 auto!important;
+}
+
+/* ---------------------------------------------------------
+   HERO
+   --------------------------------------------------------- */
+
+.nova-ambient-hero{
+  border-radius:
+    var(--nova-radius-xxl)!important;
+
+  margin-bottom:
+    15px!important;
+}
+
+/* ---------------------------------------------------------
+   LIGHT THEME · GLOBAL
+   --------------------------------------------------------- */
+
+body[data-theme="light"] .page-head p{
+  color:#708399!important;
+}
+
+body[data-theme="light"] .panel,
+body[data-theme="light"] .side-card,
+body[data-theme="light"] .files-card,
+body[data-theme="light"] .table-card,
+body[data-theme="light"] .content-card,
+body[data-theme="light"] .profile-card,
+body[data-theme="light"] .calendar-card,
+body[data-theme="light"] .events-card,
+body[data-theme="light"] .messages-shell,
+body[data-theme="light"] .course-group,
+body[data-theme="light"] .nova-command-panel,
+body[data-theme="light"] .nova-course-side-card,
+body[data-theme="light"] .nova-course-toolbar{
+  background:
+    rgba(255,255,255,.97)!important;
+
+  border-color:
+    #dbe6ef!important;
+
+  box-shadow:
+    0 14px 38px
+    rgba(36,69,99,.055),
+    inset 0 1px 0
+    rgba(255,255,255,.95)!important;
+}
+
+body[data-theme="light"] .course-card,
+body[data-theme="light"] .task-card,
+body[data-theme="light"] .test-card,
+body[data-theme="light"] .material-card,
+body[data-theme="light"] .activity,
+body[data-theme="light"] .event-card,
+body[data-theme="light"] .nova-file-main{
+  color:#19334e!important;
+
+  background:
+    #f9fcfe!important;
+
+  border-color:
+    #dce7ef!important;
+}
+
+body[data-theme="light"] .course-card:hover,
+body[data-theme="light"] .task-card:hover,
+body[data-theme="light"] .test-card:hover,
+body[data-theme="light"] .material-card:hover,
+body[data-theme="light"] .activity:hover,
+body[data-theme="light"] .event-card:hover,
+body[data-theme="light"] .nova-file-main:hover{
+  border-color:
+    rgba(8,140,242,.22)!important;
+
+  background:
+    #ffffff!important;
+
+  box-shadow:
+    0 16px 38px
+    rgba(36,72,101,.075)!important;
+}
+
+body[data-theme="light"] .panel-action{
+  color:#078cf2!important;
+}
+
+body[data-theme="light"] .icon-btn:hover,
+body[data-theme="light"] .secondary:hover,
+body[data-theme="light"] .primary:hover{
+  box-shadow:
+    0 8px 22px
+    rgba(30,76,110,.08)!important;
+}
+
+/* ---------------------------------------------------------
+   LIGHT THEME · SEARCH
+   --------------------------------------------------------- */
+
+body[data-theme="light"] .nova-search-group-head{
+  background:
+    #f6faff!important;
+
+  border-color:
+    #dce7ef!important;
+}
+
+body[data-theme="light"] .nova-search-page-result{
+  border-color:
+    #e3ebf2!important;
+}
+
+body[data-theme="light"] .nova-search-page-result-copy b{
+  color:#18344f!important;
+}
+
+body[data-theme="light"] .nova-search-page-result-copy small{
+  color:#74879a!important;
+}
+
+/* ---------------------------------------------------------
+   LIGHT THEME · COURSE OS
+   --------------------------------------------------------- */
+
+body[data-theme="light"] .nova-course-stat-grid>div{
+  background:
+    rgba(255,255,255,.98)!important;
+
+  border-color:
+    #dce7ef!important;
+}
+
+body[data-theme="light"] .nova-course-stat-grid b{
+  color:#193650!important;
+}
+
+body[data-theme="light"] .nova-course-stat-grid small{
+  color:#71869a!important;
+}
+
+body[data-theme="light"] .nova-course-side-link{
+  color:#27435d!important;
+  border-bottom-color:#e3eaf1!important;
+}
+
+body[data-theme="light"] .nova-course-side-link:hover{
+  color:#078cf2!important;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE CONSISTENCY
+   --------------------------------------------------------- */
+
+@media(max-width:1100px){
+
+  .topbar{
+    padding-inline:
+      18px!important;
+  }
+
+  .nova-command-header{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+
+  .nova-command-header-stats{
+    width:100%!important;
+  }
+
+  .nova-global-search-wrap{
+    flex-basis:360px!important;
+  }
+
+}
+
+@media(max-width:760px){
+
+  .topbar{
+    height:auto!important;
+    min-height:72px!important;
+
+    padding:
+      10px
+      14px!important;
+  }
+
+  .top-actions{
+    width:100%!important;
+
+    flex-wrap:wrap!important;
+  }
+
+  .nova-global-search-wrap{
+    flex:
+      1 1 100%!important;
+
+    order:-1!important;
+
+    min-width:
+      100%!important;
+  }
+
+  .crumb{
+    min-width:0!important;
+  }
+
+  .page{
+    padding:
+      22px
+      16px
+      44px!important;
+  }
+
+  .page-head{
+    gap:12px!important;
+  }
+
+  .page-head h1{
+    font-size:
+      34px!important;
+  }
+
+  .course-grid{
+    grid-template-columns:
+      1fr!important;
+  }
+
+  .nova-command-grid{
+    grid-template-columns:
+      1fr!important;
+  }
+
+  .nova-command-side{
+    grid-template-columns:
+      1fr!important;
+  }
+
+  .nova-course-stat-grid{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      )!important;
+  }
+
+}
+
+@media(max-width:480px){
+
+  .page{
+    padding:
+      18px
+      12px
+      36px!important;
+  }
+
+  .page-head h1{
+    font-size:
+      31px!important;
+  }
+
+  .topbar{
+    padding:
+      8px
+      10px!important;
+  }
+
+  .top-actions{
+    gap:6px!important;
+  }
+
+  .nova-command-header h1{
+    font-size:
+      38px!important;
+  }
+
+  .nova-command-header-stats span{
+    min-width:0!important;
+    flex:1!important;
+  }
+
+  .nova-course-stat-grid{
+    gap:7px!important;
+  }
+
+  .nova-course-stat-grid>div{
+    padding:
+      11px!important;
+  }
+
+}
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *::before,
+  *::after{
+    scroll-behavior:auto!important;
+  }
+
+  .course-card,
+  .task-card,
+  .test-card,
+  .material-card,
+  .activity,
+  .event-card,
+  .nova-file-main,
+  .metric,
+  .nova-command-action,
+  .nova-command-deadline,
+  .nova-command-important,
+  .nova-command-quick,
+  .nova-update-row{
+    transition:none!important;
+  }
+
+}
