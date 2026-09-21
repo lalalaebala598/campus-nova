@@ -780,12 +780,6 @@ function statePanel(kind,service,retry=true){
 }
 function hero(){
   const now = new Date();
-  const hour = now.getHours();
-  const greeting =
-    hour < 6 ? 'Доброй ночи' :
-    hour < 12 ? 'Доброе утро' :
-    hour < 18 ? 'Добрый день' :
-    'Добрый вечер';
 
   const scheduleIsCurrent =
     Boolean(
@@ -805,45 +799,7 @@ function hero(){
       ? state.data.tasks
       : [];
 
-  const dateText =
-    now.toLocaleDateString(
-      'ru-RU',
-      {
-        weekday:'long',
-        day:'numeric',
-        month:'long'
-      }
-    );
-
-  const label =
-    nextLesson
-      ? (
-          nextLesson.isTomorrow
-            ? 'ЗАВТРА · БЛИЖАЙШАЯ ПАРА'
-            : nextLesson.isToday
-              ? 'БЛИЖАЙШАЯ ПАРА'
-              : 'БЛИЖАЙШЕЕ ЗАНЯТИЕ'
-        )
-      : 'NOVA · COMMAND CENTER';
-
-  const title =
-    nextLesson
-      ? (
-          nextLesson.isTomorrow
-            ? 'Завтра в ' + (nextLesson.start || '--:--')
-            : nextLesson.isToday
-              ? 'Следующая пара в ' + (nextLesson.start || '--:--')
-              : 'Ближайшее занятие'
-        )
-      : greeting + ', ' + firstName() + '.';
-
-  const subtitle =
-    nextLesson
-      ? (nextLesson.subject || 'Учебное занятие')
-      : 'Учебный день собран в одном живом пространстве.';
-
-  const taskCount =
-    tasks.length;
+  const taskCount = tasks.length;
 
   const courseCount =
     Array.isArray(state.data.courses)
@@ -863,28 +819,75 @@ function hero(){
         0
       );
 
-  const nextMeta = [
+  const dayText =
+    now.toLocaleDateString(
+      'ru-RU',
+      {
+        weekday:'long',
+        day:'numeric',
+        month:'long'
+      }
+    );
+
+  const lessonDay =
+    nextLesson
+      ? (
+          nextLesson.isTomorrow
+            ? 'Завтра'
+            : nextLesson.isToday
+              ? 'Сегодня'
+              : 'Ближайшее занятие'
+        )
+      : '';
+
+  const lessonKicker =
+    nextLesson
+      ? (
+          nextLesson.isTomorrow
+            ? 'ЗАВТРА · БЛИЖАЙШАЯ ПАРА'
+            : nextLesson.isToday
+              ? 'СЕГОДНЯ · БЛИЖАЙШАЯ ПАРА'
+              : 'БЛИЖАЙШЕЕ ЗАНЯТИЕ'
+        )
+      : 'СЕГОДНЯ · УЧЕБНЫЙ ДЕНЬ';
+
+  const lessonSubject =
+    nextLesson?.subject ||
+    'Сегодня занятий не найдено';
+
+  const lessonMeta = [
     nextLesson?.room
-      ? 'ауд. ' + nextLesson.room
+      ? 'Ауд. ' + nextLesson.room
       : '',
     nextLesson?.teacher || ''
   ].filter(Boolean).join(' · ');
+
+  const heroDescription =
+    nextLesson
+      ? 'Начало в ' + (nextLesson.start || '--:--')
+      : 'Можно сосредоточиться на заданиях и дедлайнах.';
 
   return `
     <section class="hero dashboard-hero nova-ambient-hero ${nextLesson?.isTomorrow ? 'is-tomorrow' : ''} ${nextLesson?.isToday ? 'is-today' : ''}">
 
       <div class="nova-ambient-field" aria-hidden="true">
-        <span class="nova-ambient-blob nova-ambient-blob-a"></span>
-        <span class="nova-ambient-blob nova-ambient-blob-b"></span>
-        <span class="nova-ambient-blob nova-ambient-blob-c"></span>
-        <span class="nova-ambient-orbit nova-ambient-orbit-a"></span>
-        <span class="nova-ambient-orbit nova-ambient-orbit-b"></span>
-        <span class="nova-ambient-orbit nova-ambient-orbit-c"></span>
-        <span class="nova-ambient-node nova-ambient-node-a"></span>
-        <span class="nova-ambient-node nova-ambient-node-b"></span>
-        <span class="nova-ambient-node nova-ambient-node-c"></span>
-        <span class="nova-ambient-scan"></span>
+        <span class="nova-ambient-aurora nova-ambient-aurora-a"></span>
+        <span class="nova-ambient-aurora nova-ambient-aurora-b"></span>
+        <span class="nova-ambient-aurora nova-ambient-aurora-c"></span>
+
+        <span class="nova-ambient-ring nova-ambient-ring-a"></span>
+        <span class="nova-ambient-ring nova-ambient-ring-b"></span>
+        <span class="nova-ambient-ring nova-ambient-ring-c"></span>
+
+        <span class="nova-ambient-core"></span>
         <span class="nova-ambient-grid"></span>
+        <span class="nova-ambient-beam"></span>
+
+        <span class="nova-ambient-particle nova-ambient-particle-a"></span>
+        <span class="nova-ambient-particle nova-ambient-particle-b"></span>
+        <span class="nova-ambient-particle nova-ambient-particle-c"></span>
+        <span class="nova-ambient-particle nova-ambient-particle-d"></span>
+        <span class="nova-ambient-particle nova-ambient-particle-e"></span>
       </div>
 
       <div class="nova-ambient-overlay" aria-hidden="true"></div>
@@ -897,52 +900,109 @@ function hero(){
         </span>
       </div>
 
-      <div class="hero-date">
-        ${icon('calendar',15)}
-        <span>${esc(dateText)}</span>
+      <div class="nova-hero-main">
+        <div class="eyebrow">${esc(lessonKicker)}</div>
+
+        <div class="nova-hero-time-line">
+          <h2>
+            ${esc(
+              nextLesson?.start ||
+              'Свободно'
+            )}
+          </h2>
+
+          ${nextLesson ? `<span>${esc(lessonDay)}</span>` : ''}
+        </div>
+
+        <p class="nova-hero-subject">
+          ${esc(lessonSubject)}
+        </p>
+
+        <div class="nova-hero-meta">
+          <span>${icon(nextLesson ? 'clock' : 'calendar',13)}</span>
+          <span>${esc(heroDescription)}</span>
+
+          ${
+            lessonMeta
+              ? `<i></i><span>${esc(lessonMeta)}</span>`
+              : ''
+          }
+        </div>
       </div>
 
-      <div class="hero-copy">
-        <div class="eyebrow">${esc(label)}</div>
-        <h2>${esc(title)}</h2>
-        <p>${esc(subtitle)}</p>
-      </div>
+      <div class="nova-hero-focus">
+        <div class="nova-hero-focus-glow"></div>
 
-      <div class="nova-ambient-next">
-        <span class="nova-ambient-next-kicker">
-          ${nextLesson ? 'СЛЕДУЮЩЕЕ ДЕЙСТВИЕ' : 'NOVA'}
-        </span>
-        <strong>
-          ${esc(nextLesson?.start || (taskCount ? String(taskCount) : '—'))}
-        </strong>
-        <span>
-          ${esc(
-            nextLesson
-              ? (nextMeta || 'Расписание')
-              : 'Учебный центр'
-          )}
-        </span>
+        <div class="nova-hero-focus-orbit orbit-a"></div>
+        <div class="nova-hero-focus-orbit orbit-b"></div>
+
+        <div class="nova-hero-focus-copy">
+          <span>ЧТО ДАЛЬШЕ</span>
+
+          <strong>
+            ${esc(
+              nextLesson?.start ||
+              'Нет пар'
+            )}
+          </strong>
+
+          <small>
+            ${esc(
+              nextLesson
+                ? `${lessonDay} · ${nextLesson.room ? 'ауд. ' + nextLesson.room : 'в расписании'}`
+                : dayText
+            )}
+          </small>
+        </div>
+
+        <div class="nova-hero-focus-center">
+          ${icon(nextLesson ? 'clock' : 'check',24)}
+        </div>
       </div>
 
       <div class="hero-stats">
         <div class="hero-stat">
           <strong>${taskCount}</strong>
-          <span>${taskCount === 1 ? 'активное задание' : 'активных заданий'}</span>
+          <span>
+            ${
+              taskCount === 1
+                ? 'активное задание'
+                : 'активных заданий'
+            }
+          </span>
         </div>
+
         <div class="hero-stat-divider"></div>
+
         <div class="hero-stat">
           <strong>${courseCount}</strong>
-          <span>${courseCount === 1 ? 'курс' : 'курсов'}</span>
+          <span>
+            ${
+              courseCount === 1
+                ? 'курс'
+                : 'курсов'
+            }
+          </span>
         </div>
+
         <div class="hero-stat-divider"></div>
+
         <div class="hero-stat">
           <strong>${unreadCount}</strong>
-          <span>${unreadCount === 1 ? 'сообщение' : 'сообщений'}</span>
+          <span>
+            ${
+              unreadCount === 1
+                ? 'сообщение'
+                : 'сообщений'
+            }
+          </span>
         </div>
       </div>
+
     </section>
   `;
 }
+
 
 function novaDashboardTaskDue(task){
   return Number(
@@ -1964,6 +2024,16 @@ function dashboard(){
   const agenda =
     novaDashboardAgendaRows();
 
+  const dayLabel =
+    new Date().toLocaleDateString(
+      'ru-RU',
+      {
+        weekday:'long',
+        day:'numeric',
+        month:'long'
+      }
+    );
+
   const nextAction =
     novaDashboardNextAction(tasks);
 
@@ -2028,7 +2098,7 @@ function dashboard(){
 
                     <span class="nova-command-action-main">
                       <span class="nova-command-action-kicker">
-                        ${esc(info.label)}
+                        БЛИЖАЙШАЯ ЗАДАЧА
                       </span>
 
                       <b>
@@ -2046,7 +2116,7 @@ function dashboard(){
                     </span>
 
                     <span class="nova-command-action-side">
-                      <strong>${esc(info.label)}</strong>
+                      <strong>До ${esc(formatDate(nextAction.due))}</strong>
                       <span>${icon('arrow',15)}</span>
                     </span>
                   </button>
@@ -2333,7 +2403,7 @@ function dashboard(){
             <div class="nova-command-panel-head">
               <div>
                 <span>ПРИОРИТЕТ</span>
-                <h2>Что делать сейчас</h2>
+                <h2>Ближайшее действие</h2>
               </div>
               <span class="nova-command-live">
                 <i></i>
@@ -2348,7 +2418,12 @@ function dashboard(){
             <div class="nova-command-panel-head">
               <div>
                 <span>РАСПИСАНИЕ</span>
-                <h2>Твой день</h2>
+                <h2>
+                  Твой день
+                  <small class="nova-command-day-date">
+                    ${esc(dayLabel)}
+                  </small>
+                </h2>
               </div>
               <button
                 class="panel-action"
@@ -2368,7 +2443,7 @@ function dashboard(){
             <div class="nova-command-panel-head">
               <div>
                 <span>СРОКИ</span>
-                <h2>Требует внимания</h2>
+                <h2>Дедлайны</h2>
               </div>
               <button
                 class="panel-action"
