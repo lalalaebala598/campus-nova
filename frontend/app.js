@@ -1139,16 +1139,12 @@ function novaScheduleTodayLessons() {
 }
 
 
-function novaScheduleUpcomingLessons(
-  limit = 6
-){
+function novaScheduleUpcomingLessons(limit = 6){
   const schedule =
     state.scheduleImport;
 
   const lessons =
-    Array.isArray(
-      schedule?.lessons
-    )
+    Array.isArray(schedule?.lessons)
       ? schedule.lessons
       : [];
 
@@ -1163,66 +1159,61 @@ function novaScheduleUpcomingLessons(
     now.getMinutes();
 
   return lessons
-    .filter(
-      lesson => {
-        const date =
-          scheduleDateKey(
-            lesson?.date
-          );
+    .filter(lesson => {
+      const date =
+        scheduleDateKey(
+          lesson?.date
+        );
 
-        if(!date){
-          return false;
-        }
+      if(!date){
+        return false;
+      }
 
-        if(date > todayKey){
-          return true;
-        }
+      if(date > todayKey){
+        return true;
+      }
 
-        if(date < todayKey){
-          return false;
-        }
+      if(date < todayKey){
+        return false;
+      }
 
-        return (
-          Number(
-            lesson?.endMinutes || 0
-          ) > currentMinutes
+      return Number(
+        lesson?.endMinutes || 0
+      ) > currentMinutes;
+    })
+    .sort((a,b) => {
+      const dateA =
+        scheduleDateKey(a?.date);
+
+      const dateB =
+        scheduleDateKey(b?.date);
+
+      if(dateA !== dateB){
+        return dateA.localeCompare(
+          dateB
         );
       }
-    )
-    .sort(
-      (a,b) => {
-        const dateA =
-          scheduleDateKey(a?.date);
 
-        const dateB =
-          scheduleDateKey(b?.date);
-
-        if(dateA !== dateB){
-          return dateA.localeCompare(
-            dateB
-          );
-        }
-
-        return (
-          Number(
-            a?.startMinutes || 0
-          ) -
-          Number(
-            b?.startMinutes || 0
-          )
-        );
-      }
-    )
-    .slice(0,limit);
+      return (
+        Number(
+          a?.startMinutes || 0
+        ) -
+        Number(
+          b?.startMinutes || 0
+        )
+      );
+    })
+    .slice(
+      0,
+      Math.max(1, Number(limit) || 1)
+    );
 }
 
 function novaScheduleNextLesson(){
-  const lesson =
-    novaScheduleUpcomingLessons(
-      1
-    )[0] || null;
+  const next =
+    novaScheduleUpcomingLessons(1)[0];
 
-  if(!lesson){
+  if(!next){
     return null;
   }
 
@@ -1231,7 +1222,7 @@ function novaScheduleNextLesson(){
 
   const date =
     scheduleDateKey(
-      lesson?.date
+      next?.date
     );
 
   const today =
@@ -1249,42 +1240,24 @@ function novaScheduleNextLesson(){
       (
         lessonDate.getTime() -
         today.getTime()
-      ) /
-      86400000
+      ) / 86400000
     );
 
-  const dayLabel =
-    diffDays === 0
-      ? 'Сегодня'
-      : diffDays === 1
-        ? 'Завтра'
-        : scheduleDayText(date);
-
   return {
-    ...lesson,
+    ...next,
     date,
-    dayLabel,
-    isToday:diffDays === 0,
-    isTomorrow:diffDays === 1
+    diffDays,
+    dayLabel:
+      diffDays === 0
+        ? 'Сегодня'
+        : diffDays === 1
+          ? 'Завтра'
+          : scheduleDayText(date),
+    isToday:
+      diffDays === 0,
+    isTomorrow:
+      diffDays === 1
   };
-}
-
-function novaScheduleFocusDateKey(){
-  const next =
-    novaScheduleNextLesson();
-
-  if(next?.date){
-    return next.date;
-  }
-
-  const todayLessons =
-    novaScheduleTodayLessons();
-
-  if(todayLessons.length){
-    return scheduleTodayKey();
-  }
-
-  return null;
 }
 
 function novaScheduleFocusLabel(){
@@ -1292,18 +1265,14 @@ function novaScheduleFocusLabel(){
     novaScheduleNextLesson();
 
   if(!next){
-    return 'Занятия';
+    return 'Занятий больше нет';
   }
 
-  if(next.isToday){
-    return 'Занятий сегодня';
-  }
-
-  if(next.isTomorrow){
-    return 'Занятий завтра';
-  }
-
-  return 'Ближайшие занятия';
+  return next.isToday
+    ? 'Занятий сегодня'
+    : next.isTomorrow
+      ? 'Занятий завтра'
+      : 'Ближайшие занятия';
 }
 
 function novaScheduleDashboardTitle(){
@@ -1316,7 +1285,9 @@ function novaScheduleDashboardTitle(){
 
   return next.isToday
     ? 'Расписание на сегодня'
-    : 'Ближайшие занятия';
+    : next.isTomorrow
+      ? 'Расписание на завтра'
+      : 'Ближайшие занятия';
 }
 
 function novaScheduleIsCurrent() {
@@ -1442,19 +1413,15 @@ function novaScheduleDashboardContent(){
 
   if(!schedule){
     return `
-      <div class="nova-dashboard-empty-v4">
-
-        <span class="nova-dashboard-empty-icon-v4">
+      <div class="nova-dashboard-schedule-empty-final">
+        <div class="nova-dashboard-empty-icon-final">
           ${icon('calendar',18)}
-        </span>
+        </div>
 
-        <div>
-          <b>
-            Добавь расписание
-          </b>
-
+        <div class="nova-dashboard-empty-copy-final">
+          <b>Добавь своё расписание</b>
           <small>
-            Nova будет показывать ближайшие пары
+            Nova будет показывать ближайшие занятия
             прямо на главной.
           </small>
         </div>
@@ -1466,26 +1433,21 @@ function novaScheduleDashboardContent(){
         >
           Добавить
         </button>
-
       </div>
     `;
   }
 
   if(!novaScheduleIsCurrent()){
     return `
-      <div class="nova-dashboard-empty-v4">
-
-        <span class="nova-dashboard-empty-icon-v4 warning">
+      <div class="nova-dashboard-schedule-empty-final">
+        <div class="nova-dashboard-empty-icon-final warning">
           ${icon('refresh',18)}
-        </span>
+        </div>
 
-        <div>
-          <b>
-            Время обновить расписание
-          </b>
-
+        <div class="nova-dashboard-empty-copy-final">
+          <b>Обнови расписание</b>
           <small>
-            Эта учебная неделя уже закончилась.
+            Сохранённая учебная неделя закончилась.
           </small>
         </div>
 
@@ -1496,35 +1458,29 @@ function novaScheduleDashboardContent(){
         >
           Обновить
         </button>
-
       </div>
     `;
   }
 
   const upcoming =
-    novaScheduleUpcomingLessons(
-      4
-    );
+    novaScheduleUpcomingLessons(4);
 
   const next =
     upcoming[0] || null;
 
-  if(!upcoming.length){
+  if(!next){
     return `
-      <div class="nova-dashboard-empty-v4">
+      <div class="nova-dashboard-finished-final">
 
-        <span class="nova-dashboard-empty-icon-v4">
+        <div class="nova-dashboard-finished-icon-final">
           ${icon('check',18)}
-        </span>
+        </div>
 
         <div>
-          <b>
-            На ближайшее время занятий нет
-          </b>
-
+          <b>На сегодня занятий больше нет</b>
           <small>
-            Nova покажет следующую пару,
-            как только она появится в расписании.
+            Следующие занятия появятся после обновления
+            новой учебной недели.
           </small>
         </div>
 
@@ -1535,138 +1491,146 @@ function novaScheduleDashboardContent(){
   const todayKey =
     scheduleTodayKey();
 
-  const todayLessons =
-    novaScheduleTodayLessons();
-
-  const isTomorrow =
-    next &&
+  const firstDate =
     scheduleDateKey(
       next.date
-    ) !== todayKey;
+    );
+
+  const firstDayIsTomorrow =
+    firstDate >
+    todayKey;
 
   return `
-    <div class="nova-dashboard-schedule-v4-meta">
+    <div class="nova-dashboard-schedule-header-final">
 
       <span>
         ${
-          isTomorrow
+          firstDayIsTomorrow
             ? 'Сегодня пары уже закончились'
-            : todayLessons.length === 1
-              ? '1 пара сегодня'
-              : `${todayLessons.length} пар сегодня`
+            : 'Ближайшие занятия'
         }
       </span>
 
       <b>
         ${
-          isTomorrow
-            ? 'Следующая · завтра'
-            : 'Ближайшие занятия'
+          firstDayIsTomorrow
+            ? 'Завтра'
+            : 'Сегодня'
         }
       </b>
 
     </div>
 
-    <div class="nova-dashboard-schedule-v4-list">
+    <div class="nova-dashboard-schedule-list-final">
 
       ${
-        upcoming
-          .map(
-            lesson => {
+        upcoming.map(
+          lesson => {
 
-              const date =
-                scheduleDateKey(
-                  lesson.date
-                );
+            const date =
+              scheduleDateKey(
+                lesson.date
+              );
 
-              const dayLabel =
-                date === todayKey
-                  ? 'Сегодня'
-                  : date ===
-                    new Date(
-                      Date.now() +
-                      86400000
-                    )
-                      .toISOString()
-                      .slice(0,10)
-                    ? 'Завтра'
-                    : scheduleDayText(
-                        date
+            const label =
+              date === todayKey
+                ? 'Сегодня'
+                : (() => {
+                    const tomorrow =
+                      new Date(
+                        `${todayKey}T12:00:00`
                       );
 
-              const details = [
-                lesson.room
-                  ? `ауд. ${lesson.room}`
-                  : '',
-                lesson.teacher || ''
-              ]
-                .filter(Boolean)
-                .join(' · ');
+                    tomorrow.setDate(
+                      tomorrow.getDate() + 1
+                    );
 
-              return `
-                <button
-                  class="nova-dashboard-lesson-v4"
-                  type="button"
-                  data-go="schedule"
-                >
+                    const tomorrowKey =
+                      [
+                        tomorrow.getFullYear(),
+                        String(
+                          tomorrow.getMonth() + 1
+                        ).padStart(2,'0'),
+                        String(
+                          tomorrow.getDate()
+                        ).padStart(2,'0')
+                      ].join('-');
 
-                  <span class="nova-dashboard-lesson-time-v4">
-                    <b>
-                      ${esc(
-                        lesson.start ||
-                        '--:--'
-                      )}
-                    </b>
+                    return date === tomorrowKey
+                      ? 'Завтра'
+                      : scheduleDayText(date);
+                  })();
 
-                    <small>
-                      ${esc(
-                        lesson.end ||
-                        ''
-                      )}
-                    </small>
+            return `
+              <button
+                class="nova-dashboard-lesson-final"
+                type="button"
+                data-go="schedule"
+              >
+
+                <span class="nova-dashboard-lesson-time-final">
+
+                  <b>
+                    ${esc(
+                      lesson.start ||
+                      '--:--'
+                    )}
+                  </b>
+
+                  <small>
+                    ${esc(
+                      lesson.end ||
+                      ''
+                    )}
+                  </small>
+
+                </span>
+
+                <span class="nova-dashboard-lesson-main-final">
+
+                  <span class="nova-dashboard-lesson-day-final">
+                    ${esc(label)}
                   </span>
 
-                  <span class="nova-dashboard-lesson-copy-v4">
+                  <b>
+                    ${esc(
+                      lesson.subject ||
+                      'Занятие'
+                    )}
+                  </b>
 
-                    <span class="nova-dashboard-lesson-day-v4">
-                      ${esc(
-                        dayLabel
-                      )}
-                    </span>
+                  <small>
+                    ${
+                      [
+                        lesson.room
+                          ? `ауд. ${lesson.room}`
+                          : '',
+                        lesson.teacher || ''
+                      ]
+                        .filter(Boolean)
+                        .map(esc)
+                        .join(' · ') ||
+                      scheduleTypeLabel(
+                        lesson.type
+                      )
+                    }
+                  </small>
 
-                    <b>
-                      ${esc(
-                        lesson.subject ||
-                        'Занятие'
-                      )}
-                    </b>
+                </span>
 
-                    <small>
-                      ${esc(
-                        details ||
-                        scheduleTypeLabel(
-                          lesson.type
-                        )
-                      )}
-                    </small>
+                <span class="nova-dashboard-lesson-arrow-final">
+                  ${icon('arrow',13)}
+                </span>
 
-                  </span>
-
-                  <span class="nova-dashboard-lesson-arrow-v4">
-                    ${icon('arrow',13)}
-                  </span>
-
-                </button>
-              `;
-            }
-          )
-          .join('')
+              </button>
+            `;
+          }
+        ).join('')
       }
 
     </div>
   `;
 }
-
 
 function novaNextLessonPanel(){
   const schedule =
@@ -1679,21 +1643,18 @@ function novaNextLessonPanel(){
     return Panel({
       title:'Ближайшая пара',
       iconName:'clock',
-      action:'Добавить расписание',
+      action:'Добавить',
       children:`
-        <div class="nova-dashboard-empty-v4">
+        <div class="nova-next-empty-final">
 
-          <span class="nova-dashboard-empty-icon-v4">
-            ${icon('calendar',18)}
-          </span>
+          <div class="nova-next-empty-icon-final">
+            ${icon('calendar',17)}
+          </div>
 
           <div>
-            <b>
-              Расписание пока не добавлено
-            </b>
-
+            <b>Расписание ещё не добавлено</b>
             <small>
-              Добавь неделю из @finashkakrd_bot.
+              Добавь учебную неделю из Telegram-бота.
             </small>
           </div>
 
@@ -1714,22 +1675,20 @@ function novaNextLessonPanel(){
     return Panel({
       title:'Ближайшая пара',
       iconName:'check',
-      action:'Всё расписание',
+      action:'Расписание',
       go:'schedule',
       children:`
-        <div class="nova-dashboard-empty-v4">
+        <div class="nova-next-empty-final">
 
-          <span class="nova-dashboard-empty-icon-v4">
-            ${icon('check',18)}
-          </span>
+          <div class="nova-next-empty-icon-final">
+            ${icon('check',17)}
+          </div>
 
           <div>
-            <b>
-              Занятий больше нет
-            </b>
-
+            <b>На сегодня всё</b>
             <small>
-              Следующая неделя появится после обновления расписания.
+              Следующее занятие появится
+              после обновления новой недели.
             </small>
           </div>
 
@@ -1758,9 +1717,9 @@ function novaNextLessonPanel(){
     action:'Всё расписание',
     go:'schedule',
     children:`
-      <div class="nova-next-lesson-v4">
+      <div class="nova-next-card-final">
 
-        <div class="nova-next-time-v4">
+        <div class="nova-next-card-time-final">
 
           <b>
             ${esc(
@@ -1778,29 +1737,16 @@ function novaNextLessonPanel(){
 
         </div>
 
-        <div class="nova-next-copy-v4">
+        <div class="nova-next-card-main-final">
 
-          <div class="nova-next-kicker-v4">
-            <span>
-              ${esc(
-                next.dayLabel
-              )}
-            </span>
-
-            ${
-              next.pairNumber
-                ? `
-                  <span>
-                    · ${esc(
-                      String(
-                        next.pairNumber
-                      )
-                    )} пара
-                  </span>
-                `
-                : ''
-            }
-
+          <div class="nova-next-card-status-final">
+            ${esc(
+              next.isTomorrow
+                ? 'ЗАВТРА'
+                : next.isToday
+                  ? 'СЕГОДНЯ'
+                  : 'БЛИЖАЙШЕЕ'
+            )}
           </div>
 
           <h3>
@@ -1821,7 +1767,7 @@ function novaNextLessonPanel(){
 
         </div>
 
-        <span class="nova-next-arrow-v4">
+        <span class="nova-next-card-arrow-final">
           ${icon('arrow',16)}
         </span>
 
@@ -1846,7 +1792,23 @@ function dashboard(){
   const block=(service,html)=>state.status[service]==='loading'?'<div class="block-loading">Загружаем…</div>':state.status[service]==='error'?`<div class="block-error">${icon('info',14)}<span>${esc(state.errors?.[service]||'Не удалось загрузить блок.')}</span></div>`:html;
   if(state.status.dashboard==='loading') return `<section class="page dashboard-page">${hero()}<div class="dashboard-surface">${skeletonGrid(4)}</div></section>`;
   return `<section class="page dashboard-page">${hero()}
-    <div class="metrics">${metric('calendar',novaScheduleFocusLabel(),['loading','error'].includes(state.status.calendar)?'—':todayEvents.length,'Посмотреть','schedule','blue')}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
+    <div class="metrics">${metric(
+  'calendar',
+  novaScheduleFocusLabel(),
+  state.scheduleImport &&
+  novaScheduleIsCurrent()
+    ? novaScheduleUpcomingLessons(99).length
+    : (
+        ['loading','error'].includes(
+          state.status.calendar
+        )
+          ? '—'
+          : todayEvents.length
+      ),
+  'Посмотреть',
+  'schedule',
+  'blue'
+)}${metric('check-square','Ближайшие задания',['loading','error'].includes(state.status.tasks)?'—':tasks.length,'Перейти','tasks','orange')}${metric('chart','Средний балл',['loading','error'].includes(state.status.grades)?'—':avg,'Оценки','grades','green')}${metric('grid','Мои курсы',['loading','error'].includes(state.status.courses)?'—':courses.length,'К курсам','courses','purple')}</div>
     <div class="dashboard-layout"><div class="dash-main">
       ${
         state.scheduleImport
@@ -3624,10 +3586,7 @@ function openScheduleImport() {
 }
 
 
-function scheduleLessonMarkup(
-  lesson,
-  todayKey
-){
+function scheduleLessonMarkup(lesson, todayKey){
   const type =
     scheduleTypeClass(
       lesson?.type
@@ -3656,7 +3615,8 @@ function scheduleLessonMarkup(
       String(
         next.subject || ''
       ) === String(
-        lesson?.subject || '')
+        lesson?.subject || ''
+      )
     );
 
   const room =
@@ -3669,38 +3629,24 @@ function scheduleLessonMarkup(
       lesson?.teacher || ''
     ).trim();
 
-  const details = [];
-
-  if(room){
-    details.push(
-      `ауд. ${room}`
-    );
-  }
-
-  if(teacher){
-    details.push(
-      teacher
-    );
-  }
-
   return `
     <article
       class="
-        nova-schedule-lesson-v4
-        schedule-tone-${esc(type)}
-        ${isToday ? 'is-today' : ''}
-        ${isNext ? 'is-next' : ''}
+        nova-lesson-card
+        lesson-${esc(type)}
+        ${isToday ? 'lesson-is-today' : ''}
+        ${isNext ? 'lesson-is-next' : ''}
       "
     >
 
-      <div class="nova-schedule-time-v4">
+      <div class="nova-lesson-time">
 
-        <b>
+        <strong>
           ${esc(
             lesson?.start ||
             '--:--'
           )}
-        </b>
+        </strong>
 
         <span>
           ${esc(
@@ -3711,13 +3657,13 @@ function scheduleLessonMarkup(
 
       </div>
 
-      <div class="nova-schedule-rail-v4"></div>
+      <div class="nova-lesson-indicator"></div>
 
-      <div class="nova-schedule-lesson-copy-v4">
+      <div class="nova-lesson-content">
 
-        <div class="nova-schedule-lesson-top-v4">
+        <div class="nova-lesson-labels">
 
-          <span class="nova-schedule-type-v4">
+          <span class="nova-lesson-type">
             ${esc(
               scheduleTypeLabel(
                 lesson?.type
@@ -3726,23 +3672,9 @@ function scheduleLessonMarkup(
           </span>
 
           ${
-            lesson?.pairNumber
-              ? `
-                <span class="nova-schedule-pair-v4">
-                  ${esc(
-                    String(
-                      lesson.pairNumber
-                    )
-                  )} пара
-                </span>
-              `
-              : ''
-          }
-
-          ${
             isNext
               ? `
-                <span class="nova-schedule-next-v4">
+                <span class="nova-lesson-next">
                   Следующая
                 </span>
               `
@@ -3758,52 +3690,43 @@ function scheduleLessonMarkup(
           )}
         </h3>
 
-        ${
-          details.length
-            ? `
-              <div class="nova-schedule-details-v4">
+        <div class="nova-lesson-meta">
 
-                ${
-                  room
-                    ? `
-                      <span>
-                        ${icon('map',12)}
-                        ${esc(
-                          `ауд. ${room}`
-                        )}
-                      </span>
-                    `
-                    : ''
-                }
+          ${
+            room
+              ? `
+                <span>
+                  ${icon('calendar',11)}
+                  Аудитория
+                  <b>${esc(room)}</b>
+                </span>
+              `
+              : ''
+          }
 
-                ${
-                  teacher
-                    ? `
-                      <span>
-                        ${icon('user',12)}
-                        ${esc(
-                          teacher
-                        )}
-                      </span>
-                    `
-                    : ''
-                }
+          ${
+            teacher
+              ? `
+                <span>
+                  ${icon('user',11)}
+                  Преподаватель
+                  <b>${esc(teacher)}</b>
+                </span>
+              `
+              : ''
+          }
 
-              </div>
-            `
-            : ''
-        }
+        </div>
 
       </div>
 
-      <div class="nova-schedule-lesson-arrow-v4">
-        ${icon('arrow',14)}
-      </div>
+      <span class="nova-lesson-arrow">
+        ${icon('arrow',15)}
+      </span>
 
     </article>
   `;
 }
-
 
 function schedulePage(){
 
