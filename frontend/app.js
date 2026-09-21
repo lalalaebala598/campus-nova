@@ -11,7 +11,7 @@ const state = {
   month: new Date().getMonth() + 1,
   selectedDay: new Date().getDate(),
   data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null },
-  status: { dashboard:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle' },
+  status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle' },
   errors: {},
   selectedConversation: null,
   pageCache: new Map(),
@@ -131,6 +131,7 @@ function icon(name,size=18){
     spinner:'<path d="M12 3a9 9 0 1 0 9 9"/>',
     play:'<path d="m9 6 10 6-10 6z"/>',
     pause:'<path d="M8 6v12M16 6v12"/>',
+    'map-pin':'<path d="M12 21s7-5.2 7-11A7 7 0 0 0 5 10c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.2"/>',
     link:'<path d="M10 13.5 8.5 15a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0"/><path d="m14 10.5 1.5-1.5a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0"/><path d="m8 16 8-8"/>',
     filter:'<path d="M4 6h16M7 12h10M10 18h4"/>',
   };
@@ -184,7 +185,7 @@ async function api(path,options={}){
   if(!r.ok||d?.ok===false) throw new Error(d?.error||`Ошибка ${r.status}`);
   return d;
 }
-function routeLabel(r){return {dashboard:'Главная',courses:'Курсы',schedule:'Расписание',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
+function routeLabel(r){return {dashboard:'Главная',search:'Поиск',courses:'Курсы',schedule:'Расписание',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
 function parseRoute(){
   let rawPath=location.pathname;
   if((!rawPath || rawPath==='/') && location.hash && /^#\//.test(location.hash)){ rawPath=location.hash.slice(1); }
@@ -283,7 +284,7 @@ function brand(){
 
         <small class="brand-hostline">
           <span>${esc(host)}</span>
-          <span class="beta-badge">BETA 1.0</span>
+          <span class="beta-badge">BETA1.0</span>
         </small>
       </span>
     </div>
@@ -770,7 +771,7 @@ function notificationsBadge(){const messages=state.data.messages||{};const n=(me
 function shell(content){
   const active=['course','view'].includes(state.route)?'courses':state.route;
   const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
+  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><div class="nova-search-input-shell"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><button class="nova-search-submit" id="global-search-submit" type="button" title="Открыть все результаты">${icon('arrow',14)}</button></div><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
 }
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
@@ -779,18 +780,17 @@ function statePanel(kind,service,retry=true){
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
 function hero(){
-  const now = new Date();
 
   const scheduleIsCurrent =
     Boolean(
       state.scheduleImport &&
-      typeof novaScheduleIsCurrent === 'function' &&
+      typeof novaScheduleIsCurrent==='function' &&
       novaScheduleIsCurrent()
     );
 
   const nextLesson =
     scheduleIsCurrent &&
-    typeof novaScheduleNextLesson === 'function'
+    typeof novaScheduleNextLesson==='function'
       ? novaScheduleNextLesson()
       : null;
 
@@ -799,27 +799,31 @@ function hero(){
       ? state.data.tasks
       : [];
 
-  const taskCount = tasks.length;
+  const taskCount=
+    tasks.length;
 
-  const courseCount =
+  const courseCount=
     Array.isArray(state.data.courses)
       ? state.data.courses.length
       : 0;
 
-  const unreadCount =
-    (state.data.messages?.conversations || [])
+  const unreadCount=
+    (state.data.messages?.conversations||[])
       .reduce(
-        (sum,c) =>
-          sum +
+        (sum,c)=>
+          sum+
           Number(
-            c?.unreadcount ||
-            c?.unreadCount ||
+            c?.unreadcount||
+            c?.unreadCount||
             0
           ),
         0
       );
 
-  const dayText =
+  const now=
+    new Date();
+
+  const todayLabel=
     now.toLocaleDateString(
       'ru-RU',
       {
@@ -829,18 +833,14 @@ function hero(){
       }
     );
 
-  const lessonDay =
-    nextLesson
-      ? (
-          nextLesson.isTomorrow
-            ? 'Завтра'
-            : nextLesson.isToday
-              ? 'Сегодня'
-              : 'Ближайшее занятие'
-        )
-      : '';
+  const periodLabel=
+    nextLesson?.isTomorrow
+      ? 'Завтра'
+      : nextLesson?.isToday
+        ? 'Сегодня'
+        : 'Ближайшее занятие';
 
-  const lessonKicker =
+  const kicker=
     nextLesson
       ? (
           nextLesson.isTomorrow
@@ -851,152 +851,277 @@ function hero(){
         )
       : 'СЕГОДНЯ · УЧЕБНЫЙ ДЕНЬ';
 
-  const lessonSubject =
-    nextLesson?.subject ||
-    'Сегодня занятий не найдено';
+  const subject=
+    nextLesson?.subject||
+    'Свободное время';
 
-  const lessonMeta = [
+  const room=
     nextLesson?.room
       ? 'Ауд. ' + nextLesson.room
-      : '',
-    nextLesson?.teacher || ''
-  ].filter(Boolean).join(' · ');
+      : '';
 
-  const heroDescription =
-    nextLesson
-      ? 'Начало в ' + (nextLesson.start || '--:--')
-      : 'Можно сосредоточиться на заданиях и дедлайнах.';
+  const teacher=
+    nextLesson?.teacher||
+    '';
+
+  const scheduleMeta=
+    [
+      periodLabel,
+      room,
+      teacher
+    ]
+      .filter(Boolean)
+      .join(' · ');
 
   return `
-    <section class="hero dashboard-hero nova-ambient-hero ${nextLesson?.isTomorrow ? 'is-tomorrow' : ''} ${nextLesson?.isToday ? 'is-today' : ''}">
+    <section
+      class="
+        hero
+        dashboard-hero
+        nova-ambient-hero
+        ${nextLesson?.isTomorrow?'is-tomorrow':''}
+        ${nextLesson?.isToday?'is-today':''}
+      "
+    >
 
-      <div class="nova-ambient-field" aria-hidden="true">
-        <span class="nova-ambient-aurora nova-ambient-aurora-a"></span>
-        <span class="nova-ambient-aurora nova-ambient-aurora-b"></span>
-        <span class="nova-ambient-aurora nova-ambient-aurora-c"></span>
+      <div
+        class="nova-ambient-field"
+        aria-hidden="true"
+      >
 
-        <span class="nova-ambient-ring nova-ambient-ring-a"></span>
-        <span class="nova-ambient-ring nova-ambient-ring-b"></span>
-        <span class="nova-ambient-ring nova-ambient-ring-c"></span>
+        <span class="nova-aurora nova-aurora-a"></span>
+        <span class="nova-aurora nova-aurora-b"></span>
+        <span class="nova-aurora nova-aurora-c"></span>
 
-        <span class="nova-ambient-core"></span>
+        <span class="nova-light-line nova-light-line-a"></span>
+        <span class="nova-light-line nova-light-line-b"></span>
+
+        <span class="nova-orbit nova-orbit-a"></span>
+        <span class="nova-orbit nova-orbit-b"></span>
+        <span class="nova-orbit nova-orbit-c"></span>
+
+        <span class="nova-orbit-dot nova-orbit-dot-a"></span>
+        <span class="nova-orbit-dot nova-orbit-dot-b"></span>
+        <span class="nova-orbit-dot nova-orbit-dot-c"></span>
+
+        <span class="nova-glow-core"></span>
         <span class="nova-ambient-grid"></span>
-        <span class="nova-ambient-beam"></span>
 
-        <span class="nova-ambient-particle nova-ambient-particle-a"></span>
-        <span class="nova-ambient-particle nova-ambient-particle-b"></span>
-        <span class="nova-ambient-particle nova-ambient-particle-c"></span>
-        <span class="nova-ambient-particle nova-ambient-particle-d"></span>
-        <span class="nova-ambient-particle nova-ambient-particle-e"></span>
       </div>
 
-      <div class="nova-ambient-overlay" aria-hidden="true"></div>
+      <div
+        class="nova-ambient-overlay"
+        aria-hidden="true"
+      ></div>
 
       <div class="hero-brand">
+
         ${icon('university',23)}
+
         <span>
-          <b>Финансовый университет</b>
-          <small>Краснодарский филиал</small>
+
+          <b>
+            Финансовый университет
+          </b>
+
+          <small>
+            Краснодарский филиал
+          </small>
+
         </span>
+
       </div>
 
-      <div class="nova-hero-main">
-        <div class="eyebrow">${esc(lessonKicker)}</div>
+      <div class="nova-hero-content">
 
-        <div class="nova-hero-time-line">
-          <h2>
-            ${esc(
-              nextLesson?.start ||
-              'Свободно'
-            )}
-          </h2>
-
-          ${nextLesson ? `<span>${esc(lessonDay)}</span>` : ''}
+        <div class="nova-hero-kicker">
+          ${esc(kicker)}
         </div>
 
-        <p class="nova-hero-subject">
-          ${esc(lessonSubject)}
-        </p>
+        ${
+          nextLesson
+            ? `
+              <div class="nova-hero-time">
+                ${esc(
+                  nextLesson.start||
+                  '--:--'
+                )}
 
-        <div class="nova-hero-meta">
-          <span>${icon(nextLesson ? 'clock' : 'calendar',13)}</span>
-          <span>${esc(heroDescription)}</span>
+                <span>
+                  ${esc(periodLabel)}
+                </span>
+              </div>
 
-          ${
-            lessonMeta
-              ? `<i></i><span>${esc(lessonMeta)}</span>`
-              : ''
-          }
-        </div>
+              <h2 class="nova-hero-title">
+                ${esc(subject)}
+              </h2>
+
+              <div class="nova-hero-details">
+
+                ${
+                  room
+                    ? `
+                      <span>
+                        ${icon('map-pin',12)}
+                        ${esc(room)}
+                      </span>
+                    `
+                    : ''
+                }
+
+                ${
+                  teacher
+                    ? `
+                      <span>
+                        ${icon('user',12)}
+                        ${esc(teacher)}
+                      </span>
+                    `
+                    : ''
+                }
+
+              </div>
+            `
+            : `
+              <div class="nova-hero-free">
+
+                <span>
+                  Сегодня свободно
+                </span>
+
+                <h2 class="nova-hero-title">
+                  Нет ближайших занятий
+                </h2>
+
+                <p>
+                  Можно заняться заданиями,
+                  материалами или подготовкой.
+                </p>
+
+                <small>
+                  ${esc(todayLabel)}
+                </small>
+
+              </div>
+            `
+        }
+
       </div>
 
       <div class="nova-hero-focus">
-        <div class="nova-hero-focus-glow"></div>
 
-        <div class="nova-hero-focus-orbit orbit-a"></div>
-        <div class="nova-hero-focus-orbit orbit-b"></div>
-
-        <div class="nova-hero-focus-copy">
-          <span>ЧТО ДАЛЬШЕ</span>
-
-          <strong>
-            ${esc(
-              nextLesson?.start ||
-              'Нет пар'
-            )}
-          </strong>
-
-          <small>
-            ${esc(
+        <div class="nova-hero-focus-top">
+          <span>
+            ${
               nextLesson
-                ? `${lessonDay} · ${nextLesson.room ? 'ауд. ' + nextLesson.room : 'в расписании'}`
-                : dayText
-            )}
-          </small>
+                ? 'БЛИЖАЙШАЯ ПАРА'
+                : 'СЕГОДНЯ'
+            }
+          </span>
+
+          <i></i>
         </div>
 
-        <div class="nova-hero-focus-center">
-          ${icon(nextLesson ? 'clock' : 'check',24)}
+        ${
+          nextLesson
+            ? `
+              <strong>
+                ${esc(
+                  nextLesson.start||
+                  '--:--'
+                )}
+              </strong>
+
+              <b>
+                ${esc(
+                  subject
+                )}
+              </b>
+
+              <small>
+                ${esc(
+                  scheduleMeta
+                )}
+              </small>
+            `
+            : `
+              <strong>
+                Свободно
+              </strong>
+
+              <b>
+                Ближайших занятий нет
+              </b>
+
+              <small>
+                ${esc(todayLabel)}
+              </small>
+            `
+        }
+
+        <div class="nova-hero-focus-orb">
+          ${icon(
+            nextLesson
+              ? 'clock'
+              : 'check',
+            23
+          )}
         </div>
+
       </div>
 
       <div class="hero-stats">
+
         <div class="hero-stat">
-          <strong>${taskCount}</strong>
+          <strong>
+            ${taskCount}
+          </strong>
+
           <span>
             ${
-              taskCount === 1
+              taskCount===1
                 ? 'активное задание'
                 : 'активных заданий'
             }
           </span>
         </div>
 
-        <div class="hero-stat-divider"></div>
+        <div
+          class="hero-stat-divider"
+        ></div>
 
         <div class="hero-stat">
-          <strong>${courseCount}</strong>
+          <strong>
+            ${courseCount}
+          </strong>
+
           <span>
             ${
-              courseCount === 1
+              courseCount===1
                 ? 'курс'
                 : 'курсов'
             }
           </span>
         </div>
 
-        <div class="hero-stat-divider"></div>
+        <div
+          class="hero-stat-divider"
+        ></div>
 
         <div class="hero-stat">
-          <strong>${unreadCount}</strong>
+          <strong>
+            ${unreadCount}
+          </strong>
+
           <span>
             ${
-              unreadCount === 1
+              unreadCount===1
                 ? 'сообщение'
                 : 'сообщений'
             }
           </span>
         </div>
+
       </div>
 
     </section>
@@ -3453,6 +3578,380 @@ function updateNovaSearchPopover(){
     });
 }
 
+
+
+function novaSearchResultsFull(query=''){
+
+  const q=
+    novaSearchText(query)
+      .toLowerCase();
+
+  if(!q){
+    return [];
+  }
+
+  return novaSearchItems()
+    .map(item=>{
+
+      const title=
+        String(item.title||'')
+          .toLowerCase();
+
+      const hay=
+        String(item.searchable||'')
+          .toLowerCase();
+
+      let score=0;
+
+      if(title===q){
+        score+=100;
+      }else if(title.startsWith(q)){
+        score+=45;
+      }else if(title.includes(q)){
+        score+=25;
+      }
+
+      if(hay.includes(q)){
+        score+=10;
+      }
+
+      return {
+        ...item,
+        score
+      };
+    })
+    .filter(item=>item.score>0)
+    .sort((a,b)=>b.score-a.score);
+}
+
+function novaSearchTypeLabel(type=''){
+  return {
+    course:'Курсы',
+    teacher:'Преподаватели',
+    task:'Задания',
+    test:'Тесты',
+    material:'Материалы',
+    file:'Файлы',
+    message:'Сообщения',
+    grade:'Оценки'
+  }[type] || 'Результаты';
+}
+
+function searchPage(){
+
+  const query=
+    novaSearchText(
+      state.search
+    );
+
+  if(
+    state.status.search===
+    'loading'
+  ){
+
+    return `
+      <section class="page nova-search-page">
+
+        ${PageHead({
+          eyebrow:'ПОИСК',
+          title:'Поиск',
+          sub:'Собираем результаты из твоего Campus…'
+        })}
+
+        <div class="nova-search-page-loading">
+          ${Array.from(
+            {length:7},
+            ()=>
+              `<div class="nova-search-page-skeleton"></div>`
+          ).join('')}
+        </div>
+
+      </section>
+    `;
+  }
+
+  if(
+    !query
+  ){
+
+    return `
+      <section class="page nova-search-page">
+
+        ${PageHead({
+          eyebrow:'ПОИСК',
+          title:'Поиск',
+          sub:'Найди всё нужное в одном месте.'
+        })}
+
+        <div class="nova-search-page-empty">
+
+          <div class="nova-search-page-empty-icon">
+            ${icon('search',26)}
+          </div>
+
+          <h2>
+            Что ищем?
+          </h2>
+
+          <p>
+            Введи название курса, задания,
+            материала, файла, теста,
+            преподавателя или сообщения.
+          </p>
+
+        </div>
+
+      </section>
+    `;
+  }
+
+  const results=
+    novaSearchResultsFull(
+      query
+    );
+
+  const groups=
+    results.reduce(
+      (acc,item)=>{
+        const key=
+          novaSearchTypeLabel(
+            item.type
+          );
+
+        if(!acc[key]){
+          acc[key]=[];
+        }
+
+        acc[key].push(item);
+
+        return acc;
+      },
+      {}
+    );
+
+  return `
+    <section
+      class="page nova-search-page"
+    >
+
+      <div
+        class="nova-search-page-head"
+      >
+
+        <div>
+
+          <span
+            class="nova-command-kicker"
+          >
+            РЕЗУЛЬТАТЫ ПОИСКА
+          </span>
+
+          <h1>
+            Поиск
+          </h1>
+
+          <p>
+            По запросу
+            <b>«${esc(query)}»</b>
+            найдено
+            <b>${results.length}</b>
+            совпадений
+          </p>
+
+        </div>
+
+        <button
+          class="secondary nova-search-clear"
+          type="button"
+          id="nova-search-clear"
+        >
+          ${icon('close',14)}
+          Очистить
+        </button>
+
+      </div>
+
+      ${
+        results.length
+          ? `
+            <div
+              class="nova-search-groups"
+            >
+
+              ${
+                Object.entries(groups)
+                  .map(
+                    ([label,items])=>`
+
+                      <section
+                        class="nova-search-group"
+                      >
+
+                        <div
+                          class="nova-search-group-head"
+                        >
+
+                          <div>
+
+                            <span>
+                              ${esc(label)}
+                            </span>
+
+                            <b>
+                              ${items.length}
+                            </b>
+
+                          </div>
+
+                        </div>
+
+                        <div
+                          class="nova-search-page-results"
+                        >
+
+                          ${
+                            items.map(
+                              item=>{
+
+                                const attrs=
+                                  item.activity
+                                    ? `data-activity="${activityRefAttr(item.activity)}"`
+                                    : `data-go="${esc(item.go||'dashboard')}" data-param="${esc(item.param||'')}"`;
+
+                                return `
+                                  <button
+                                    class="nova-search-page-result"
+                                    type="button"
+                                    ${attrs}
+                                  >
+
+                                    <span
+                                      class="
+                                        nova-search-page-result-icon
+                                        ${esc(item.type)}
+                                      "
+                                    >
+                                      ${icon(
+                                        item.icon||
+                                        'search',
+                                        18
+                                      )}
+                                    </span>
+
+                                    <span
+                                      class="nova-search-page-result-copy"
+                                    >
+
+                                      <b>
+                                        ${esc(
+                                          item.title
+                                        )}
+                                      </b>
+
+                                      <small>
+                                        ${esc(
+                                          item.meta||
+                                          ''
+                                        )}
+                                      </small>
+
+                                    </span>
+
+                                    <span
+                                      class="nova-search-page-result-arrow"
+                                    >
+                                      ${icon(
+                                        'arrow',
+                                        14
+                                      )}
+                                    </span>
+
+                                  </button>
+                                `;
+                              }
+                            ).join('')
+                          }
+
+                        </div>
+
+                      </section>
+                    `
+                  )
+                  .join('')
+              }
+
+            </div>
+          `
+          : `
+            <div
+              class="nova-search-page-empty"
+            >
+
+              <div
+                class="nova-search-page-empty-icon"
+              >
+                ${icon('search',25)}
+              </div>
+
+              <h2>
+                Ничего не найдено
+              </h2>
+
+              <p>
+                Попробуй изменить запрос
+                или использовать часть названия.
+              </p>
+
+            </div>
+          `
+      }
+
+    </section>
+  `;
+}
+
+async function loadSearchData(
+  epoch=state.routeEpoch
+){
+
+  if(
+    !state.connected ||
+    state.route!=='search' ||
+    epoch!==state.routeEpoch
+  ){
+    return;
+  }
+
+  state.status.search=
+    'loading';
+
+  state.errors.search=
+    null;
+
+  render();
+
+  await Promise.allSettled([
+    loadData('courses',false,epoch),
+    loadData('tasks',false,epoch),
+    loadData('tests',false,epoch),
+    loadData('materials',false,epoch),
+    loadData('files',false,epoch),
+    loadData('messages',false,epoch),
+    loadData('grades',false,epoch)
+  ]);
+
+  if(
+    state.route!=='search' ||
+    epoch!==state.routeEpoch
+  ){
+    return;
+  }
+
+  state.status.search=
+    'success';
+
+  render();
+}
 
 function coursesPage(){
   if(state.status.courses==='loading') return `<section class="page">${PageHead({eyebrow:'УЧЕБНАЯ СРЕДА',title:'Мои курсы',sub:'Загружаем актуальный список Campus…'})}<div class="tabs"><span class="chip active">Все</span></div>${skeletonGrid(6)}</section>`;
@@ -12088,6 +12587,7 @@ function render(animateNav=false){
   let body='';
 
   switch(state.route){
+    case 'search':body=searchPage();break;
     case 'courses':body=coursesPage();break;
     case 'course':body=coursePage();break;
     case 'schedule':body=schedulePage();break;
@@ -12369,12 +12869,21 @@ function bind(){
       'keydown',
       e=>{
 
-        if(e.key==='Escape'){
+        if(
+          e.key==='Escape'
+        ){
+
+          const popover=
+            document.querySelector(
+              '#nova-search-popover'
+            );
 
           state.search='';
           s.value='';
 
-          updateNovaSearchPopover();
+          popover?.classList.remove(
+            'open'
+          );
 
           s.blur();
 
@@ -12386,40 +12895,12 @@ function bind(){
           state.search.trim()
         ){
 
-          const first=
-            novaSearchResults(
-              state.search
-            )[0];
+          state.search=
+            s.value.trim();
 
-          if(first){
-
-            state.search='';
-
-            if(first.activity){
-
-              try{
-                openActivity(
-                  first.activity
-                );
-              }catch{}
-
-            }else{
-
-              navigate(
-                first.go||
-                'dashboard',
-                first.param||
-                ''
-              );
-            }
-
-          }else{
-
-            navigate(
-              'courses'
-            );
-
-          }
+          navigate(
+            'search'
+          );
 
         }
 
@@ -12497,6 +12978,48 @@ function bind(){
     );
 
   }
+
+  $('#global-search-submit')?.addEventListener(
+    'click',
+    ()=>{
+      const input=
+        $('#global-search');
+
+      const query=
+        input?.value?.trim()||
+        '';
+
+      if(!query){
+        input?.focus();
+        return;
+      }
+
+      state.search=query;
+
+      navigate(
+        'search'
+      );
+    }
+  );
+
+  $('#nova-search-clear')?.addEventListener(
+    'click',
+    ()=>{
+      state.search='';
+
+      const input=
+        $('#global-search');
+
+      if(input){
+        input.value='';
+      }
+
+      navigate(
+        'search'
+      );
+    }
+  );
+
   $('#mobile-menu')?.addEventListener('click',()=>$('.sidebar')?.classList.toggle('mobile-open'));
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
@@ -12587,6 +13110,7 @@ async function loadDashboard(epoch=state.routeEpoch){
 async function loadRouteData(force=false,epoch=state.routeEpoch){
   const r=state.route;if(!state.connected||state.demo)return;
   if(r==='dashboard')return loadDashboard(epoch);
+  if(r==='search')return loadSearchData(epoch);
   if(r==='courses')return loadData('courses',force,epoch);
   if(r==='course')return loadCourse(force,epoch);
   if(r==='grades')return loadData('grades',force,epoch);
