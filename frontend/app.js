@@ -770,7 +770,7 @@ function notificationsBadge(){const messages=state.data.messages||{};const n=(me
 function shell(content){
   const active=['course','view'].includes(state.route)?'courses':state.route;
   const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><label class="search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Поиск по курсам, материалам, преподавателям…"><kbd>Ctrl K</kbd></label><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
+  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
 }
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
@@ -2005,6 +2005,244 @@ function novaNextLessonPanel(){
   });
 }
 
+
+function novaDashboardUpdateItems(limit=5){
+
+  const items=[];
+
+  for(
+    const task of
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : []
+  ){
+
+    const due=
+      novaDashboardTaskDue(
+        task
+      );
+
+    if(!due){
+      continue;
+    }
+
+    items.push({
+      type:'task',
+      icon:'check-square',
+      title:
+        task?.name||
+        task?.identity?.name||
+        'Новое задание',
+      meta:
+        `Задание · ${activityCourseName(task)}`,
+      time:due,
+      activity:task
+    });
+  }
+
+  for(
+    const conversation of
+    state.data.messages?.conversations||
+    []
+  ){
+
+    const latest=
+      conversation?.messages?.[0]||
+      {};
+
+    const timestamp=
+      Number(
+        latest?.timecreated||
+        conversation?.timemodified||
+        conversation?.timecreated||
+        0
+      );
+
+    if(!timestamp){
+      continue;
+    }
+
+    items.push({
+      type:'message',
+      icon:'message',
+      title:
+        conversation?.name||
+        'Новое сообщение',
+      meta:'Новое сообщение',
+      time:timestamp,
+      go:'messages'
+    });
+  }
+
+  for(
+    const grade of
+    Array.isArray(state.data.grades)
+      ? state.data.grades
+      : []
+  ){
+
+    const timestamp=
+      Number(
+        grade?.timemodified||
+        grade?.timecreated||
+        0
+      );
+
+    if(!timestamp){
+      continue;
+    }
+
+    items.push({
+      type:'grade',
+      icon:'chart',
+      title:
+        grade?.course||
+        grade?.name||
+        'Новая оценка',
+      meta:
+        `Оценка · ${grade?.grade??'—'}`,
+      time:timestamp,
+      go:'grades'
+    });
+  }
+
+  return items
+    .sort(
+      (a,b)=>
+        Number(b.time||0)-
+        Number(a.time||0)
+    )
+    .slice(0,limit);
+}
+
+function novaDashboardUpdatesMarkup(){
+
+  const items=
+    novaDashboardUpdateItems(
+      5
+    );
+
+  return `
+    <section
+      class="nova-command-panel nova-updates-panel"
+    >
+
+      <div
+        class="nova-command-panel-head"
+      >
+
+        <div>
+
+          <span>
+            ПОСЛЕДНИЕ ИЗМЕНЕНИЯ
+          </span>
+
+          <h2>
+            Что нового
+          </h2>
+
+        </div>
+
+        <span
+          class="nova-command-live"
+        >
+          <i></i>
+          LIVE
+        </span>
+
+      </div>
+
+      ${
+        items.length
+          ? `
+            <div class="nova-update-list">
+
+              ${
+                items.map(item=>{
+
+                  const attrs=
+                    item.activity
+                      ? `data-activity="${activityRefAttr(item.activity)}"`
+                      : `data-go="${esc(item.go||'dashboard')}"`;
+
+                  return `
+                    <button
+                      class="nova-update-row"
+                      type="button"
+                      ${attrs}
+                    >
+
+                      <span
+                        class="nova-update-icon ${esc(item.type)}"
+                      >
+                        ${icon(item.icon,15)}
+                      </span>
+
+                      <span
+                        class="nova-update-copy"
+                      >
+
+                        <b>
+                          ${esc(item.title)}
+                        </b>
+
+                        <small>
+                          ${esc(item.meta)}
+                        </small>
+
+                      </span>
+
+                      <span
+                        class="nova-update-date"
+                      >
+                        ${
+                          item.type==='task'
+                            ? 'Срок · '
+                            : ''
+                        }
+
+                        ${esc(
+                          formatDate(item.time)
+                        )}
+                      </span>
+
+                      ${icon('arrow',12)}
+
+                    </button>
+                  `;
+                }).join('')
+              }
+
+            </div>
+          `
+          : `
+            <div
+              class="nova-command-empty compact"
+            >
+
+              <span>
+                ${icon('sparkle',17)}
+              </span>
+
+              <div>
+                <b>
+                  Пока ничего нового
+                </b>
+
+                <small>
+                  Новые задания, сообщения
+                  и оценки появятся здесь.
+                </small>
+              </div>
+
+            </div>
+          `
+      }
+
+    </section>
+  `;
+}
+
 function dashboard(){
   const courses =
     Array.isArray(state.data.courses)
@@ -2463,6 +2701,8 @@ function dashboard(){
 
         <aside class="nova-command-side">
 
+          ${novaDashboardUpdatesMarkup()}
+
           <section class="nova-command-panel nova-command-pulse">
             <div class="nova-command-panel-head">
               <div>
@@ -2663,6 +2903,557 @@ function courseGroupHead(name,count,type='activity'){
 function taskRow(t){const due=t.due?formatLong(t.due):'Срок не указан';return `<button class="compact-row" data-view="${esc(t.url||'')}" data-route-url><span class="compact-icon ${t.type}">${icon(t.type==='quiz'?'quiz':'check-square',17)}</span><span><b>${esc(t.name)}</b><small>${esc(t.course)}</small></span><em>${esc(due)}</em></button>`}
 function gradeRow(g){return `<button class="compact-row grade" data-go="grades"><span class="compact-icon grade">${icon('chart',17)}</span><span><b>${esc(g.course||g.name||'Оценка')}</b><small>${esc(g.percentage||g.range||'')}</small></span><strong>${esc(g.grade||'—')}</strong></button>`}
 function ann(e){return `<button class="ann" data-view="${esc(e.url||'')}" data-route-url><span>${icon('message',17)}</span><b>${esc(e.name||'Объявление')}</b><small>${esc(e.description||formatLong(e.timestart))}</small></button>`}
+
+function novaSearchText(value=''){
+  return String(value||'')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function novaSearchItems(){
+  const items=[];
+
+  const add=item=>{
+    if(item?.title){
+      items.push(item);
+    }
+  };
+
+  for(const c of Array.isArray(state.data.courses)?state.data.courses:[]){
+
+    const courseName=
+      c.fullnamedisplay||
+      c.fullname||
+      c.shortname||
+      'Курс';
+
+    add({
+      type:'course',
+      icon:'grid',
+      title:courseName,
+      meta:'Курс',
+      searchable:[
+        courseName,
+        c.shortname,
+        c.summary
+      ].map(novaSearchText).join(' '),
+      go:'course',
+      param:String(c.id||'')
+    });
+
+    for(const teacher of Array.isArray(c.teachers)?c.teachers:[]){
+
+      const teacherName=
+        teacher?.fullname||
+        teacher?.name||
+        '';
+
+      if(!teacherName){
+        continue;
+      }
+
+      add({
+        type:'teacher',
+        icon:'user',
+        title:teacherName,
+        meta:`Преподаватель · ${courseName}`,
+        searchable:[
+          teacherName,
+          courseName
+        ].map(novaSearchText).join(' '),
+        go:'course',
+        param:String(c.id||'')
+      });
+    }
+  }
+
+  for(const a of Array.isArray(state.data.tasks)?state.data.tasks:[]){
+
+    const title=
+      a?.name||
+      a?.identity?.name||
+      'Задание';
+
+    add({
+      type:'task',
+      icon:'check-square',
+      title,
+      meta:`Задание · ${activityCourseName(a)}`,
+      searchable:[
+        title,
+        a?.description,
+        activityCourseName(a)
+      ].map(novaSearchText).join(' '),
+      activity:a
+    });
+  }
+
+  for(const a of Array.isArray(state.data.tests)?state.data.tests:[]){
+
+    const title=
+      a?.name||
+      a?.identity?.name||
+      'Тест';
+
+    add({
+      type:'test',
+      icon:'quiz',
+      title,
+      meta:`Тест · ${activityCourseName(a)}`,
+      searchable:[
+        title,
+        a?.description,
+        activityCourseName(a)
+      ].map(novaSearchText).join(' '),
+      activity:a
+    });
+  }
+
+  for(const a of Array.isArray(state.data.materials)?state.data.materials:[]){
+
+    const title=
+      a?.name||
+      a?.identity?.name||
+      'Материал';
+
+    add({
+      type:'material',
+      icon:'book',
+      title,
+      meta:`Материал · ${activityCourseName(a)}`,
+      searchable:[
+        title,
+        a?.description,
+        a?.ref?.type,
+        activityCourseName(a)
+      ].map(novaSearchText).join(' '),
+      activity:a
+    });
+  }
+
+  for(const item of Array.isArray(state.data.files)?state.data.files:[]){
+
+    const activity=
+      item?.activity||
+      {};
+
+    const file=
+      item?.file||
+      {};
+
+    const title=
+      file?.filename||
+      activity?.identity?.name||
+      'Файл';
+
+    add({
+      type:'file',
+      icon:'file',
+      title,
+      meta:`Файл · ${activityCourseName(activity)}`,
+      searchable:[
+        title,
+        file?.mimetype,
+        activity?.identity?.name,
+        activityCourseName(activity)
+      ].map(novaSearchText).join(' '),
+      activity
+    });
+  }
+
+  for(const conversation of state.data.messages?.conversations||[]){
+
+    const title=
+      conversation?.name||
+      'Диалог';
+
+    const preview=
+      messageText(
+        conversation?.messages?.[0]?.text||
+        conversation?.messages?.[0]?.message||
+        ''
+      );
+
+    add({
+      type:'message',
+      icon:'message',
+      title,
+      meta:
+        Number(conversation?.unreadcount||0)>0
+          ? `Сообщения · ${conversation.unreadcount} новых`
+          : 'Сообщения',
+      searchable:[
+        title,
+        preview
+      ].map(novaSearchText).join(' '),
+      go:'messages'
+    });
+  }
+
+  for(const grade of Array.isArray(state.data.grades)?state.data.grades:[]){
+
+    const title=
+      grade?.course||
+      grade?.name||
+      'Оценка';
+
+    add({
+      type:'grade',
+      icon:'chart',
+      title,
+      meta:`Оценка · ${grade?.grade??'—'}`,
+      searchable:[
+        title,
+        grade?.grade,
+        grade?.percentage,
+        grade?.range
+      ].map(novaSearchText).join(' '),
+      go:'grades'
+    });
+  }
+
+  return items;
+}
+
+function novaSearchResults(query=''){
+
+  const q=
+    novaSearchText(query)
+      .toLowerCase();
+
+  if(!q){
+    return [];
+  }
+
+  return novaSearchItems()
+    .map(item=>{
+
+      const title=
+        String(item.title||'')
+          .toLowerCase();
+
+      const hay=
+        String(item.searchable||'')
+          .toLowerCase();
+
+      let score=0;
+
+      if(title===q){
+        score+=100;
+      }else if(title.startsWith(q)){
+        score+=40;
+      }else if(title.includes(q)){
+        score+=18;
+      }
+
+      if(hay.includes(q)){
+        score+=8;
+      }
+
+      return {
+        ...item,
+        score
+      };
+    })
+    .filter(item=>item.score>0)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,8);
+}
+
+function novaSearchResultMarkup(query=''){
+
+  const results=
+    novaSearchResults(query);
+
+  if(!query.trim()){
+    return `
+      <div class="nova-search-empty">
+        <span class="nova-search-empty-icon">
+          ${icon('search',18)}
+        </span>
+
+        <div>
+          <b>Поиск по Nova</b>
+          <small>
+            Курсы, задания, тесты, материалы, файлы,
+            сообщения и оценки.
+          </small>
+        </div>
+      </div>
+    `;
+  }
+
+  if(!results.length){
+    return `
+      <div class="nova-search-empty">
+        <span class="nova-search-empty-icon">
+          ${icon('search',18)}
+        </span>
+
+        <div>
+          <b>Ничего не найдено</b>
+          <small>
+            Попробуй название курса,
+            задания или материала.
+          </small>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="nova-search-results">
+
+      ${
+        results.map(item=>{
+
+          const attrs=
+            item.activity
+              ? `data-activity="${activityRefAttr(item.activity)}"`
+              : `data-go="${esc(item.go||'dashboard')}" data-param="${esc(item.param||'')}"`;
+
+          return `
+            <button
+              class="nova-search-result"
+              type="button"
+              ${attrs}
+            >
+
+              <span
+                class="nova-search-result-icon ${esc(item.type)}"
+              >
+                ${icon(item.icon||'search',16)}
+              </span>
+
+              <span class="nova-search-result-copy">
+
+                <b>
+                  ${esc(item.title)}
+                </b>
+
+                <small>
+                  ${esc(item.meta||'')}
+                </small>
+
+              </span>
+
+              <span class="nova-search-result-arrow">
+                ${icon('arrow',13)}
+              </span>
+
+            </button>
+          `;
+        }).join('')
+      }
+
+    </div>
+  `;
+}
+
+let novaSearchRequest=0;
+
+async function novaEnsureGlobalSearchData(){
+
+  const requestId=
+    ++novaSearchRequest;
+
+  const jobs=[
+    [
+      'courses',
+      '/api/courses',
+      d=>{
+        state.data.courses=
+          d?.courses||
+          [];
+      }
+    ],
+
+    [
+      'tasks',
+      '/api/tasks',
+      d=>{
+        state.data.tasks=
+          d?.tasks||
+          d||
+          [];
+      }
+    ],
+
+    [
+      'grades',
+      '/api/grades',
+      d=>{
+        state.data.grades=
+          d?.courses||
+          d?.items||
+          [];
+      }
+    ],
+
+    [
+      'messages',
+      '/api/messages',
+      d=>{
+        state.data.messages=
+          d||
+          {};
+      }
+    ],
+
+    [
+      'files',
+      '/api/files',
+      d=>{
+        state.data.files=
+          d?.files||
+          d||
+          [];
+      }
+    ],
+
+    [
+      'materials',
+      '/api/materials',
+      d=>{
+        state.data.materials=
+          d?.materials||
+          d||
+          [];
+      }
+    ],
+
+    [
+      'tests',
+      '/api/tests',
+      d=>{
+        state.data.tests=
+          d?.tests||
+          d||
+          [];
+      }
+    ]
+  ];
+
+  await Promise.allSettled(
+    jobs
+      .filter(
+        job=>
+          state.data[job[0]]===null
+      )
+      .map(
+        async job=>{
+          try{
+
+            const data=
+              await api(job[1]);
+
+            if(
+              requestId !==
+              novaSearchRequest
+            ){
+              return;
+            }
+
+            job[2](data);
+
+          }catch{
+          }
+        }
+      )
+  );
+
+  updateNovaSearchPopover();
+}
+
+function updateNovaSearchPopover(){
+
+  const input=
+    document.querySelector(
+      '#global-search'
+    );
+
+  const popover=
+    document.querySelector(
+      '#nova-search-popover'
+    );
+
+  if(!input||!popover){
+    return;
+  }
+
+  popover.innerHTML=
+    novaSearchResultMarkup(
+      state.search
+    );
+
+  const active=
+    document.activeElement===input||
+    Boolean(
+      novaSearchText(
+        state.search
+      )
+    );
+
+  popover.classList.toggle(
+    'open',
+    active
+  );
+
+  popover
+    .querySelectorAll(
+      '.nova-search-result'
+    )
+    .forEach(result=>{
+
+      if(
+        result.dataset.novaSearchBound===
+        '1'
+      ){
+        return;
+      }
+
+      result.dataset.novaSearchBound='1';
+
+      result.addEventListener(
+        'click',
+        ()=>{
+
+          const raw=
+            result.dataset.activity;
+
+          state.search='';
+
+          popover.classList.remove(
+            'open'
+          );
+
+          if(raw){
+
+            try{
+              openActivity(
+                JSON.parse(
+                  decodeURIComponent(raw)
+                )
+              );
+            }catch{}
+
+            return;
+          }
+
+          navigate(
+            result.dataset.go||
+            'dashboard',
+
+            result.dataset.param||
+            ''
+          );
+        }
+      );
+    });
+}
+
+
 function coursesPage(){
   if(state.status.courses==='loading') return `<section class="page">${PageHead({eyebrow:'УЧЕБНАЯ СРЕДА',title:'Мои курсы',sub:'Загружаем актуальный список Campus…'})}<div class="tabs"><span class="chip active">Все</span></div>${skeletonGrid(6)}</section>`;
   if(state.status.courses==='error') return `<section class="page">${PageHead({eyebrow:'УЧЕБНАЯ СРЕДА',title:'Мои курсы',sub:'Не удалось получить список курсов.'})}${statePanel('error','courses')}</section>`;
@@ -2673,23 +3464,664 @@ function coursesPage(){
 }
 function courseCard(c){const p=Number.isFinite(Number(c.progress))?Math.max(0,Math.min(100,Number(c.progress))):null;return `<button class="course-card" data-go="course" data-param="${esc(c.id)}"><div class="course-cover" style="${c.courseimage?`background-image:url('${String(c.courseimage).replace(/'/g,'%27')}')`:''}"><span>${icon('grid',22)}</span><i></i></div><div class="course-card-body"><div class="course-dept">Кафедра математики и информатики</div><h3>${esc(c.fullnamedisplay||c.fullname||'Курс')}</h3><p>${esc(c.summary?text(c.summary).slice(0,100):'Электронный учебный курс')}</p><div class="course-foot">${p!==null?`<div class="progress"><i style="width:${p}%"></i></div><b>${p}%</b>`:'<span class="muted">Прогресс не указан</span>'}</div></div></button>`}
 function PageHead({eyebrow,title,sub,children=''}){return `<div class="page-head"><div><div class="eyebrow">${esc(eyebrow||'')}</div><h1>${esc(title)}</h1><p>${esc(sub||'')}</p></div>${children}</div>`}
+
 function coursePage(){
-  if(state.status.course==='loading') return `<section class="page">${PageHead({eyebrow:'КУРС',title:'Загрузка курса',sub:'Получаем содержимое Campus…'})}${skeletonGrid(3)}</section>`;
-  if(state.status.course==='error') return `<section class="page">${PageHead({eyebrow:'КУРС',title:'Не удалось открыть курс',sub:state.errors?.course||'Campus не вернул содержимое этого курса.'})}${statePanel('error','course')}</section>`;
-  const c=state.data.course; if(!c) return `<section class="page">${statePanel('empty','course',false)}</section>`;
-  const sections=Array.isArray(c.sections)?c.sections:[];
-  const progress=Number.isFinite(Number(c.progress))?Number(c.progress):null;
-  const count=sections.reduce((n,s)=>n+(Array.isArray(s.activities)?s.activities.length:0),0);
-  const teachers=(Array.isArray(c.teachers)?c.teachers:[]).map(t=>esc(t.fullname||t.name||'')).filter(Boolean);
-  const sectionMarkup=sections.map((sec,i)=>{
-    const activities=Array.isArray(sec.activities)?sec.activities:[];
-    return `<details class="course-section" ${i<2?'open':''}><summary><span class="section-number">${String(i+1).padStart(2,'0')}</span><span><b>${esc(sec.name||`Раздел ${i+1}`)}</b><small>${activities.length} ${activities.length===1?'активность':'активностей'}</small></span>${icon('chevron',17)}</summary><div class="activity-list">${activities.map(activity).join('')||'<div class="inline-empty">В этом разделе пока нет материалов.</div>'}</div></details>`;
-  }).join('');
-  const native = typeof c.nativeHtml==='string' && c.nativeHtml.trim() ? `<div class="native-course"><div class="native-course-head"><div><b>${icon('university',15)} Оригинальный Campus</b><small>Nova не потеряла содержимое. Показываем реальную страницу курса внутри нового интерфейса.</small></div>${c.fallback?.url?`<button class="secondary tiny" data-view="${esc(c.fallback.url)}">Открыть отдельно ${icon('arrow',13)}</button>`:''}</div><div id="campus-content" class="native-course-content">${c.nativeHtml}</div></div>`:'';
-  const empty=`<div class="state-card empty course-empty"><div class="state-icon">${icon('sparkle',22)}</div><h3>Campus пока не отдал структурированные материалы.</h3><p>Nova сохранила реальную страницу курса и может открыть её напрямую.</p>${c.fallback?.url?`<button class="primary" data-view="${esc(c.fallback.url)}">Открыть содержимое Campus ${icon('arrow',16)}</button>`:''}</div>`;
-  const bodyContent = count || sections.length ? `<div class="sections">${sectionMarkup}</div>` : (native || empty);
-  return `<section class="page course-page"><div class="course-head"><button class="back-button" data-back="courses">${icon('back',17)} Все курсы</button><div class="course-hero-small"><div class="course-hero-copy"><div class="eyebrow">КУРС · ${count} ${count===1?'активность':'активностей'}</div><h1>${esc(c.title||'Курс')}</h1><p>${esc(c.description||'Электронный учебный курс')}</p>${teachers.length?`<div class="course-meta"><span>Преподаватель${teachers.length>1?'и':''}</span><b>${teachers.join(', ')}</b></div>`:''}${progress!==null?`<div class="progress-wide"><span>Прогресс ${progress}%</span><i><b style="width:${Math.max(0,Math.min(100,progress))}%"></b></i></div>`:''}</div><div class="course-hero-img" style="${c.courseimage?`background-image:url('${String(c.courseimage).replace(/'/g,'%27')}')`:''}"></div></div></div><div class="course-toolbar"><span>Содержание курса</span><div><button id="expand-all" class="secondary tiny">Развернуть всё</button><button id="collapse-all" class="secondary tiny">Свернуть всё</button></div></div>${bodyContent}</section>`;
+
+  if(state.status.course==='loading'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'КУРС',
+          title:'Загрузка курса',
+          sub:'Получаем содержимое Campus…'
+        })}
+        ${skeletonGrid(3)}
+      </section>
+    `;
+  }
+
+  if(state.status.course==='error'){
+    return `
+      <section class="page">
+        ${PageHead({
+          eyebrow:'КУРС',
+          title:'Не удалось открыть курс',
+          sub:
+            state.errors?.course||
+            'Campus не вернул содержимое этого курса.'
+        })}
+        ${statePanel('error','course')}
+      </section>
+    `;
+  }
+
+  const c=
+    state.data.course;
+
+  if(!c){
+    return `
+      <section class="page">
+        ${statePanel(
+          'empty',
+          'course',
+          false
+        )}
+      </section>
+    `;
+  }
+
+  const sections=
+    Array.isArray(c.sections)
+      ? c.sections
+      : [];
+
+  const progress=
+    Number.isFinite(
+      Number(c.progress)
+    )
+      ? Number(c.progress)
+      : null;
+
+  const activities=
+    sections.flatMap(
+      section=>
+        Array.isArray(
+          section.activities
+        )
+          ? section.activities
+          : []
+    );
+
+  const count=
+    activities.length;
+
+  const teachers=
+    (
+      Array.isArray(c.teachers)
+        ? c.teachers
+        : []
+    )
+      .map(
+        teacher=>
+          teacher?.fullname||
+          teacher?.name||
+          ''
+      )
+      .filter(Boolean);
+
+  const assignments=
+    activities.filter(
+      activity=>
+        /assign|assignment/i.test(
+          String(
+            activity?.type||
+            activity?.modname||
+            ''
+          )
+        )
+    ).length;
+
+  const tests=
+    activities.filter(
+      activity=>
+        /quiz|test/i.test(
+          String(
+            activity?.type||
+            activity?.modname||
+            ''
+          )
+        )
+    ).length;
+
+  const files=
+    activities.filter(
+      activity=>
+        Boolean(
+          Array.isArray(
+            activity?.contents
+          ) &&
+          activity.contents.some(
+            file=>
+              file?.fileurl
+          )
+        ) ||
+        /file|resource/i.test(
+          String(
+            activity?.type||
+            activity?.modname||
+            ''
+          )
+        )
+    ).length;
+
+  const dueItems=
+    activities
+      .map(
+        item=>({
+          item,
+          due:activityDue(item)
+        })
+      )
+      .filter(item=>item.due)
+      .sort(
+        (a,b)=>
+          a.due-b.due
+      );
+
+  const nextDue=
+    dueItems[0]||
+    null;
+
+  const sectionMarkup=
+    sections
+      .map(
+        (section,index)=>{
+
+          const list=
+            Array.isArray(
+              section.activities
+            )
+              ? section.activities
+              : [];
+
+          return `
+            <details
+              class="course-section nova-course-section"
+              ${index<2?'open':''}
+            >
+
+              <summary>
+
+                <span
+                  class="section-number"
+                >
+                  ${String(index+1).padStart(2,'0')}
+                </span>
+
+                <span
+                  class="nova-course-section-copy"
+                >
+
+                  <b>
+                    ${esc(
+                      section.name||
+                      `Раздел ${index+1}`
+                    )}
+                  </b>
+
+                  <small>
+                    ${list.length}
+                    ${
+                      list.length===1
+                        ? 'активность'
+                        : 'активностей'
+                    }
+                  </small>
+
+                </span>
+
+                ${icon('chevron',17)}
+
+              </summary>
+
+              <div class="activity-list">
+
+                ${
+                  list.length
+                    ? list.map(activity).join('')
+                    : `
+                      <div class="inline-empty">
+                        В этом разделе пока нет материалов.
+                      </div>
+                    `
+                }
+
+              </div>
+
+            </details>
+          `;
+        }
+      )
+      .join('');
+
+  const native=
+    typeof c.nativeHtml==='string' &&
+    c.nativeHtml.trim()
+      ? `
+        <div class="native-course">
+
+          <div class="native-course-head">
+
+            <div>
+
+              <b>
+                ${icon('university',15)}
+                Оригинальный Campus
+              </b>
+
+              <small>
+                Nova не потеряла содержимое.
+                Здесь отображается реальная страница курса.
+              </small>
+
+            </div>
+
+            ${
+              c.fallback?.url
+                ? `
+                  <button
+                    class="secondary tiny"
+                    data-view="${esc(
+                      c.fallback.url
+                    )}"
+                  >
+                    Открыть отдельно
+                    ${icon('arrow',13)}
+                  </button>
+                `
+                : ''
+            }
+
+          </div>
+
+          <div
+            id="campus-content"
+            class="native-course-content"
+          >
+            ${c.nativeHtml}
+          </div>
+
+        </div>
+      `
+      : '';
+
+  const empty=`
+    <div class="state-card empty course-empty">
+
+      <div class="state-icon">
+        ${icon('sparkle',22)}
+      </div>
+
+      <h3>
+        Campus пока не отдал
+        структурированные материалы.
+      </h3>
+
+      <p>
+        Nova сохранила реальную страницу курса
+        и может открыть её напрямую.
+      </p>
+
+      ${
+        c.fallback?.url
+          ? `
+            <button
+              class="primary"
+              data-view="${esc(
+                c.fallback.url
+              )}"
+            >
+              Открыть содержимое Campus
+              ${icon('arrow',16)}
+            </button>
+          `
+          : ''
+      }
+
+    </div>
+  `;
+
+  const body=
+    count||sections.length
+      ? `
+        <div
+          class="sections nova-course-sections"
+        >
+          ${sectionMarkup}
+        </div>
+      `
+      : (native||empty);
+
+  return `
+    <section
+      class="page course-page nova-course-page"
+    >
+
+      <button
+        class="back-button nova-course-back"
+        data-back="courses"
+      >
+        ${icon('back',17)}
+        Все курсы
+      </button>
+
+      <section class="nova-course-hero">
+
+        <div
+          class="nova-course-hero-glow"
+        ></div>
+
+        <div
+          class="nova-course-hero-copy"
+        >
+
+          <span class="eyebrow">
+            КУРС · ${count}
+            ${
+              count===1
+                ? 'АКТИВНОСТЬ'
+                : 'АКТИВНОСТЕЙ'
+            }
+          </span>
+
+          <h1>
+            ${esc(
+              c.title||
+              'Курс'
+            )}
+          </h1>
+
+          <p>
+            ${esc(
+              c.description||
+              'Электронный учебный курс'
+            )}
+          </p>
+
+          ${
+            teachers.length
+              ? `
+                <div
+                  class="nova-course-teachers"
+                >
+                  ${icon('user',14)}
+
+                  <span>
+                    ${esc(
+                      teachers.join(' · ')
+                    )}
+                  </span>
+
+                </div>
+              `
+              : ''
+          }
+
+        </div>
+
+        <div
+          class="nova-course-progress-card"
+        >
+
+          <span>
+            ПРОГРЕСС КУРСА
+          </span>
+
+          <strong>
+            ${
+              progress!==null
+                ? Math.round(progress)+'%'
+                : '—'
+            }
+          </strong>
+
+          ${
+            progress!==null
+              ? `
+                <div
+                  class="nova-course-progress-track"
+                >
+                  <i
+                    style="width:${Math.max(
+                      0,
+                      Math.min(
+                        100,
+                        Number(progress)
+                      )
+                    )}%"
+                  ></i>
+                </div>
+              `
+              : `
+                <small>
+                  Прогресс пока не указан
+                </small>
+              `
+          }
+
+        </div>
+
+      </section>
+
+      <div
+        class="nova-course-stat-grid"
+      >
+
+        <div>
+          <span>
+            ${icon('book',15)}
+          </span>
+
+          <b>
+            ${sections.length}
+          </b>
+
+          <small>
+            разделов
+          </small>
+        </div>
+
+        <div>
+          <span>
+            ${icon('grid',15)}
+          </span>
+
+          <b>
+            ${count}
+          </b>
+
+          <small>
+            активностей
+          </small>
+        </div>
+
+        <div>
+          <span>
+            ${icon('check-square',15)}
+          </span>
+
+          <b>
+            ${assignments}
+          </b>
+
+          <small>
+            заданий
+          </small>
+        </div>
+
+        <div>
+          <span>
+            ${icon('quiz',15)}
+          </span>
+
+          <b>
+            ${tests}
+          </b>
+
+          <small>
+            тестов
+          </small>
+        </div>
+
+        <div>
+          <span>
+            ${icon('file',15)}
+          </span>
+
+          <b>
+            ${files}
+          </b>
+
+          <small>
+            файлов
+          </small>
+        </div>
+
+      </div>
+
+      <div class="nova-course-layout">
+
+        <main>
+
+          <div
+            class="course-toolbar nova-course-toolbar"
+          >
+
+            <div>
+
+              <span>
+                СОДЕРЖАНИЕ
+              </span>
+
+              <b>
+                Учебный план курса
+              </b>
+
+            </div>
+
+            <div>
+
+              <button
+                id="expand-all"
+                class="secondary tiny"
+              >
+                Развернуть всё
+              </button>
+
+              <button
+                id="collapse-all"
+                class="secondary tiny"
+              >
+                Свернуть всё
+              </button>
+
+            </div>
+
+          </div>
+
+          ${body}
+
+        </main>
+
+        <aside
+          class="nova-course-sidebar"
+        >
+
+          <section
+            class="nova-course-side-card"
+          >
+
+            <span>
+              БЛИЖАЙШАЯ АКТИВНОСТЬ
+            </span>
+
+            ${
+              nextDue
+                ? `
+                  <b>
+                    ${esc(
+                      nextDue.item?.name||
+                      nextDue.item?.identity?.name||
+                      'Активность'
+                    )}
+                  </b>
+
+                  <small>
+                    Срок · ${esc(
+                      formatLong(
+                        nextDue.due
+                      )
+                    )}
+                  </small>
+
+                  <button
+                    type="button"
+                    class="nova-course-side-action"
+                    data-activity="${activityRefAttr(
+                      nextDue.item
+                    )}"
+                  >
+                    Открыть
+                    ${icon('arrow',13)}
+                  </button>
+                `
+                : `
+                  <b>
+                    Ближайших сроков нет
+                  </b>
+
+                  <small>
+                    Новые дедлайны появятся автоматически.
+                  </small>
+                `
+            }
+
+          </section>
+
+          <section
+            class="nova-course-side-card"
+          >
+
+            <span>
+              БЫСТРАЯ НАВИГАЦИЯ
+            </span>
+
+            <button
+              type="button"
+              class="nova-course-side-link"
+              data-course-action="expand"
+            >
+              Все разделы
+              ${icon('arrow',13)}
+            </button>
+
+            <button
+              type="button"
+              class="nova-course-side-link"
+              data-go="tasks"
+            >
+              Задания
+              ${icon('arrow',13)}
+            </button>
+
+            <button
+              type="button"
+              class="nova-course-side-link"
+              data-go="tests"
+            >
+              Тесты
+              ${icon('arrow',13)}
+            </button>
+
+            <button
+              type="button"
+              class="nova-course-side-link"
+              data-go="materials"
+            >
+              Материалы
+              ${icon('arrow',13)}
+            </button>
+
+          </section>
+
+        </aside>
+
+      </div>
+
+    </section>
+  `;
 }
+
 function activity(a){
   const file=Array.isArray(a.contents)&&a.contents.find(x=>x.fileurl);
   const canDownload=Boolean(file?.fileurl);
@@ -10902,10 +12334,169 @@ function bind(){
     confirmNovaLogout
   );
   $('#calendar-today')?.addEventListener('click',()=>{const d=new Date();state.year=d.getFullYear();state.month=d.getMonth()+1;state.selectedDay=d.getDate();render();loadData('calendar',true)});
-  $('#expand-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true));$('#collapse-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=false));
+  $('#expand-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true));$('#collapse-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=false));$$('[data-course-action="expand"]').forEach(el=>el.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true)));
   $('#cards-mode')?.addEventListener('click',()=>{state.courseView='cards';localStorage.setItem('nova-course-view','cards');render()});$('#list-mode')?.addEventListener('click',()=>{state.courseView='list';localStorage.setItem('nova-course-view','list');render()});
   $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>showNotifications());
-  const s=$('#global-search');if(s){s.addEventListener('input',()=>{state.search=s.value; if(state.route==='courses')render()});s.addEventListener('keydown',e=>{if(e.key==='Enter'&&state.search.trim())navigate('courses')});}
+  const s=$('#global-search');
+
+  if(s){
+
+    s.addEventListener(
+      'focus',
+      ()=>{
+        updateNovaSearchPopover();
+        novaEnsureGlobalSearchData();
+      }
+    );
+
+    s.addEventListener(
+      'input',
+      ()=>{
+        state.search=
+          s.value;
+
+        updateNovaSearchPopover();
+
+        if(
+          state.search.trim()
+        ){
+          novaEnsureGlobalSearchData();
+        }
+      }
+    );
+
+    s.addEventListener(
+      'keydown',
+      e=>{
+
+        if(e.key==='Escape'){
+
+          state.search='';
+          s.value='';
+
+          updateNovaSearchPopover();
+
+          s.blur();
+
+          return;
+        }
+
+        if(
+          e.key==='Enter' &&
+          state.search.trim()
+        ){
+
+          const first=
+            novaSearchResults(
+              state.search
+            )[0];
+
+          if(first){
+
+            state.search='';
+
+            if(first.activity){
+
+              try{
+                openActivity(
+                  first.activity
+                );
+              }catch{}
+
+            }else{
+
+              navigate(
+                first.go||
+                'dashboard',
+                first.param||
+                ''
+              );
+            }
+
+          }else{
+
+            navigate(
+              'courses'
+            );
+
+          }
+
+        }
+
+      }
+    );
+
+  }
+
+  if(
+    !window.__novaSearchShortcutBound
+  ){
+
+    window.__novaSearchShortcutBound=
+      true;
+
+    document.addEventListener(
+      'keydown',
+      event=>{
+
+        if(
+          (event.ctrlKey||event.metaKey) &&
+          String(event.key).toLowerCase()==='k'
+        ){
+
+          event.preventDefault();
+
+          const input=
+            document.querySelector(
+              '#global-search'
+            );
+
+          if(input){
+
+            input.focus();
+            input.select();
+
+            updateNovaSearchPopover();
+
+            novaEnsureGlobalSearchData();
+          }
+
+        }
+
+      }
+    );
+
+  }
+
+  if(
+    !window.__novaSearchOutsideBound
+  ){
+
+    window.__novaSearchOutsideBound=
+      true;
+
+    document.addEventListener(
+      'click',
+      event=>{
+
+        if(
+          event.target.closest(
+            '.nova-global-search-wrap'
+          )
+        ){
+          return;
+        }
+
+        document
+          .querySelector(
+            '#nova-search-popover'
+          )
+          ?.classList.remove('open');
+
+      }
+    );
+
+  }
   $('#mobile-menu')?.addEventListener('click',()=>$('.sidebar')?.classList.toggle('mobile-open'));
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
@@ -10991,7 +12582,7 @@ async function loadData(service,force=false,epoch=state.routeEpoch){
 async function loadDashboard(epoch=state.routeEpoch){
   if(!state.connected||epoch!==state.routeEpoch||state.route!=='dashboard')return;
   state.status.dashboard='success'; state.errors.dashboard=null; render();
-  await Promise.allSettled([loadData('courses',false,epoch),loadData('calendar',false,epoch),loadData('grades',false,epoch),loadData('tasks',false,epoch)]);
+  await Promise.allSettled([loadData('courses',false,epoch),loadData('calendar',false,epoch),loadData('grades',false,epoch),loadData('tasks',false,epoch),loadData('messages',false,epoch)]);
 }
 async function loadRouteData(force=false,epoch=state.routeEpoch){
   const r=state.route;if(!state.connected||state.demo)return;
