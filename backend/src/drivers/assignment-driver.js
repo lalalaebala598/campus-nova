@@ -16,10 +16,15 @@ function assignmentWorkflowStatus(html = '') {
       .trim()
       .toLowerCase();
 
+  /*
+   * IMPORTANT:
+   * "Not submitted" contains the word "submitted".
+   * Check negative states BEFORE positive states.
+   */
   if (
-    /отправлено на оценивание|submitted for grading|submitted successfully|\bsubmitted\b/.test(value)
+    /не отправлено|ничего не отправлено|nothing submitted|not submitted|no attempt|add submission|добавить ответ/.test(value)
   ) {
-    return 'submitted';
+    return 'not-submitted';
   }
 
   if (
@@ -29,9 +34,9 @@ function assignmentWorkflowStatus(html = '') {
   }
 
   if (
-    /не отправлено|ничего не отправлено|nothing submitted|no attempt|add submission|добавить ответ/.test(value)
+    /отправлено на оценивание|submitted for grading|submitted successfully|status\s*[:\-]?\s*submitted\b|\bsubmitted\b/.test(value)
   ) {
-    return 'not-submitted';
+    return 'submitted';
   }
 
   return 'unknown';
@@ -227,8 +232,21 @@ function assignmentWorkflowSubmissionFiles(html = '') {
     return [];
   }
 
-  const region =
+  let region =
     source.slice(statusIndex);
+
+  /*
+   * Keep only the student's submission area.
+   * Feedback/grader attachments must not be reported
+   * as files submitted by the student.
+   */
+  const feedbackIndex = region.search(
+    /(?:Feedback|Grader feedback|Teacher feedback|Комментарии преподавателя|Отзыв преподавателя|Комментарий преподавателя|Обратная связь)/i
+  );
+
+  if (feedbackIndex >= 0) {
+    region = region.slice(0, feedbackIndex);
+  }
 
   const files = [];
   const seen = new Set();
@@ -836,13 +854,21 @@ export class AssignmentDriver {
     if (action === 'save' || action === 'submit') {
       const edited = await this.edit(activity, options);
       const preferred = action === 'submit'
-        ? edited.form.submitters?.find(x => /submit|отправ|сдать|send/i.test(`${x.name} ${x.value}`))
-        : edited.form.submitters?.find(x => /save|сохран|чернов/i.test(`${x.name} ${x.value}`)) || edited.form.submitters?.[0];
+        ? edited.form.submitters?.find(
+            x => /submit|отправ|сдать|send/i.test(
+              `${x.name} ${x.value}`
+            )
+          )
+        : edited.form.submitters?.find(
+            x => /save|сохран|чернов|draft/i.test(
+              `${x.name} ${x.value}`
+            )
+          );
       if (!preferred) throw unverified(`assignment.${action}`, 'Реальная форма не содержит подтверждаемой submit-кнопки для этого действия.');
       const values = payload?.values || payload || {};
       const submitted = await this.formService.submit(edited.form, values, { submitter: preferred, timeoutMs: options.timeoutMs || 30000, parentTraceId: options.parentTraceId });
       const html = submitted.parsed?.html || '';
-      const status = detectSubmission(html);
+      const status = assignmentWorkflowStatus(html);
       this.trace?.stage(options.parentTraceId, 'RUNTIME_FORM_SUBMITTED', { action, submitter: preferred.name, submitterValue: preferred.value, detectedSubmissionStatus: status });
       const httpStatus = submitted.response?.status ?? null;
       const confirmed = action === 'submit'

@@ -5551,7 +5551,7 @@ async function submitNovaQuizControl(action) {
      * Это одновременно обновляет статус Continue/Start.
      */
     if(action === 'finish'){
-      await loadActivity(true);
+      await loadActivity(true, state.routeEpoch, true);
 
       toast(
         'Тест завершён.',
@@ -6198,7 +6198,7 @@ function activityPage(){
       ).toLowerCase();
 
     const assignmentCanEdit =
-      result?.submission?.canEdit !== false;
+      result?.submission?.canEdit === true;
 
     let assignmentAction = 'edit';
     let assignmentButton = 'Добавить ответ';
@@ -7382,10 +7382,32 @@ async function loadCourse(force=false,epoch=state.routeEpoch){
 function encodeActivityRef(ref){return btoa(JSON.stringify(ref)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function decodeActivityRef(value){let x=String(value||'').replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';return JSON.parse(atob(x))}
 function openActivity(ref){state.routeBeforeActivity=state.route; navigate('activity',encodeActivityRef(ref));}
-async function loadActivity(force=false,epoch=state.routeEpoch){
+async function loadActivity(
+  force=false,
+  epoch=state.routeEpoch,
+  throwOnError=false
+){
   const seq=(state.requests.activity||0)+1;state.requests.activity=seq;state.status.activity='loading';state.errors.activity=null;state.data.activity=null;render();
   try{const ref=decodeActivityRef(state.param);const q=new URLSearchParams(ref);q.set('action','open');if(force)q.set('refresh','1');const d=await api(`/api/activity?${q}`);if(epoch!==state.routeEpoch||state.requests.activity!==seq||state.route!=='activity')return;if(d.fallback){state.data.activity=d;state.status.activity='success';render();$('#open-activity-fallback')?.addEventListener('click',()=>openCampusPath(d.fallback.url));return;}state.data.activity=d;state.status.activity='success';render();bindCampusContent();}
-  catch(e){if(state.requests.activity!==seq||!state.connected)return;if(epoch!==state.routeEpoch||state.route!=='activity')return;state.errors.activity=e.message;state.status.activity='error';render();}
+  catch(e){
+    if(state.requests.activity!==seq||!state.connected){
+      if(throwOnError) throw e;
+      return;
+    }
+
+    if(epoch!==state.routeEpoch||state.route!=='activity'){
+      if(throwOnError) throw e;
+      return;
+    }
+
+    state.errors.activity=e.message;
+    state.status.activity='error';
+    render();
+
+    if(throwOnError){
+      throw e;
+    }
+  }
 }
 async function executeActivityAction(action){
   const current=state.data.activity?.activity; if(!current?.ref)return;
@@ -7450,7 +7472,11 @@ async function executeActivityAction(action){
      * submitted files.
      */
     if(action==='save' || action==='submit'){
-      await loadActivity(true);
+      await loadActivity(
+        true,
+        state.routeEpoch,
+        true
+      );
 
       if(action==='submit'){
         toast('Ответ отправлен.','success');

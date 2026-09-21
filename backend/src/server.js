@@ -20,12 +20,71 @@ const DEBUG_CAMPUS = process.env.DEBUG_CAMPUS === 'true';
 function normalizeCampusUrl(value) {
   const raw = String(value || '').trim();
   if (!raw) return CAMPUS_ORIGIN;
+
   let u;
-  try { u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); }
-  catch { throw Object.assign(new Error('Укажите корректную ссылку на Campus.'), { statusCode: 400 }); }
-  if (!['http:', 'https:'].includes(u.protocol)) throw Object.assign(new Error('Campus URL должен начинаться с http:// или https://.'), { statusCode: 400 });
-  if (u.username || u.password) throw Object.assign(new Error('Campus URL не должен содержать логин или пароль.'), { statusCode: 400 });
-  if (u.search || u.hash) u.search = '', u.hash = '';
+
+  try {
+    u = new URL(
+      /^https?:\/\//i.test(raw)
+        ? raw
+        : `https://${raw}`
+    );
+  } catch {
+    throw Object.assign(
+      new Error('Укажите корректную ссылку на Campus.'),
+      { statusCode: 400 }
+    );
+  }
+
+  if (!['http:', 'https:'].includes(u.protocol)) {
+    throw Object.assign(
+      new Error('Campus URL должен использовать HTTP или HTTPS.'),
+      { statusCode: 400 }
+    );
+  }
+
+  if (u.username || u.password) {
+    throw Object.assign(
+      new Error('Campus URL не должен содержать логин или пароль.'),
+      { statusCode: 400 }
+    );
+  }
+
+  const hostname = u.hostname.toLowerCase();
+
+  const isLoopback =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1';
+
+  if (!isLoopback) {
+    if (u.protocol !== 'https:') {
+      throw Object.assign(
+        new Error('Campus должен использовать HTTPS.'),
+        { statusCode: 400 }
+      );
+    }
+
+    if (hostname !== 'campus.fa.ru') {
+      throw Object.assign(
+        new Error('Разрешён только официальный Campus: campus.fa.ru.'),
+        { statusCode: 400 }
+      );
+    }
+
+    if (u.port) {
+      throw Object.assign(
+        new Error('Campus не должен использовать нестандартный порт.'),
+        { statusCode: 400 }
+      );
+    }
+  }
+
+  if (u.search || u.hash) {
+    u.search = '';
+    u.hash = '';
+  }
+
   return u.toString().replace(/\/$/, '');
 }
 function campusUrlOf(session) { return String(session?.campus?.baseUrl || CAMPUS_ORIGIN).replace(/\/$/, ''); }
@@ -43,16 +102,45 @@ async function rawBody(req, limit = 20 * 1024 * 1024) {
   for await (const c of req) { n += c.length; if (n > limit) throw new Error('Слишком большой запрос.'); chunks.push(c); }
   return Buffer.concat(chunks);
 }
-async function multipartFormData(req) {
-  const { Readable } = await import('node:stream');
+async function multipartFormData(
+  req,
+  limit = 50 * 1024 * 1024
+) {
+  const contentLength = Number(
+    req.headers['content-length'] || 0
+  );
+
+  if (
+    Number.isFinite(contentLength) &&
+    contentLength > limit
+  ) {
+    throw Object.assign(
+      new Error('Слишком большой файл. Максимальный размер загрузки — 50 МБ.'),
+      { statusCode: 413 }
+    );
+  }
+
+  let body;
+
+  try {
+    body = await rawBody(req, limit);
+  } catch (e) {
+    if (e?.message === 'Слишком большой запрос.') {
+      throw Object.assign(
+        new Error('Слишком большой файл. Максимальный размер загрузки — 50 МБ.'),
+        { statusCode: 413 }
+      );
+    }
+
+    throw e;
+  }
 
   const request = new Request(
     `http://${req.headers.host || 'localhost'}/`,
     {
       method: req.method || 'POST',
       headers: new Headers(req.headers),
-      body: Readable.toWeb(req),
-      duplex: 'half',
+      body,
     }
   );
 
@@ -62,7 +150,48 @@ async function multipartFormData(req) {
 
 async function bodyJson(req) { const b = await rawBody(req); return JSON.parse(b.toString('utf8') || '{}'); }
 function parseCookies(req) { const out = {}; for (const p of (req.headers.cookie || '').split(';')) { const i = p.indexOf('='); if (i > 0) out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim()); } return out; }
-function getSession(req) { const id = parseCookies(req).nova_sid; return id ? sessions.get(id) : null; }
+function getSession(req) {
+  const id = parseCookies(req).nova_sid;
+  if (!id) return null;
+
+  const s = sessions.get(id);
+  if (!s) return null;
+
+  const lastSeen = Number(s.lastSeen || 0);
+  if (
+    !Number.isFinite(lastSeen) ||
+    Date.now() - lastSeen > TTL
+  ) {
+    sessions.delete(id);
+    try { s?.campus?.invalidate(); } catch {}
+    return null;
+  }
+
+  return s;
+}
+
+function cleanupExpiredSessions() {
+  const now = Date.now();
+
+  for (const [id, s] of sessions) {
+    const lastSeen = Number(s?.lastSeen || 0);
+
+    if (
+      !Number.isFinite(lastSeen) ||
+      now - lastSeen > TTL
+    ) {
+      sessions.delete(id);
+      try { s?.campus?.invalidate(); } catch {}
+    }
+  }
+}
+
+const sessionCleanupTimer = setInterval(
+  cleanupExpiredSessions,
+  Math.min(TTL, 15 * 60 * 1000)
+);
+
+sessionCleanupTimer.unref?.();
 function setSid(res, id) { const secure = process.env.NODE_ENV === 'production'; res.setHeader('set-cookie', `nova_sid=${encodeURIComponent(id)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${TTL / 1000}${secure ? '; Secure' : ''}`); }
 function clearSid(res) { res.setHeader('set-cookie', 'nova_sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'); }
 function requireSession(req, res) { const s = getSession(req); if (!s) { json(res, 401, { ok: false, error: 'Сначала подключите Campus.' }); return null; } s.cache ||= {}; s.inflight ||= new Map(); s.lastSeen = Date.now(); return s; }
@@ -159,31 +288,97 @@ async function ensureActivityGraph(s, { force = false } = {}) {
   });
 }
 
-function invalidateActivityGraph(s) {
-  delete s.cache['activity-graph'];
+function invalidateActivityState(s) {
+  /*
+   * Assignment/quiz state changes do not change the course graph.
+   * Keep the structural graph and course caches warm.
+   * The activity itself is refreshed explicitly by the client.
+   */
+  delete s.cache.dashboard;
+}
+
+function publicFileUrl(value) {
+  if (!value) return null;
+
   try {
-    const cache = s.campus.cache;
-    if (cache?.keys && cache?.delete) {
-      for (const key of [...cache.keys()]) {
-        if (key === 'courses' || String(key).startsWith('course:')) cache.delete(key);
-      }
+    const u = new URL(
+      String(value),
+      CAMPUS_ORIGIN
+    );
+
+    if (u.origin !== new URL(CAMPUS_ORIGIN).origin) {
+      return null;
     }
-    s.campus.getCourseGraph().clear();
-  } catch {}
+
+    return u.pathname;
+  } catch {
+    return null;
+  }
+}
+
+function publicFile(file) {
+  if (!file || typeof file !== 'object') {
+    return null;
+  }
+
+  const fileurl = publicFileUrl(
+    file.fileurl || file.url
+  );
+
+  return {
+    filename: file.filename || 'Файл',
+    filepath: file.filepath || '/',
+    filesize: Number(file.filesize || 0) || 0,
+    mimetype: file.mimetype || '',
+    fileurl
+  };
 }
 
 function publicActivity(activity) {
   if (!activity) return null;
-  const out = JSON.parse(JSON.stringify(activity));
-  if (out.source) out.source.raw = null;
+
+  const out = JSON.parse(
+    JSON.stringify(activity)
+  );
+
+  if (out.source) {
+    out.source.raw = null;
+  }
+
+  if (Array.isArray(out.content?.files)) {
+    out.content.files = out.content.files
+      .map(publicFile)
+      .filter(Boolean);
+  }
+
   return out;
 }
 
 function publicCourse(course) {
   if (!course) return null;
-  const out = JSON.parse(JSON.stringify(course));
-  if (out.source) out.source.raw = null;
-  for (const section of out.sections || []) for (const a of section.activities || []) if (a.source) a.source.raw = null;
+
+  const out = JSON.parse(
+    JSON.stringify(course)
+  );
+
+  if (out.source) {
+    out.source.raw = null;
+  }
+
+  for (const section of out.sections || []) {
+    for (const activity of section.activities || []) {
+      if (activity.source) {
+        activity.source.raw = null;
+      }
+
+      if (Array.isArray(activity.content?.files)) {
+        activity.content.files = activity.content.files
+          .map(publicFile)
+          .filter(Boolean);
+      }
+    }
+  }
+
   return out;
 }
 
@@ -216,10 +411,19 @@ function publicActivityResult(result) {
   delete out.response; delete out.body; delete out.raw;
   if (out.activity) out.activity = publicActivity(out.activity);
   if (out.form) out.form = publicForm(out.form);
+
+  if (Array.isArray(out.submission?.files)) {
+    out.submission.files = out.submission.files
+      .map(publicFile)
+      .filter(Boolean);
+  }
+
   if (typeof out.html === 'string') {
     out.html = sSanitize(out.html, out.redirectedPath || out.activityRef?.url || '/');
   }
-  if (out.file && out.file.fileurl) out.file = { ...out.file };
+  if (out.file) {
+    out.file = publicFile(out.file);
+  }
   return out;
 }
 
@@ -261,13 +465,16 @@ function globalFiles(s, { force = false } = {}) {
   for (const activity of activities) {
     for (const file of (activity.content?.files || [])) {
       if (!file?.fileurl) continue;
-      out.push({ activity: publicActivity(activity), file: {
-        filename: file.filename || activity.identity?.name || 'Файл',
-        filepath: file.filepath || '/',
-        filesize: Number(file.filesize || 0) || 0,
-        mimetype: file.mimetype || '',
-        fileurl: file.fileurl,
-      }});
+      out.push({
+        activity: publicActivity(activity),
+        file: publicFile({
+          filename: file.filename || activity.identity?.name || 'Файл',
+          filepath: file.filepath || '/',
+          filesize: file.filesize,
+          mimetype: file.mimetype,
+          fileurl: file.fileurl,
+        }),
+      });
     }
   }
   return out;
@@ -289,8 +496,17 @@ async function dashboardData(s) {
   let tasks = null;
   if (Array.isArray(courses)) {
     try {
-      const limited = courses.slice(0, 8);
-      const courseData = (await mapLimit(limited, 4, c => s.campus.course(c.id))).filter(Boolean);
+      /*
+       * Dashboard tasks must include every enrolled course.
+       * Keep concurrency limited so a large course list does not
+       * create a burst of Campus requests.
+       */
+      const courseData =
+        (await mapLimit(
+          courses,
+          4,
+          c => s.campus.course(c.id)
+        )).filter(Boolean);
       tasks = [];
       for (const c of courseData) for (const sec of c.sections || []) for (const a of sec.activities || []) if (['assign', 'quiz'].includes(a.type)) {
         const due = (a.dates || []).find(x => /срок|due|deadline/i.test(x.label || ''));
@@ -488,7 +704,7 @@ async function api(req, res, route, q) {
       await ensureActivityGraph(s);
       try {
         const result = await s.campus.getAdapter().executeActivity(ref, action, b?.payload || {}, { timeoutMs: Number(b?.timeoutMs || 30000) });
-        if (['upload','save','submit','finish','start'].includes(action)) invalidateActivityGraph(s);
+        if (['upload','save','submit','finish','start'].includes(action)) invalidateActivityState(s);
         return json(res,200,{ok:true,activity:publicActivity(result.activity),result:publicActivityResult(result)});
       } catch (e) {
         if (e?.code === 'UNVERIFIED_OPERATION' || e?.code === 'UNVERIFIED_CONTRACT') return json(res,409,{ok:false,error:e.message,code:e.code,phase:e.phase||'CONTRACT'});

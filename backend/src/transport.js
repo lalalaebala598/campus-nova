@@ -89,7 +89,7 @@ function interpolate(template, values = {}) {
 }
 
 export class CampusTransport {
-  constructor({ baseUrl, session, contracts, trace, userAgent = 'Mozilla/5.0 CampusNova/11.1.0-final' }) {
+  constructor({ baseUrl, session, contracts, trace, userAgent = 'Mozilla/5.0 CampusNova/13.0.0-final' }) {
     this.baseUrl = String(baseUrl || '').replace(/\/$/, '');
     this.session = session;
     this.contracts = contracts;
