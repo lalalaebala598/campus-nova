@@ -2059,141 +2059,714 @@ function scheduleTypeClass(type = '') {
 function scheduleImportModal() {
   return `
     <div
-      class="modal-backdrop nova-schedule-backdrop"
+      class="modal-backdrop nova-schedule-backdrop nova-schedule-backdrop-v2"
       id="nova-schedule-import-modal"
     >
 
+      <style>
+        .nova-schedule-backdrop-v2{
+          position:fixed!important;
+          inset:0!important;
+          z-index:9999!important;
+          display:grid!important;
+          place-items:center!important;
+          padding:24px!important;
+          background:
+            radial-gradient(
+              circle at 50% 12%,
+              rgba(24,183,255,.13),
+              transparent 34%
+            ),
+            radial-gradient(
+              circle at 80% 90%,
+              rgba(104,91,255,.10),
+              transparent 30%
+            ),
+            rgba(3,7,13,.78)!important;
+          backdrop-filter:blur(24px)!important;
+          -webkit-backdrop-filter:blur(24px)!important;
+        }
+
+        .nova-schedule-modal-v2{
+          position:relative!important;
+          width:min(880px,100%)!important;
+          max-height:min(880px,calc(100vh - 48px))!important;
+          overflow:auto!important;
+          padding:0!important;
+          margin:0!important;
+          border:1px solid rgba(130,180,255,.17)!important;
+          border-radius:30px!important;
+          background:
+            radial-gradient(
+              circle at 100% 0,
+              rgba(77,102,255,.13),
+              transparent 34%
+            ),
+            radial-gradient(
+              circle at 0 100%,
+              rgba(24,183,255,.08),
+              transparent 31%
+            ),
+            color-mix(
+              in srgb,
+              var(--surface) 96%,
+              #07111d
+            )!important;
+          box-shadow:
+            0 50px 140px rgba(0,0,0,.52),
+            0 0 0 1px rgba(255,255,255,.025) inset,
+            0 0 80px rgba(24,183,255,.045)!important;
+          color:var(--text)!important;
+        }
+
+        .nova-schedule-modal-v2::-webkit-scrollbar{
+          width:8px;
+        }
+
+        .nova-schedule-modal-v2::-webkit-scrollbar-thumb{
+          background:rgba(130,150,180,.20);
+          border-radius:999px;
+        }
+
+        .nova-schedule-hero-v2{
+          position:relative;
+          overflow:hidden;
+          padding:28px 30px 24px;
+          border-bottom:1px solid var(--line);
+        }
+
+        .nova-schedule-hero-v2:before{
+          content:"";
+          position:absolute;
+          width:280px;
+          height:280px;
+          top:-160px;
+          right:-80px;
+          border-radius:50%;
+          background:
+            radial-gradient(
+              circle,
+              rgba(65,122,255,.20),
+              transparent 68%
+            );
+          filter:blur(8px);
+          pointer-events:none;
+        }
+
+        .nova-schedule-hero-v2:after{
+          content:"";
+          position:absolute;
+          left:30px;
+          right:30px;
+          bottom:0;
+          height:1px;
+          background:
+            linear-gradient(
+              90deg,
+              transparent,
+              rgba(24,183,255,.42),
+              transparent
+            );
+          opacity:.8;
+        }
+
+        .nova-schedule-hero-top-v2{
+          position:relative;
+          z-index:1;
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:20px;
+        }
+
+        .nova-schedule-brand-v2{
+          display:flex;
+          align-items:center;
+          gap:13px;
+          min-width:0;
+        }
+
+        .nova-schedule-brand-icon-v2{
+          width:50px;
+          height:50px;
+          display:grid;
+          place-items:center;
+          flex:0 0 50px;
+          border-radius:16px;
+          color:#fff;
+          background:
+            linear-gradient(
+              145deg,
+              #19bcff,
+              #6873ff
+            );
+          box-shadow:
+            0 14px 32px rgba(43,118,255,.25),
+            inset 0 1px 0 rgba(255,255,255,.24);
+        }
+
+        .nova-schedule-brand-copy-v2{
+          min-width:0;
+        }
+
+        .nova-schedule-brand-copy-v2 .eyebrow{
+          margin-bottom:5px;
+          font-size:8px;
+          letter-spacing:.17em;
+        }
+
+        .nova-schedule-brand-copy-v2 h2{
+          margin:0;
+          font-size:26px;
+          line-height:1.03;
+          letter-spacing:-.045em;
+        }
+
+        .nova-schedule-brand-copy-v2 p{
+          margin:7px 0 0;
+          color:var(--muted);
+          font-size:9px;
+          line-height:1.5;
+        }
+
+        .nova-schedule-close-v2{
+          width:40px!important;
+          height:40px!important;
+          min-width:40px!important;
+          padding:0!important;
+          border-radius:13px!important;
+          background:rgba(255,255,255,.035)!important;
+        }
+
+        .nova-schedule-steps-v2{
+          position:relative;
+          z-index:1;
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:10px;
+          margin-top:22px;
+        }
+
+        .nova-schedule-step-v2{
+          position:relative;
+          display:flex;
+          align-items:flex-start;
+          gap:11px;
+          min-width:0;
+          padding:13px;
+          border:1px solid rgba(150,170,200,.10);
+          border-radius:17px;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255,255,255,.035),
+              rgba(255,255,255,.012)
+            );
+          transition:
+            transform .2s ease,
+            border-color .2s ease,
+            background .2s ease;
+        }
+
+        .nova-schedule-step-v2:hover{
+          transform:translateY(-2px);
+          border-color:rgba(24,183,255,.20);
+          background:
+            linear-gradient(
+              145deg,
+              rgba(24,183,255,.055),
+              rgba(255,255,255,.015)
+            );
+        }
+
+        .nova-schedule-step-number-v2{
+          width:30px;
+          height:30px;
+          min-width:30px;
+          display:grid;
+          place-items:center;
+          border-radius:10px;
+          color:#fff;
+          background:
+            linear-gradient(
+              145deg,
+              #1abaff,
+              #6072ff
+            );
+          font-size:9px;
+          font-weight:900;
+          box-shadow:
+            0 8px 20px rgba(50,116,255,.20);
+        }
+
+        .nova-schedule-step-copy-v2{
+          min-width:0;
+        }
+
+        .nova-schedule-step-copy-v2 b,
+        .nova-schedule-step-copy-v2 small{
+          display:block;
+        }
+
+        .nova-schedule-step-copy-v2 b{
+          font-size:9px;
+          line-height:1.35;
+        }
+
+        .nova-schedule-step-copy-v2 small{
+          margin-top:3px;
+          color:var(--muted);
+          font-size:7.5px;
+          line-height:1.45;
+        }
+
+        .nova-schedule-body-v2{
+          padding:22px 30px 0;
+        }
+
+        .nova-schedule-source-v2{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          margin-bottom:10px;
+        }
+
+        .nova-schedule-source-label-v2{
+          color:var(--text);
+          font-size:10px;
+          font-weight:850;
+        }
+
+        .nova-schedule-source-action-v2{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:7px 9px;
+          border-radius:9px;
+          color:#57c8ff;
+          background:rgba(24,183,255,.065);
+          border:1px solid rgba(24,183,255,.10);
+          font-size:7px;
+          font-weight:900;
+        }
+
+        .nova-schedule-textarea-wrap-v2{
+          position:relative;
+        }
+
+        .nova-schedule-textarea-wrap-v2:after{
+          content:"";
+          position:absolute;
+          left:14px;
+          right:14px;
+          bottom:10px;
+          height:1px;
+          background:
+            linear-gradient(
+              90deg,
+              transparent,
+              rgba(255,255,255,.055),
+              transparent
+            );
+          pointer-events:none;
+        }
+
+        .nova-schedule-input-v2{
+          width:100%!important;
+          min-height:300px!important;
+          box-sizing:border-box!important;
+          margin:0!important;
+          resize:vertical!important;
+          padding:16px!important;
+          border:1px solid rgba(150,170,200,.13)!important;
+          border-radius:19px!important;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(255,255,255,.028),
+              rgba(255,255,255,.012)
+            )!important;
+          color:var(--text)!important;
+          outline:none!important;
+          font:500 11px/1.65 inherit!important;
+          transition:
+            border-color .2s ease,
+            box-shadow .2s ease,
+            background .2s ease!important;
+        }
+
+        .nova-schedule-input-v2::placeholder{
+          color:#66768a!important;
+        }
+
+        .nova-schedule-input-v2:focus{
+          border-color:rgba(24,183,255,.42)!important;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(24,183,255,.03),
+              rgba(255,255,255,.012)
+            )!important;
+          box-shadow:
+            0 0 0 4px rgba(24,183,255,.07),
+            0 18px 50px rgba(0,0,0,.12)!important;
+        }
+
+        .nova-schedule-drop-v2{
+          position:absolute;
+          inset:10px;
+          display:none;
+          place-items:center;
+          border:1px dashed rgba(24,183,255,.42);
+          border-radius:14px;
+          background:
+            rgba(8,25,40,.82);
+          color:#75d6ff;
+          font-size:9px;
+          font-weight:850;
+          pointer-events:none;
+          backdrop-filter:blur(8px);
+        }
+
+        .nova-schedule-textarea-wrap-v2.dragging
+        .nova-schedule-drop-v2{
+          display:grid;
+        }
+
+        .nova-schedule-hint-v2{
+          display:flex;
+          align-items:center;
+          gap:7px;
+          margin-top:8px;
+          color:var(--muted-2);
+          font-size:7.5px;
+        }
+
+        .nova-schedule-hint-v2 .icon{
+          color:var(--accent);
+        }
+
+        .nova-schedule-error-v2{
+          min-height:0;
+          margin-top:9px;
+          padding:0;
+          color:var(--danger);
+          font-size:8px;
+          line-height:1.45;
+        }
+
+        .nova-schedule-error-v2:not(:empty){
+          padding:9px 11px;
+          border:1px solid rgba(255,102,125,.16);
+          border-radius:11px;
+          background:rgba(255,102,125,.055);
+        }
+
+        .nova-schedule-footer-v2{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:16px;
+          padding:18px 30px 24px;
+          margin-top:18px;
+          border-top:1px solid var(--line);
+          background:
+            linear-gradient(
+              180deg,
+              rgba(255,255,255,.006),
+              rgba(255,255,255,.018)
+            );
+        }
+
+        .nova-schedule-footer-copy-v2{
+          display:flex;
+          align-items:flex-start;
+          gap:8px;
+          min-width:0;
+          max-width:470px;
+        }
+
+        .nova-schedule-footer-copy-v2 .icon{
+          flex:0 0 auto;
+          color:var(--accent);
+          margin-top:1px;
+        }
+
+        .nova-schedule-footer-copy-v2 b,
+        .nova-schedule-footer-copy-v2 small{
+          display:block;
+        }
+
+        .nova-schedule-footer-copy-v2 b{
+          font-size:8px;
+        }
+
+        .nova-schedule-footer-copy-v2 small{
+          margin-top:3px;
+          color:var(--muted);
+          font-size:7.5px;
+          line-height:1.45;
+        }
+
+        .nova-schedule-submit-v2{
+          min-width:160px;
+          height:46px!important;
+          border-radius:14px!important;
+          font-size:10px!important;
+          box-shadow:
+            0 13px 30px rgba(8,136,249,.23)!important;
+        }
+
+        @media(max-width:760px){
+          .nova-schedule-backdrop-v2{
+            padding:12px!important;
+          }
+
+          .nova-schedule-modal-v2{
+            width:100%!important;
+            max-height:calc(100vh - 24px)!important;
+            border-radius:23px!important;
+          }
+
+          .nova-schedule-hero-v2{
+            padding:20px 18px 18px;
+          }
+
+          .nova-schedule-hero-top-v2{
+            gap:12px;
+          }
+
+          .nova-schedule-brand-icon-v2{
+            width:44px;
+            height:44px;
+            min-width:44px;
+            border-radius:14px;
+          }
+
+          .nova-schedule-brand-copy-v2 h2{
+            font-size:21px;
+          }
+
+          .nova-schedule-steps-v2{
+            grid-template-columns:1fr;
+            margin-top:17px;
+          }
+
+          .nova-schedule-body-v2{
+            padding:18px 18px 0;
+          }
+
+          .nova-schedule-input-v2{
+            min-height:250px!important;
+          }
+
+          .nova-schedule-footer-v2{
+            align-items:stretch;
+            flex-direction:column;
+            padding:15px 18px 19px;
+          }
+
+          .nova-schedule-submit-v2{
+            width:100%;
+          }
+        }
+      </style>
+
       <div
-        class="
-          modal
-          nova-schedule-modal
-        "
+        class="modal nova-schedule-modal-v2"
         role="dialog"
         aria-modal="true"
         aria-labelledby="nova-schedule-title"
       >
 
-        <div class="modal-head">
+        <div class="nova-schedule-hero-v2">
 
-          <div>
-            <span class="eyebrow">
-              РАСПИСАНИЕ
+          <div class="nova-schedule-hero-top-v2">
+
+            <div class="nova-schedule-brand-v2">
+
+              <span class="nova-schedule-brand-icon-v2">
+                ${icon('calendar',22)}
+              </span>
+
+              <div class="nova-schedule-brand-copy-v2">
+
+                <span class="eyebrow">
+                  РАСПИСАНИЕ
+                </span>
+
+                <h2 id="nova-schedule-title">
+                  Добавить учебную неделю
+                </h2>
+
+                <p>
+                  Один раз вставляешь сообщение из Telegram,
+                  Nova собирает из него аккуратное расписание.
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              class="icon-btn nova-schedule-close-v2"
+              type="button"
+              id="nova-schedule-close"
+              aria-label="Закрыть"
+            >
+              ${icon('close',17)}
+            </button>
+
+          </div>
+
+          <div class="nova-schedule-steps-v2">
+
+            <div class="nova-schedule-step-v2">
+
+              <span class="nova-schedule-step-number-v2">
+                1
+              </span>
+
+              <div class="nova-schedule-step-copy-v2">
+
+                <b>
+                  Открой Telegram-бота
+                </b>
+
+                <small>
+                  @finashkakrd_bot
+                </small>
+
+                <a
+                  class="nova-schedule-telegram"
+                  href="https://t.me/finashkakrd_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Открыть бота ↗
+                </a>
+
+              </div>
+
+            </div>
+
+            <div class="nova-schedule-step-v2">
+
+              <span class="nova-schedule-step-number-v2">
+                2
+              </span>
+
+              <div class="nova-schedule-step-copy-v2">
+
+                <b>
+                  Выбери группу
+                </b>
+
+                <small>
+                  Нажми «Расписание на неделю».
+                </small>
+
+              </div>
+
+            </div>
+
+            <div class="nova-schedule-step-v2">
+
+              <span class="nova-schedule-step-number-v2">
+                3
+              </span>
+
+              <div class="nova-schedule-step-copy-v2">
+
+                <b>
+                  Скопируй сообщение
+                </b>
+
+                <small>
+                  Целиком, от заголовка до количества пар.
+                </small>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="nova-schedule-body-v2">
+
+          <div class="nova-schedule-source-v2">
+
+            <span class="nova-schedule-source-label-v2">
+              Сообщение расписания
             </span>
 
-            <h2 id="nova-schedule-title">
-              Добавить расписание
-            </h2>
+            <span class="nova-schedule-source-action-v2">
+              ${icon('sparkle',11)}
+              Nova распознает автоматически
+            </span>
+
+          </div>
+
+          <div class="nova-schedule-textarea-wrap-v2">
+
+            <textarea
+              id="nova-schedule-text"
+              class="nova-schedule-input-v2"
+              rows="12"
+              placeholder="Вставь сюда сообщение от @finashkakrd_bot…"
+              spellcheck="false"
+            ></textarea>
+
+            <div class="nova-schedule-drop-v2">
+              ${icon('upload',17)}
+              Отпусти текст здесь
+            </div>
+
+          </div>
+
+          <div class="nova-schedule-hint-v2">
+            ${icon('info',11)}
+            Nova распознает даты, время, предметы,
+            преподавателей, аудитории и типы занятий.
+          </div>
+
+          <div
+            id="nova-schedule-import-error"
+            class="nova-schedule-error-v2"
+          ></div>
+
+        </div>
+
+        <div class="nova-schedule-footer-v2">
+
+          <div class="nova-schedule-footer-copy-v2">
+
+            ${icon('calendar',14)}
+
+            <div>
+
+              <b>
+                Расписание обновляется примерно раз в неделю
+              </b>
+
+              <small>
+                После импорта Nova сохранит неделю на этом устройстве
+                и сможет использовать её на главной странице.
+              </small>
+
+            </div>
+
           </div>
 
           <button
-            class="icon-btn"
-            type="button"
-            id="nova-schedule-close"
-            aria-label="Закрыть"
-          >
-            ${icon('close',17)}
-          </button>
-
-        </div>
-
-        <div class="nova-schedule-steps">
-
-          <div class="nova-schedule-step">
-            <span>1</span>
-
-            <div>
-              <b>
-                Открой университетского бота
-              </b>
-
-              <small>
-                @finashkakrd_bot
-              </small>
-            </div>
-
-            <a
-              class="nova-schedule-telegram"
-              href="https://t.me/finashkakrd_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Открыть ↗
-            </a>
-          </div>
-
-          <div class="nova-schedule-step">
-            <span>2</span>
-
-            <div>
-              <b>
-                Выбери курс и группу
-              </b>
-
-              <small>
-                Затем нажми «Расписание на неделю».
-              </small>
-            </div>
-          </div>
-
-          <div class="nova-schedule-step">
-            <span>3</span>
-
-            <div>
-              <b>
-                Скопируй всё сообщение
-              </b>
-
-              <small>
-                От первой строки до количества пар.
-              </small>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="nova-schedule-ai-note">
-          ${icon('sparkle',15)}
-
-          <div>
-            <b>
-              Nova разберёт его сама
-            </b>
-
-            <small>
-              Дни, время, предметы, преподавателей,
-              аудитории и типы занятий.
-            </small>
-          </div>
-        </div>
-
-        <label class="nova-schedule-input-label">
-          Вставь сообщение Telegram
-
-          <textarea
-            id="nova-schedule-text"
-            rows="12"
-            placeholder="Вставь сюда сообщение от @finashkakrd_bot…"
-          ></textarea>
-        </label>
-
-        <div
-          id="nova-schedule-import-error"
-          class="nova-schedule-error"
-        ></div>
-
-        <div class="nova-schedule-footer">
-
-          <small>
-            Обновлять расписание нужно примерно раз в неделю.
-            Это занимает несколько секунд.
-          </small>
-
-          <button
-            class="primary"
+            class="primary nova-schedule-submit-v2"
             type="button"
             id="nova-schedule-import-submit"
           >
-            ${icon('upload',16)}
+            ${icon('upload',15)}
             Импортировать
           </button>
 
@@ -2204,7 +2777,6 @@ function scheduleImportModal() {
     </div>
   `;
 }
-
 function closeScheduleImport() {
   const root =
     document.querySelector(
@@ -2242,28 +2814,47 @@ function openScheduleImport() {
   const modal =
     root.firstElementChild;
 
+  if(!modal){
+    return;
+  }
+
   document.body.append(
     modal
   );
 
+  const dialog =
+    modal.querySelector(
+      '.nova-schedule-modal-v2'
+    );
+
   const textarea =
-    document.querySelector(
+    modal.querySelector(
       '#nova-schedule-text'
     );
 
   const submit =
-    document.querySelector(
+    modal.querySelector(
       '#nova-schedule-import-submit'
     );
 
   const error =
-    document.querySelector(
+    modal.querySelector(
       '#nova-schedule-import-error'
+    );
+
+  const drop =
+    modal.querySelector(
+      '.nova-schedule-drop-v2'
+    );
+
+  const textWrap =
+    modal.querySelector(
+      '.nova-schedule-textarea-wrap-v2'
     );
 
   let closed = false;
 
-  const close = () =>{
+  const close = () => {
     if(closed){
       return;
     }
@@ -2275,37 +2866,137 @@ function openScheduleImport() {
       escHandler
     );
 
-    closeScheduleImport();
+    modal.classList.add(
+      'is-closing'
+    );
+
+    novaFrame(() => {
+      modal.remove();
+    });
   };
 
-  document
-    .querySelector(
-      '#nova-schedule-close'
-    )
-    ?.addEventListener(
-      'click',
-      close
-    );
+  const escHandler =
+    event => {
+      if(
+        event.key === 'Escape'
+      ){
+        close();
+      }
+    };
 
   modal.addEventListener(
     'click',
     event => {
-      if(event.target === modal){
+      if(
+        event.target === modal
+      ){
         close();
       }
     }
   );
 
-  const escHandler =
-    event => {
-      if(event.key === 'Escape'){
-        close();
-      }
-    };
+  modal.querySelector(
+    '#nova-schedule-close'
+  )?.addEventListener(
+    'click',
+    close
+  );
 
   document.addEventListener(
     'keydown',
     escHandler
+  );
+
+  textarea?.addEventListener(
+    'dragenter',
+    event => {
+      event.preventDefault();
+      textWrap?.classList.add(
+        'dragging'
+      );
+    }
+  );
+
+  textarea?.addEventListener(
+    'dragover',
+    event => {
+      event.preventDefault();
+      textWrap?.classList.add(
+        'dragging'
+      );
+    }
+  );
+
+  textarea?.addEventListener(
+    'dragleave',
+    event => {
+      if(
+        event.relatedTarget &&
+        textWrap?.contains(
+          event.relatedTarget
+        )
+      ){
+        return;
+      }
+
+      textWrap?.classList.remove(
+        'dragging'
+      );
+    }
+  );
+
+  textarea?.addEventListener(
+    'drop',
+    event => {
+      event.preventDefault();
+
+      textWrap?.classList.remove(
+        'dragging'
+      );
+
+      const text =
+        event.dataTransfer?.getData(
+          'text/plain'
+        ) || '';
+
+      if(
+        text &&
+        textarea
+      ){
+        textarea.value = text;
+        textarea.dispatchEvent(
+          new Event(
+            'input',
+            {
+              bubbles:true
+            }
+          )
+        );
+
+        textarea.focus();
+      }
+    }
+  );
+
+  textarea?.addEventListener(
+    'input',
+    () => {
+      if(error){
+        error.textContent = '';
+      }
+
+      if(
+        textarea.value.trim()
+      ){
+        textarea.classList.add(
+          'has-value'
+        );
+      }else{
+        textarea.classList.remove(
+          'has-value'
+        );
+      }
+    }
   );
 
   textarea?.focus();
@@ -2313,15 +3004,23 @@ function openScheduleImport() {
   submit?.addEventListener(
     'click',
     async() => {
+
       const source =
         textarea?.value?.trim() || '';
 
-      error.textContent = '';
+      if(error){
+        error.textContent = '';
+      }
 
       if(!source){
-        error.textContent =
-          'Вставь сообщение с расписанием.';
+
+        if(error){
+          error.textContent =
+            'Вставь сообщение с расписанием.';
+        }
+
         textarea?.focus();
+
         return;
       }
 
@@ -2330,11 +3029,13 @@ function openScheduleImport() {
 
       submit.disabled = true;
 
-      submit.innerHTML =
-        `${icon('spinner',16)}
-         Распознаём…`;
+      submit.innerHTML = `
+        <span class="spinner small"></span>
+        Распознаём…
+      `;
 
-      try {
+      try{
+
         const response =
           await api(
             '/api/schedule/parse',
@@ -2369,13 +3070,15 @@ function openScheduleImport() {
           'success'
         );
 
-      } catch(errorValue) {
+      }catch(errorValue){
 
-        error.textContent =
-          errorValue?.message ||
-          'Не удалось распознать расписание.';
+        if(error){
+          error.textContent =
+            errorValue?.message ||
+            'Не удалось распознать расписание.';
+        }
 
-      } finally {
+      }finally{
 
         if(
           document.body.contains(
@@ -2386,9 +3089,20 @@ function openScheduleImport() {
           submit.innerHTML =
             original;
         }
+
       }
     }
   );
+
+  /*
+   * Tiny entrance animation. The modal itself stays CSS-only
+   * after this point.
+   */
+  novaFrame(() => {
+    dialog?.classList.add(
+      'is-visible'
+    );
+  });
 }
 
 function scheduleLessonMarkup(
@@ -2509,46 +3223,206 @@ function schedulePage(){
         "
       >
 
-        ${PageHead({
-          eyebrow:'РАСПИСАНИЕ',
-          title:'Расписание',
-          sub:'Добавь неделю из университетского Telegram-бота.'
-        })}
+        <div class="nova-schedule-empty-hero">
 
-        <div class="nova-schedule-empty">
+          <div class="nova-schedule-empty-glow"></div>
 
-          <div class="nova-schedule-empty-icon">
-            ${icon('calendar',28)}
+          <div class="nova-schedule-empty-content">
+
+            <div class="nova-schedule-empty-icon">
+              ${icon('calendar',31)}
+            </div>
+
+            <span class="eyebrow">
+              ЛИЧНОЕ РАСПИСАНИЕ
+            </span>
+
+            <h1>
+              Твоя учебная неделя
+              <span>в одном месте.</span>
+            </h1>
+
+            <p>
+              Добавь сообщение из университетского Telegram-бота.
+              Nova сама соберёт дни, пары, аудитории и преподавателей
+              в аккуратный календарь.
+            </p>
+
+            <div class="nova-schedule-empty-actions">
+
+              <button
+                class="primary nova-schedule-empty-primary"
+                type="button"
+                data-schedule-action="import"
+              >
+                ${icon('calendar',17)}
+                Добавить расписание
+              </button>
+
+              <a
+                class="nova-schedule-empty-telegram"
+                href="https://t.me/finashkakrd_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ${icon('send',15)}
+                Открыть Telegram-бота
+                ${icon('arrow',12)}
+              </a>
+
+            </div>
+
           </div>
 
-          <span class="eyebrow">
-            НЕТ РАСПИСАНИЯ
-          </span>
+          <div class="nova-schedule-empty-preview">
 
-          <h2>
-            Дай Nova своё расписание
-          </h2>
+            <div class="nova-schedule-preview-top">
 
-          <p>
-            Открой @finashkakrd_bot, выбери свой курс
-            и группу, нажми «Расписание на неделю»,
-            скопируй сообщение и вставь его сюда.
-          </p>
+              <div>
+                <span>ПРЕДПРОСМОТР</span>
+                <b>Учебная неделя</b>
+              </div>
 
-          <button
-            class="primary"
-            type="button"
-            data-schedule-action="import"
-          >
-            ${icon('calendar',17)}
-            Добавить расписание
-          </button>
+              <span class="nova-schedule-preview-status">
+                <i></i>
+                Готово к импорту
+              </span>
 
-          <small class="nova-schedule-empty-note">
-            Обновлять нужно раз в неделю.
-            Зато потом Nova сможет связывать пары
-            с заданиями, тестами и материалами из Campus.
-          </small>
+            </div>
+
+            <div class="nova-schedule-preview-days">
+
+              <div class="nova-schedule-preview-day is-active">
+
+                <span>
+                  ПН
+                </span>
+
+                <b>
+                  21
+                </b>
+
+                <small>
+                  сентября
+                </small>
+
+              </div>
+
+              <div class="nova-schedule-preview-day">
+
+                <span>
+                  ВТ
+                </span>
+
+                <b>
+                  22
+                </b>
+
+                <small>
+                  сентября
+                </small>
+
+              </div>
+
+              <div class="nova-schedule-preview-day">
+
+                <span>
+                  СР
+                </span>
+
+                <b>
+                  23
+                </b>
+
+                <small>
+                  сентября
+                </small>
+
+              </div>
+
+              <div class="nova-schedule-preview-day">
+
+                <span>
+                  ЧТ
+                </span>
+
+                <b>
+                  24
+                </b>
+
+                <small>
+                  сентября
+                </small>
+
+              </div>
+
+              <div class="nova-schedule-preview-day">
+
+                <span>
+                  ПТ
+                </span>
+
+                <b>
+                  25
+                </b>
+
+                <small>
+                  сентября
+                </small>
+
+              </div>
+
+            </div>
+
+            <div class="nova-schedule-preview-list">
+
+              <div>
+                <time>08:00</time>
+                <span></span>
+                <p>
+                  <b>Теория игр</b>
+                  <small>ауд. 71к · Коренева О.В.</small>
+                </p>
+              </div>
+
+              <div>
+                <time>09:40</time>
+                <span></span>
+                <p>
+                  <b>Теория игр</b>
+                  <small>ауд. 84 · Коренева О.В.</small>
+                </p>
+              </div>
+
+              <div class="muted-preview-row">
+                <time>09:40</time>
+                <span></span>
+                <p>
+                  <b>Иностранный язык</b>
+                  <small>Следующая пара появится после импорта</small>
+                </p>
+              </div>
+
+            </div>
+
+            <div class="nova-schedule-preview-footer">
+              <span>
+                <b>10</b>
+                пар
+              </span>
+
+              <span>
+                <b>5</b>
+                учебных дней
+              </span>
+
+              <span>
+                <b>1</b>
+                импорт в неделю
+              </span>
+            </div>
+
+          </div>
 
         </div>
 
@@ -2570,6 +3444,7 @@ function schedulePage(){
     new Map();
 
   for(const lesson of lessons){
+
     const key =
       scheduleDateKey(
         lesson?.date
@@ -2597,44 +3472,98 @@ function schedulePage(){
   const education =
     schedule.education || {};
 
+  const nextLesson =
+    novaScheduleNextLesson?.() || null;
+
   return `
-    <section class="page schedule-page">
+    <section class="page schedule-page nova-schedule-week-page">
 
-      ${PageHead({
-        eyebrow:'РАСПИСАНИЕ',
-        title:'Расписание',
-        sub:
-          `${schedulePeriodText(schedule)} · ` +
-          `${education.course || '—'} курс · ` +
-          `${education.program || 'Направление'} · ` +
-          `Группа ${education.group || '—'}`,
-        children:`
-          <div class="nova-schedule-actions">
+      <div class="nova-schedule-page-hero">
 
-            <button
-              class="secondary"
-              type="button"
-              data-schedule-action="import"
-            >
-              ${icon('refresh',16)}
-              Обновить
-            </button>
+        <div class="nova-schedule-page-hero-copy">
 
-            <button
-              class="icon-btn"
-              type="button"
-              data-schedule-action="clear"
-              title="Удалить расписание"
-              aria-label="Удалить расписание"
-            >
-              ${icon('x',16)}
-            </button>
+          <span class="eyebrow">
+            МОЯ УЧЕБНАЯ НЕДЕЛЯ
+          </span>
 
-          </div>
-        `
-      })}
+          <h1>
+            Расписание
+          </h1>
 
-      <div class="nova-schedule-summary">
+          <p>
+            ${esc(
+              education.program ||
+              'Прикладная математика и информатика'
+            )}
+            ·
+            ${esc(
+              education.course ||
+              '—'
+            )} курс
+            ·
+            группа
+            ${esc(
+              education.group ||
+              '—'
+            )}
+          </p>
+
+        </div>
+
+        <div class="nova-schedule-page-hero-actions">
+
+          ${
+            nextLesson
+              ? `
+                <div class="nova-schedule-next-chip">
+
+                  <span>
+                    Следующая
+                  </span>
+
+                  <b>
+                    ${esc(
+                      nextLesson.start ||
+                      '--:--'
+                    )}
+                  </b>
+
+                  <small>
+                    ${esc(
+                      nextLesson.subject ||
+                      'Занятие'
+                    )}
+                  </small>
+
+                </div>
+              `
+              : ''
+          }
+
+          <button
+            class="secondary"
+            type="button"
+            data-schedule-action="import"
+          >
+            ${icon('refresh',15)}
+            Обновить
+          </button>
+
+          <button
+            class="icon-btn"
+            type="button"
+            data-schedule-action="clear"
+            title="Удалить расписание"
+            aria-label="Удалить расписание"
+          >
+            ${icon('x',15)}
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="nova-schedule-summary nova-schedule-summary-v2">
 
         <div class="nova-schedule-summary-main">
 
@@ -2643,6 +3572,7 @@ function schedulePage(){
           </span>
 
           <div>
+
             <b>
               ${esc(
                 schedule.period?.label ||
@@ -2653,6 +3583,7 @@ function schedulePage(){
             <small>
               Источник · @finashkakrd_bot
             </small>
+
           </div>
 
         </div>
@@ -2661,16 +3592,33 @@ function schedulePage(){
 
           <span>
             <b>
-              ${schedule.stats?.lessons || lessons.length}
+              ${
+                schedule.stats?.lessons ||
+                lessons.length
+              }
             </b>
             <small>пар</small>
           </span>
 
           <span>
             <b>
-              ${schedule.stats?.days || days.length}
+              ${
+                schedule.stats?.days ||
+                days.length
+              }
             </b>
             <small>дней</small>
+          </span>
+
+          <span>
+            <b>
+              ${
+                schedule.period?.parity
+                  ? 'Н'
+                  : '—'
+              }
+            </b>
+            <small>неделя</small>
           </span>
 
         </div>
@@ -2692,6 +3640,7 @@ function schedulePage(){
                 <div class="nova-schedule-day-head">
 
                   <div>
+
                     <span>
                       ${esc(
                         scheduleDayText(date)
@@ -2707,6 +3656,7 @@ function schedulePage(){
                         `
                         : ''
                     }
+
                   </div>
 
                   <small>
@@ -2748,22 +3698,14 @@ function schedulePage(){
 
       </div>
 
-      <div class="nova-schedule-footnote">
+      <div class="nova-schedule-week-footer">
 
-        ${icon('info',14)}
+        ${icon('info',13)}
 
         <span>
-          Последнее обновление:
-          ${esc(
-            schedule.importedAt
-              ? formatLong(
-                  Math.floor(
-                    schedule.importedAt / 1000
-                  )
-                )
-              : 'только что'
-          )}.
-          Новое расписание можно загрузить в любой момент.
+          Расписание хранится локально на этом устройстве.
+          Обновляй его примерно раз в неделю из
+          <b>@finashkakrd_bot</b>.
         </span>
 
       </div>
