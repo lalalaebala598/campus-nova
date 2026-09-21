@@ -8,6 +8,277 @@ function detectSubmission(html) {
   return 'unknown';
 }
 
+
+function assignmentWorkflowStatus(html = '') {
+  const value =
+    textOnly(html)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+
+  if (
+    /отправлено на оценивание|submitted for grading|submitted successfully|\bsubmitted\b/.test(value)
+  ) {
+    return 'submitted';
+  }
+
+  if (
+    /\bчерновик\b|\bdraft\b/.test(value)
+  ) {
+    return 'draft';
+  }
+
+  if (
+    /не отправлено|ничего не отправлено|nothing submitted|no attempt|add submission|добавить ответ/.test(value)
+  ) {
+    return 'not-submitted';
+  }
+
+  return 'unknown';
+}
+
+function assignmentWorkflowField(
+  html = '',
+  labels = []
+) {
+  const source = String(html || '');
+
+  for (const label of labels) {
+    const escaped =
+      String(label).replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&'
+      );
+
+    /*
+     * Moodle commonly renders assignment metadata
+     * inside table rows. Keep extraction local to the
+     * row so the next block (for example a submitted file)
+     * cannot be swallowed into the field value.
+     */
+    const rowMatch =
+      source.match(
+        new RegExp(
+          '<tr\\b[^>]*>[\\s\\S]*?' +
+          escaped +
+          '[\\s\\S]*?<\\/tr>',
+          'i'
+        )
+      );
+
+    if (rowMatch) {
+      const rowText =
+        textOnly(rowMatch[0])
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      const value =
+        rowText
+          .replace(
+            new RegExp(
+              '^.*?' +
+              escaped +
+              '\\s*:?\\s*',
+              'i'
+            ),
+            ''
+          )
+          .trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    /*
+     * Fallback for div/p/li based markup. Again, limit the
+     * extraction to one semantic HTML block.
+     */
+    const blockMatch =
+      source.match(
+        new RegExp(
+          '<(?:div|p|li|dd)\\b[^>]*>[\\s\\S]*?' +
+          escaped +
+          '[\\s\\S]*?<\\/(?:div|p|li|dd)>',
+          'i'
+        )
+      );
+
+    if (blockMatch) {
+      const blockText =
+        textOnly(blockMatch[0])
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      const value =
+        blockText
+          .replace(
+            new RegExp(
+              '^.*?' +
+              escaped +
+              '\\s*:?\\s*',
+              'i'
+            ),
+            ''
+          )
+          .trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    /*
+     * Final fallback for flattened/non-semantic markup.
+     */
+    const value =
+      textOnly(source)
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const match =
+      value.match(
+        new RegExp(
+          escaped +
+          '\\s*:?\\s*(.+?)(?=\\s+(?:Состояние ответа|Состояние оценивания|Срок сдачи|Оставшееся время|Последнее изменение|Submission status|Grading status|Due date|Time remaining|Last modified|Файлы|Files)\\b|$)',
+          'i'
+        )
+      );
+
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return '';
+}
+function assignmentWorkflowFile(
+  href = '',
+  label = ''
+) {
+  const fileurl =
+    String(href || '')
+      .replace(/&amp;/gi, '&')
+      .trim();
+
+  if (!fileurl) {
+    return null;
+  }
+
+  let filename =
+    textOnly(label)
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  if (!filename) {
+    try {
+      filename =
+        decodeURIComponent(
+          fileurl
+            .split('/')
+            .pop()
+            ?.split('?')[0] || ''
+        );
+    } catch {
+      filename =
+        fileurl
+          .split('/')
+          .pop()
+          ?.split('?')[0] || '';
+    }
+  }
+
+  if (
+    /\.(?:ico|png|jpe?g|gif|svg|webp|bmp|avif|css|js|woff2?|woff|ttf|otf)(?:$|[?#])/i.test(filename)
+  ) {
+    return null;
+  }
+
+  const isFile =
+    /(?:pluginfile|webservice\/pluginfile|tokenpluginfile|draftfile)\.php/i.test(fileurl) ||
+    /\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(filename) ||
+    /\.(?:pdf|docx?|xlsx?|pptx?|zip|rar|7z)(?:$|[?#])/i.test(fileurl);
+
+  if (!isFile) {
+    return null;
+  }
+
+  return {
+    type: 'file',
+    filename: filename || 'Файл',
+    filepath: '/',
+    filesize: 0,
+    fileurl,
+    content: '',
+    sortorder: 0,
+    mimetype: ''
+  };
+}
+
+function assignmentWorkflowSubmissionFiles(html = '') {
+  const source = String(html || '');
+
+  const statusIndex =
+    source.search(
+      /Состояние ответа|Состояние оценивания|Submission status|Grading status/i
+    );
+
+  if (statusIndex < 0) {
+    return [];
+  }
+
+  const region =
+    source.slice(statusIndex);
+
+  const files = [];
+  const seen = new Set();
+
+  for (
+    const match of region.matchAll(
+      /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+    )
+  ) {
+    const file =
+      assignmentWorkflowFile(
+        match[1],
+        match[2]
+      );
+
+    if (
+      !file ||
+      seen.has(file.fileurl)
+    ) {
+      continue;
+    }
+
+    file.sortorder =
+      files.length;
+
+    files.push(file);
+    seen.add(file.fileurl);
+  }
+
+  return files;
+}
+
+
+function assignmentWorkflowSubmissionText(html = '') {
+  const source = String(html || '');
+
+  const match =
+    source.match(
+      /<(?:div|section)[^>]*class=["'][^"']*(?:assignsubmission_onlinetext|online-text|submission-text)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)>/i
+    );
+
+  if (!match) {
+    return '';
+  }
+
+  return textOnly(match[1])
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function readNumericOption(html, keys = []) {
   const source = String(html || '');
 
@@ -330,12 +601,59 @@ export class AssignmentDriver {
         .trim();
 
     const status =
-      detectSubmission(
+      assignmentWorkflowStatus(
         html
       );
 
     const addSubmission =
       /editsubmission|Добавить ответ|Add submission/i.test(
+        html
+      );
+
+    const deadline =
+      assignmentWorkflowField(
+        html,
+        [
+          'Срок сдачи',
+          'Due date',
+          'Deadline',
+          'Окончание',
+          'Дата окончания'
+        ]
+      );
+
+    const remainingTime =
+      assignmentWorkflowField(
+        html,
+        [
+          'Оставшееся время',
+          'Time remaining',
+          'Remaining time'
+        ]
+      );
+
+    const lastModified =
+      assignmentWorkflowField(
+        html,
+        [
+          'Последнее изменение',
+          'Last modified'
+        ]
+      );
+
+    const submissionFiles =
+      assignmentWorkflowSubmissionFiles(
+        html,
+        files
+      );
+
+    const submissionText =
+      assignmentWorkflowSubmissionText(
+        html
+      );
+
+    const canEdit =
+      /Изменить ответ|Edit submission|editsubmission/i.test(
         html
       );
 
@@ -381,9 +699,17 @@ export class AssignmentDriver {
       activityRef:
         activity.ref,
 
+      deadline: {
+        text: deadline || '',
+        remaining: remainingTime || ''
+      },
       submission: {
         status,
-        addSubmission
+        addSubmission,
+        canEdit,
+        lastModified: lastModified || '',
+        text: submissionText || '',
+        files: submissionFiles
       },
 
       capabilities: {

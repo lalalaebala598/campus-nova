@@ -3826,6 +3826,7 @@ function practiceDescriptionFragment(result = {}) {
 
 function assignmentSourceMarkup(activity, result) {
   const content = activity?.content || {};
+
   const description =
     String(
       result?.description ||
@@ -3834,29 +3835,98 @@ function assignmentSourceMarkup(activity, result) {
     ).trim();
 
   const descriptionHtml =
-    practiceDescriptionFragment(
-      result
-    ) ||
+    practiceDescriptionFragment(result) ||
     String(
       result?.description ||
       content.description ||
       ''
     ).trim();
 
-  const files =
+  const sourceFiles =
     Array.isArray(result?.files)
       ? result.files.filter(
           file => file?.fileurl
         )
       : [];
 
-  const dates = Array.isArray(content.dates)
-    ? content.dates
-    : [];
+  const submission =
+    result?.submission || {};
 
-  const due = dates.find(item =>
-    /срок|deadline|due/i.test(String(item?.label || ''))
-  );
+  const status =
+    String(
+      submission.status ||
+      'unknown'
+    ).toLowerCase();
+
+  const statusMap = {
+    'not-submitted': {
+      label: 'Не отправлено',
+      className: 'is-pending',
+      iconName: 'clock'
+    },
+    draft: {
+      label: 'Черновик',
+      className: 'is-draft',
+      iconName: 'edit'
+    },
+    submitted: {
+      label: 'Отправлено',
+      className: 'is-submitted',
+      iconName: 'check'
+    }
+  };
+
+  const statusUi =
+    statusMap[status] ||
+    {
+      label: 'Состояние неизвестно',
+      className: 'is-unknown',
+      iconName: 'info'
+    };
+
+  const dates =
+    Array.isArray(content.dates)
+      ? content.dates
+      : [];
+
+  const due =
+    dates.find(item =>
+      /срок|deadline|due/i.test(
+        String(item?.label || '')
+      )
+    );
+
+  const deadlineText =
+    String(
+      result?.deadline?.text ||
+      ''
+    ).trim();
+
+  const deadlineRemaining =
+    String(
+      result?.deadline?.remaining ||
+      ''
+    ).trim();
+
+  const hasDeadline =
+    Boolean(
+      deadlineText ||
+      due?.timestamp ||
+      deadlineRemaining
+    );
+
+  const submissionFiles =
+    Array.isArray(submission.files)
+      ? submission.files.filter(
+          file => file?.fileurl
+        )
+      : [];
+
+  const submissionText =
+    String(
+      submission.text ||
+      ''
+    ).trim();
 
   return `
     <section class="nova-practice-source">
@@ -3871,6 +3941,56 @@ function assignmentSourceMarkup(activity, result) {
           ${icon('check-square',14)} Практика
         </span>
       </div>
+
+
+      <div class="nova-practice-status-grid">
+
+        <div class="nova-practice-status-card ${statusUi.className}">
+          <span class="nova-practice-status-icon">
+            ${icon(statusUi.iconName,17)}
+          </span>
+
+          <div>
+            <span class="eyebrow">СТАТУС</span>
+            <b>${esc(statusUi.label)}</b>
+          </div>
+        </div>
+
+
+        ${
+          hasDeadline
+            ? `
+              <div class="nova-practice-status-card is-deadline">
+                <span class="nova-practice-status-icon">
+                  ${icon('calendar',17)}
+                </span>
+
+                <div>
+                  <span class="eyebrow">СРОК СДАЧИ</span>
+
+                  <b>
+                    ${
+                      deadlineText
+                        ? esc(deadlineText)
+                        : due?.timestamp
+                          ? esc(formatLong(due.timestamp))
+                          : 'Срок указан в Campus'
+                    }
+                  </b>
+
+                  ${
+                    deadlineRemaining
+                      ? `<small>${esc(deadlineRemaining)}</small>`
+                      : ''
+                  }
+                </div>
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
 
       ${
         description
@@ -3888,22 +4008,107 @@ function assignmentSourceMarkup(activity, result) {
           `
       }
 
+
       ${
-        due?.timestamp
+        submissionFiles.length ||
+        submissionText ||
+        status === 'draft' ||
+        status === 'submitted'
           ? `
-            <div class="nova-practice-meta">
-              <span>
-                ${icon('calendar',14)}
-                Срок
-              </span>
-              <b>${formatLong(due.timestamp)}</b>
+            <div class="nova-practice-files nova-practice-my-answer">
+
+              <div class="nova-practice-files-head">
+                <div>
+                  <span class="eyebrow">МОЙ ОТВЕТ</span>
+                  <h3>
+                    ${
+                      status === 'submitted'
+                        ? 'Отправленная работа'
+                        : 'Сохранённый ответ'
+                    }
+                  </h3>
+                </div>
+
+                <span class="nova-practice-count">
+                  ${
+                    submissionFiles.length ||
+                    (submissionText ? 1 : 0)
+                  }
+                </span>
+              </div>
+
+
+              ${
+                submissionText
+                  ? `
+                    <div class="nova-practice-submission-text">
+                      ${esc(submissionText)}
+                    </div>
+                  `
+                  : ''
+              }
+
+
+              ${
+                submissionFiles.length
+                  ? `
+                    <div class="nova-practice-file-list">
+
+                      ${submissionFiles.map(file => `
+                        <div class="nova-practice-file">
+
+                          <span class="nova-practice-file-icon">
+                            ${icon('file',19)}
+                          </span>
+
+                          <span class="nova-practice-file-copy">
+                            <b>
+                              ${esc(
+                                file.filename ||
+                                'Файл ответа'
+                              )}
+                            </b>
+
+                            <small>
+                              ${
+                                file.mimetype
+                                  ? esc(file.mimetype)
+                                  : 'Файл ответа'
+                              }
+
+                              ${
+                                file.filesize
+                                  ? ` · ${formatFileSize(file.filesize)}`
+                                  : ''
+                              }
+                            </small>
+                          </span>
+
+                          <button
+                            class="nova-learning-download nova-practice-download"
+                            type="button"
+                            data-download="${esc(file.fileurl)}"
+                          >
+                            ${icon('download',16)}
+                            Скачать
+                          </button>
+
+                        </div>
+                      `).join('')}
+
+                    </div>
+                  `
+                  : ''
+              }
+
             </div>
           `
           : ''
       }
 
+
       ${
-        files.length
+        sourceFiles.length
           ? `
             <div class="nova-practice-files">
 
@@ -3914,16 +4119,15 @@ function assignmentSourceMarkup(activity, result) {
                 </div>
 
                 <span class="nova-practice-count">
-                  ${files.length}
+                  ${sourceFiles.length}
                 </span>
               </div>
 
               <div class="nova-practice-file-list">
 
-                ${files.map(file => `
-                  <div
-                    class="nova-practice-file"
-                  >
+                ${sourceFiles.map(file => `
+                  <div class="nova-practice-file">
+
                     <span class="nova-practice-file-icon">
                       ${icon('file',19)}
                     </span>
@@ -3958,7 +4162,7 @@ function assignmentSourceMarkup(activity, result) {
                       data-download="${esc(file.fileurl)}"
                     >
                       ${icon('download',16)}
-                      Скачать практику
+                      Скачать
                     </button>
 
                   </div>
@@ -3973,8 +4177,6 @@ function assignmentSourceMarkup(activity, result) {
     </section>
   `;
 }
-
-
 function assignmentFieldMarkup(control) {
   const type = String(control?.type || 'text').toLowerCase();
   const name = String(control?.name || '');
@@ -5989,34 +6191,80 @@ function activityPage(){
 
   if(kind === 'assignment'){
 
+    const assignmentStatus =
+      String(
+        result?.submission?.status ||
+        'unknown'
+      ).toLowerCase();
+
+    const assignmentCanEdit =
+      result?.submission?.canEdit !== false;
+
+    let assignmentAction = 'edit';
+    let assignmentButton = 'Добавить ответ';
+    let assignmentTitle = 'Готовы отправить работу?';
+    let assignmentText =
+      'Добавьте свои файлы и отправьте их преподавателю прямо из Nova.';
+
+    if(assignmentStatus === 'draft'){
+      assignmentButton = 'Продолжить редактирование';
+      assignmentTitle = 'Продолжить работу?';
+      assignmentText =
+        'В Campus уже сохранён черновик. Можно продолжить редактирование и отправить его.';
+    }
+
+    if(
+      assignmentStatus === 'submitted' &&
+      assignmentCanEdit
+    ){
+      assignmentButton = 'Изменить ответ';
+      assignmentTitle = 'Ответ уже отправлен';
+      assignmentText =
+        'Работа отправлена в Campus. При необходимости можно открыть её и внести изменения.';
+    }
+
+    const canShowAssignmentAction =
+      assignmentStatus !== 'submitted' ||
+      assignmentCanEdit;
+
     body = `
       ${assignmentSourceMarkup(a, result)}
 
-      <section class="nova-bottom-cta">
+      ${
+        canShowAssignmentAction
+          ? `
+            <section class="nova-bottom-cta">
 
-        <div>
-          <span class="eyebrow">СДАЧА</span>
+              <div>
+                <span class="eyebrow">СДАЧА</span>
 
-          <h2>
-            Готовы отправить работу?
-          </h2>
+                <h2>
+                  ${assignmentTitle}
+                </h2>
 
-          <p>
-            Добавьте свои файлы и отправьте их преподавателю
-            прямо из Nova.
-          </p>
-        </div>
+                <p>
+                  ${assignmentText}
+                </p>
+              </div>
 
-        <button
-          class="primary"
-          type="button"
-          data-activity-action="edit"
-        >
-          ${icon('upload',17)}
-          Добавить ответ
-        </button>
+              <button
+                class="primary"
+                type="button"
+                data-activity-action="${assignmentAction}"
+              >
+                ${icon(
+                  assignmentStatus === 'submitted'
+                    ? 'edit'
+                    : 'upload',
+                  17
+                )}
+                ${assignmentButton}
+              </button>
 
-      </section>
+            </section>
+          `
+          : ''
+      }
     `;
   }
 
@@ -7173,16 +7421,70 @@ async function executeActivityAction(action){
   }
 
   try{
-    const d=await api('/api/activity/action',{method:'POST',body:JSON.stringify({ref:current.ref,action,payload:{values}})});
-    state.data.activity={activity:d.activity,result:d.result}; state.status.activity='success'; state.errors.activity=null; render(); bindCampusContent();
+    const d=await api('/api/activity/action',{
+      method:'POST',
+      body:JSON.stringify({
+        ref:current.ref,
+        action,
+        payload:{values}
+      })
+    });
+
     const confirmed=d.result?.confirmed;
-    if(confirmed===false) toast(action==='submit'?'Campus не подтвердил отправку ответа.':action==='start'?'Campus не подтвердил запуск попытки.':'Campus не подтвердил изменение.','error');
-    else if(action==='submit') toast('Ответ отправлен.','success');
-    else if(action==='save') toast('Ответ сохранён.','success');
-    else if(action==='start') toast('Попытка теста запущена.','success');
-    else if(action==='download') toast('Файл скачан.','success');
-    else toast('Действие выполнено.','success');
-  } catch(e){toast(e.message||'Не удалось выполнить действие.','error');}
+
+    if(confirmed===false){
+      toast(
+        action==='submit'
+          ? 'Campus не подтвердил отправку ответа.'
+          : action==='start'
+            ? 'Campus не подтвердил запуск попытки.'
+            : 'Campus не подтвердил изменение.',
+        'error'
+      );
+      return;
+    }
+
+    /*
+     * Save/submit must be followed by a fresh assignment.view.
+     * Campus is the source of truth for status, deadline and
+     * submitted files.
+     */
+    if(action==='save' || action==='submit'){
+      await loadActivity(true);
+
+      if(action==='submit'){
+        toast('Ответ отправлен.','success');
+      }else{
+        toast('Ответ сохранён.','success');
+      }
+
+      return;
+    }
+
+    state.data.activity={
+      activity:d.activity,
+      result:d.result
+    };
+    state.status.activity='success';
+    state.errors.activity=null;
+
+    render();
+    bindCampusContent();
+
+    if(action==='start'){
+      toast('Попытка теста запущена.','success');
+    }else if(action==='download'){
+      toast('Файл скачан.','success');
+    }else{
+      toast('Действие выполнено.','success');
+    }
+
+  }catch(e){
+    toast(
+      e.message || 'Не удалось выполнить действие.',
+      'error'
+    );
+  }
 }
 function selectDay(value){const [y,m,d]=value.split('-').map(Number);state.year=y;state.month=m;state.selectedDay=d;render();loadData('calendar',true)}
 function changeMonth(delta){let m=state.month+delta,y=state.year;if(m<1){m=12;y--}if(m>12){m=1;y++}state.year=y;state.month=m;const days=new Date(y,m,0).getDate();state.selectedDay=Math.min(state.selectedDay,days);render();loadData('calendar',true)}
