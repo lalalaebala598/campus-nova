@@ -2261,8 +2261,22 @@ function openScheduleImport() {
       '#nova-schedule-import-error'
     );
 
-  const close = () =>
+  let closed = false;
+
+  const close = () =>{
+    if(closed){
+      return;
+    }
+
+    closed = true;
+
+    document.removeEventListener(
+      'keydown',
+      escHandler
+    );
+
     closeScheduleImport();
+  };
 
   document
     .querySelector(
@@ -2286,11 +2300,6 @@ function openScheduleImport() {
     event => {
       if(event.key === 'Escape'){
         close();
-
-        document.removeEventListener(
-          'keydown',
-          escHandler
-        );
       }
     };
 
@@ -8547,6 +8556,64 @@ function bind(){
   $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
   $$('[data-activity]').forEach(el=>el.addEventListener('click',e=>{ if(e.target.closest('[data-download]')) return; const raw=el.dataset.activity; if(raw) { try { openActivity(JSON.parse(decodeURIComponent(raw))); } catch {} } }));
   $$('[data-activity-action]').forEach(el=>el.addEventListener('click',()=>executeActivityAction(el.dataset.activityAction)));
+
+  /*
+   * Schedule import / clear actions.
+   *
+   * These buttons are rendered dynamically by schedulePage(),
+   * therefore bind() must explicitly attach handlers after render.
+   */
+  $$('[data-schedule-action="import"]').forEach(el=>{
+    if(el.dataset.novaScheduleBound === '1'){
+      return;
+    }
+
+    el.dataset.novaScheduleBound = '1';
+
+    el.addEventListener(
+      'click',
+      ()=>{
+        if(el.disabled) return;
+        openScheduleImport();
+      }
+    );
+  });
+
+  $$('[data-schedule-action="clear"]').forEach(el=>{
+    if(el.dataset.novaScheduleBound === '1'){
+      return;
+    }
+
+    el.dataset.novaScheduleBound = '1';
+
+    el.addEventListener(
+      'click',
+      ()=>{
+        if(el.disabled) return;
+
+        const confirmed = window.confirm(
+          'Удалить сохранённое расписание?'
+        );
+
+        if(!confirmed){
+          return;
+        }
+
+        clearImportedSchedule();
+
+        state.status.schedule =
+          'success';
+
+        render();
+
+        toast(
+          'Расписание удалено.',
+          'success'
+        );
+      }
+    );
+  });
+
   bindQuizStart();
   bindQuizContinue();
   $$('[data-view]').forEach(el=>el.addEventListener('click',e=>{if(el.hasAttribute('data-activity'))return;if(e.target.closest('[data-download]'))return;const p=el.dataset.view;if(p)openCampusPath(p)}));

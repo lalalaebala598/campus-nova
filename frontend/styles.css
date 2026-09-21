@@ -15293,3 +15293,770 @@ body[data-theme="light"] .nova-schedule-lesson-type{
   }
 }
 
+
+
+/* NOVA SCHEDULE POLISH 20260921 */
+
+/* ---------------------------------------------------------
+   EMPTY PAGE
+   --------------------------------------------------------- */
+
+.nova-schedule-empty-page #page-head{
+  margin-bottom:24px;
+}
+
+.nova-schedule-empty{
+  position:relative;
+  isolation:isolate;
+  width:min(900px,100%);
+  margin:8px auto 0;
+  padding:42px 42px 38px;
+  overflow:hidden;
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 12%,
+    var(--line)
+  );
+  border-radius:30px;
+  background:
+    radial-gradient(
+      circle at 85% 8%,
+      rgba(76,111,255,.18),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 8% 88%,
+      rgba(0,195,255,.10),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb,var(--surface) 96%,transparent),
+      color-mix(in srgb,var(--surface-2) 88%,transparent)
+    );
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.nova-schedule-empty::before{
+  content:"";
+  position:absolute;
+  width:280px;
+  height:280px;
+  top:-150px;
+  right:-100px;
+  border-radius:50%;
+  background:rgba(60,120,255,.14);
+  filter:blur(28px);
+  pointer-events:none;
+}
+
+.nova-schedule-empty::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.42;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255,255,255,.035) 50%,
+      transparent 78%
+    );
+}
+
+.nova-schedule-empty > *{
+  position:relative;
+  z-index:1;
+}
+
+.nova-schedule-empty-icon{
+  width:72px;
+  height:72px;
+  display:grid;
+  place-items:center;
+  margin-bottom:22px;
+  border-radius:22px;
+  color:#fff;
+  background:
+    linear-gradient(
+      145deg,
+      #21b8ff,
+      #5d6cff
+    );
+  box-shadow:
+    0 18px 36px rgba(60,110,255,.28),
+    inset 0 1px 0 rgba(255,255,255,.24);
+}
+
+.nova-schedule-empty .eyebrow{
+  color:var(--accent);
+  font-size:8px;
+  letter-spacing:.16em;
+}
+
+.nova-schedule-empty h2{
+  max-width:680px;
+  margin:10px 0 10px;
+  font-size:clamp(27px,4vw,44px);
+  line-height:1.03;
+  letter-spacing:-.055em;
+}
+
+.nova-schedule-empty p{
+  max-width:720px;
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.7;
+}
+
+.nova-schedule-empty .primary{
+  margin-top:24px;
+  min-height:48px;
+  padding:0 20px;
+  font-size:11px;
+  border-radius:14px;
+  box-shadow:
+    0 12px 28px rgba(60,110,255,.22);
+}
+
+.nova-schedule-empty-note{
+  display:block;
+  max-width:700px;
+  margin-top:15px;
+  color:var(--muted-2);
+  font-size:8px;
+  line-height:1.6;
+}
+
+/* ---------------------------------------------------------
+   MODAL
+   --------------------------------------------------------- */
+
+.nova-schedule-backdrop{
+  background:
+    radial-gradient(
+      circle at 50% 10%,
+      rgba(35,120,255,.11),
+      transparent 38%
+    ),
+    rgba(4,8,15,.68);
+  backdrop-filter:blur(18px);
+}
+
+.nova-schedule-modal{
+  width:min(760px,calc(100vw - 28px));
+  max-height:min(88vh,900px);
+  overflow:auto;
+  padding:0;
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 13%,
+    var(--line)
+  );
+  border-radius:26px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(78,104,255,.10),
+      transparent 35%
+    ),
+    var(--surface);
+  box-shadow:
+    0 34px 110px rgba(0,0,0,.38),
+    0 0 0 1px rgba(255,255,255,.025) inset;
+}
+
+.nova-schedule-modal .modal-head{
+  position:sticky;
+  top:0;
+  z-index:4;
+  padding:23px 24px 18px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb,var(--surface) 97%,transparent),
+      color-mix(in srgb,var(--surface) 88%,transparent)
+    );
+  backdrop-filter:blur(14px);
+}
+
+.nova-schedule-modal .modal-head h2{
+  margin-top:6px;
+  font-size:25px;
+  letter-spacing:-.045em;
+}
+
+.nova-schedule-modal .icon-btn{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+}
+
+.nova-schedule-steps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  padding:4px 24px 0;
+}
+
+.nova-schedule-step{
+  min-width:0;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:
+    linear-gradient(
+      145deg,
+      var(--surface-2),
+      color-mix(in srgb,var(--surface-2) 82%,transparent)
+    );
+}
+
+.nova-schedule-step > span{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  margin-bottom:10px;
+  border-radius:9px;
+  color:#fff;
+  background:linear-gradient(145deg,#22b8ff,#5d6cff);
+  font-size:9px;
+  font-weight:900;
+}
+
+.nova-schedule-step b,
+.nova-schedule-step small{
+  display:block;
+}
+
+.nova-schedule-step b{
+  color:var(--text);
+  font-size:10px;
+  line-height:1.35;
+}
+
+.nova-schedule-step small{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.45;
+}
+
+.nova-schedule-telegram{
+  display:inline-flex;
+  margin-top:10px;
+  color:var(--accent);
+  font-size:8px;
+  font-weight:900;
+  text-decoration:none;
+}
+
+.nova-schedule-ai-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:16px 24px 0;
+  padding:13px 14px;
+  border:1px solid color-mix(
+    in srgb,
+    var(--accent) 13%,
+    var(--line)
+  );
+  border-radius:15px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23,188,255,.07),
+      rgba(91,99,255,.05)
+    );
+}
+
+.nova-schedule-ai-note > .icon{
+  flex:0 0 auto;
+  margin-top:1px;
+  color:var(--accent);
+}
+
+.nova-schedule-ai-note b,
+.nova-schedule-ai-note small{
+  display:block;
+}
+
+.nova-schedule-ai-note b{
+  font-size:9px;
+}
+
+.nova-schedule-ai-note small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.5;
+}
+
+.nova-schedule-input-label{
+  display:block;
+  margin:18px 24px 0;
+  color:var(--text);
+  font-size:9px;
+  font-weight:850;
+}
+
+.nova-schedule-input-label textarea{
+  display:block;
+  width:100%;
+  min-height:245px;
+  margin-top:8px;
+  padding:14px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface-2),
+      color-mix(in srgb,var(--surface-2) 86%,transparent)
+    );
+  color:var(--text);
+  outline:none;
+  font:inherit;
+  font-size:10px;
+  line-height:1.55;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background .2s ease;
+}
+
+.nova-schedule-input-label textarea::placeholder{
+  color:var(--muted-2);
+}
+
+.nova-schedule-input-label textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px rgba(24,183,255,.08);
+  background:var(--surface);
+}
+
+.nova-schedule-error{
+  min-height:18px;
+  margin:8px 24px 0;
+  color:#ff718f;
+  font-size:8px;
+  line-height:1.5;
+}
+
+.nova-schedule-footer{
+  position:sticky;
+  bottom:0;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:12px;
+  padding:15px 24px 20px;
+  border-top:1px solid var(--line);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb,var(--surface) 84%,transparent),
+      var(--surface)
+    );
+  backdrop-filter:blur(14px);
+}
+
+.nova-schedule-footer small{
+  max-width:390px;
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.5;
+}
+
+.nova-schedule-footer .primary{
+  flex:0 0 auto;
+  min-height:45px;
+  padding:0 17px;
+  border-radius:13px;
+}
+
+/* ---------------------------------------------------------
+   WEEK PAGE
+   --------------------------------------------------------- */
+
+.nova-schedule-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.nova-schedule-actions .secondary{
+  min-height:40px;
+}
+
+.nova-schedule-actions .icon-btn{
+  width:40px;
+  height:40px;
+  color:#ff718f;
+}
+
+.nova-schedule-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:16px;
+  padding:17px;
+  border:1px solid var(--line);
+  border-radius:19px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(85,107,255,.10),
+      transparent 30%
+    ),
+    var(--surface);
+  box-shadow:0 12px 32px rgba(0,0,0,.07);
+}
+
+.nova-schedule-summary-main{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.nova-schedule-summary-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  color:var(--accent);
+  background:rgba(24,183,255,.08);
+  border:1px solid rgba(24,183,255,.12);
+}
+
+.nova-schedule-summary-main b,
+.nova-schedule-summary-main small{
+  display:block;
+}
+
+.nova-schedule-summary-main b{
+  font-size:11px;
+}
+
+.nova-schedule-summary-main small{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-schedule-summary-stats{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.nova-schedule-summary-stats span{
+  min-width:62px;
+  padding:9px 10px;
+  text-align:center;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface-2);
+}
+
+.nova-schedule-summary-stats b,
+.nova-schedule-summary-stats small{
+  display:block;
+}
+
+.nova-schedule-summary-stats b{
+  font-size:14px;
+}
+
+.nova-schedule-summary-stats small{
+  margin-top:2px;
+  color:var(--muted);
+  font-size:7px;
+}
+
+.nova-schedule-day{
+  margin-bottom:13px;
+  border:1px solid var(--line);
+  border-radius:19px;
+  overflow:hidden;
+  background:var(--surface);
+}
+
+.nova-schedule-day.is-today{
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 30%,
+    var(--line)
+  );
+  box-shadow:
+    0 16px 40px rgba(24,183,255,.07);
+}
+
+.nova-schedule-day-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 15px;
+  border-bottom:1px solid var(--line);
+  background:
+    linear-gradient(
+      145deg,
+      var(--surface-2),
+      transparent
+    );
+}
+
+.nova-schedule-day-head div > span{
+  color:var(--text);
+  font-size:10px;
+  font-weight:850;
+  text-transform:capitalize;
+}
+
+.nova-schedule-day-head b{
+  display:inline-flex;
+  margin-left:7px;
+  padding:4px 7px;
+  border-radius:7px;
+  color:var(--accent);
+  background:rgba(24,183,255,.08);
+  font-size:7px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.nova-schedule-day-head small{
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-schedule-day-list{
+  display:grid;
+}
+
+.nova-schedule-lesson{
+  display:grid;
+  grid-template-columns:64px 4px minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  min-height:76px;
+  padding:12px 15px;
+  border-bottom:1px solid var(--line);
+  transition:
+    background .18s ease,
+    transform .18s ease;
+}
+
+.nova-schedule-lesson:last-child{
+  border-bottom:0;
+}
+
+.nova-schedule-lesson:hover{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(24,183,255,.035),
+      transparent
+    );
+}
+
+.nova-schedule-lesson.is-today{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(24,183,255,.045),
+      transparent 45%
+    );
+}
+
+.nova-schedule-lesson-time b,
+.nova-schedule-lesson-time small{
+  display:block;
+}
+
+.nova-schedule-lesson-time b{
+  font-size:13px;
+  letter-spacing:-.03em;
+}
+
+.nova-schedule-lesson-time small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-schedule-lesson-line{
+  width:4px;
+  height:42px;
+  border-radius:99px;
+  background:var(--accent);
+}
+
+.schedule-tone-practice
+.nova-schedule-lesson-line{
+  background:#54d89a;
+}
+
+.schedule-tone-lecture
+.nova-schedule-lesson-line{
+  background:#63a8ff;
+}
+
+.schedule-tone-lab
+.nova-schedule-lesson-line{
+  background:#ff718f;
+}
+
+.schedule-tone-seminar
+.nova-schedule-lesson-line{
+  background:#ad88ff;
+}
+
+.nova-schedule-lesson-main{
+  min-width:0;
+}
+
+.nova-schedule-lesson-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.nova-schedule-lesson-title b{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+}
+
+.nova-schedule-lesson-emoji{
+  flex:0 0 auto;
+  font-size:11px;
+}
+
+.nova-schedule-lesson-type{
+  display:inline-block;
+  margin-top:4px;
+  color:var(--accent);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+
+.nova-schedule-lesson-meta{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-schedule-pair{
+  align-self:start;
+  margin-top:2px;
+  padding:5px 7px;
+  border-radius:7px;
+  color:var(--muted);
+  background:var(--surface-2);
+  font-size:7px;
+  white-space:nowrap;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media(max-width:760px){
+
+  .nova-schedule-empty{
+    padding:28px 22px 24px;
+    border-radius:22px;
+  }
+
+  .nova-schedule-steps{
+    grid-template-columns:1fr;
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .nova-schedule-modal .modal-head{
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .nova-schedule-ai-note,
+  .nova-schedule-input-label,
+  .nova-schedule-error{
+    margin-left:18px;
+    margin-right:18px;
+  }
+
+  .nova-schedule-footer{
+    align-items:stretch;
+    flex-direction:column;
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .nova-schedule-footer small{
+    max-width:none;
+  }
+
+  .nova-schedule-footer .primary{
+    width:100%;
+  }
+
+  .nova-schedule-summary{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .nova-schedule-lesson{
+    grid-template-columns:52px 3px minmax(0,1fr);
+    gap:9px;
+    padding:11px;
+  }
+
+  .nova-schedule-pair{
+    grid-column:3;
+    justify-self:start;
+  }
+
+}
+
+@media(max-width:480px){
+
+  .nova-schedule-empty h2{
+    font-size:26px;
+  }
+
+  .nova-schedule-empty p{
+    font-size:10px;
+  }
+
+  .nova-schedule-summary-stats{
+    width:100%;
+  }
+
+  .nova-schedule-summary-stats span{
+    flex:1;
+  }
+
+}
