@@ -1220,59 +1220,190 @@ function novaDashboardDeadlineRows(tasks, limit=6){
 }
 
 function novaDashboardNextAction(tasks){
+
   const now =
-    Date.now() / 1000;
+    Date.now()/1000;
 
-  const taskItems =
-    (tasks || [])
-      .map(task => ({
-        task,
-        due:novaDashboardTaskDue(task)
-      }))
-      .filter(
-        item =>
-          item.due > 0
-      )
-      .sort(
-        (a,b) => {
-          const aOverdue =
-            a.due < now ? 0 : 1;
-          const bOverdue =
-            b.due < now ? 0 : 1;
+  const candidates=[];
 
-          if(aOverdue !== bOverdue){
-            return aOverdue - bOverdue;
-          }
+  const addDueCandidate=(
+    item,
+    kind
+  )=>{
+    const due=
+      novaDashboardTaskDue(item) ||
+      activityDue(item);
 
-          return a.due - b.due;
-        }
-      );
+    if(!due || due<=0){
+      return;
+    }
 
-  if(taskItems.length){
-    return {
-      kind:'task',
-      task:taskItems[0].task,
-      due:taskItems[0].due
-    };
+    const distance=
+      due-now;
+
+    let score=0;
+
+    if(distance<0){
+      score=1000000000+
+        Math.min(
+          86400000,
+          Math.abs(distance)
+        );
+    }else if(distance<=3600){
+      score=900000000-
+        distance;
+    }else if(distance<=86400){
+      score=700000000-
+        distance;
+    }else if(distance<=259200){
+      score=500000000-
+        distance;
+    }else{
+      score=300000000-
+        Math.min(
+          distance,
+          30*86400
+        );
+    }
+
+    candidates.push({
+      kind,
+      item,
+      task:
+        kind==='task'
+          ? item
+          : null,
+      test:
+        kind==='test'
+          ? item
+          : null,
+      due,
+      score
+    });
+  };
+
+  for(
+    const task of
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : []
+  ){
+    addDueCandidate(
+      task,
+      'task'
+    );
   }
 
+  for(
+    const test of
+    Array.isArray(state.data.tests)
+      ? state.data.tests
+      : []
+  ){
+    addDueCandidate(
+      test,
+      'test'
+    );
+  }
+
+  /*
+   * Unread messages are actionable,
+   * but a concrete deadline wins over them.
+   */
+  const unread=
+    novaDashboardUnreadMessages();
+
+  if(unread>0){
+
+    candidates.push({
+      kind:'message',
+      score:600000000+
+        Math.min(
+          unread,
+          99
+        ),
+      unread
+    });
+
+  }
+
+  /*
+   * The imported schedule is another real source
+   * of immediate actions.
+   */
   if(
     state.scheduleImport &&
     novaScheduleIsCurrent() &&
-    typeof novaScheduleNextLesson === 'function'
+    typeof novaScheduleNextLesson==='function'
   ){
-    const next =
+
+    const lesson=
       novaScheduleNextLesson();
 
-    if(next){
-      return {
+    if(lesson){
+
+      const lessonDate=
+        scheduleDateKey(
+          lesson.date
+        );
+
+      const todayKey=
+        scheduleTodayKey();
+
+      let score=
+        lesson.diffDays===0
+          ? 450000000
+          : lesson.diffDays===1
+            ? 250000000
+            : 100000000;
+
+      if(
+        lessonDate===todayKey &&
+        Number.isFinite(
+          Number(lesson.startMinutes)
+        )
+      ){
+
+        const currentMinutes=
+          new Date().getHours()*60+
+          new Date().getMinutes();
+
+        const minutesUntil=
+          Number(
+            lesson.startMinutes
+          )-
+          currentMinutes;
+
+        if(
+          minutesUntil>=0 &&
+          minutesUntil<=120
+        ){
+          score=
+            650000000-
+            minutesUntil;
+        }
+
+      }
+
+      candidates.push({
         kind:'lesson',
-        lesson:next
-      };
+        lesson,
+        score
+      });
     }
   }
 
-  return null;
+  if(!candidates.length){
+    return null;
+  }
+
+  candidates.sort(
+    (a,b)=>
+      Number(b.score||0)-
+      Number(a.score||0)
+  );
+
+  return candidates[0];
 }
 
 function novaDashboardAgendaRows(){
@@ -1411,6 +1542,42 @@ function novaDashboardImportantItems(tasks, grades){
 
   const deadlines =
     novaDashboardDeadlineRows(tasks,1)[0];
+
+  const tests=
+    Array.isArray(state.data.tests)
+      ? state.data.tests
+      : [];
+
+  if(tests.length){
+    const test=
+      tests
+        .map(item=>({
+          item,
+          due:
+            activityDue(item)
+        }))
+        .filter(
+          entry=>entry.due
+        )
+        .sort(
+          (a,b)=>
+            a.due-b.due
+        )[0];
+
+    if(test){
+      items.push({
+        icon:'quiz',
+        tone:'grade',
+        title:
+          test.item?.name||
+          test.item?.identity?.name||
+          'Ближайший тест',
+        meta:
+          `Тест · ${formatDate(test.due)}`,
+        activity:test.item
+      });
+    }
+  }
 
   if(deadlines){
     const info =
@@ -2131,10 +2298,170 @@ function novaNextLessonPanel(){
 }
 
 
-function novaDashboardUpdateItems(limit=5){
+function novaGlobalUpdateStorageKey(){
+  return 'nova-whats-new-v1';
+}
 
-  const items=[];
+function novaGlobalUpdateNormalizeTimestamp(value){
+  const n=Number(value||0);
 
+  if(!Number.isFinite(n)||n<=0){
+    return 0;
+  }
+
+  return n>20000000000
+    ? Math.floor(n/1000)
+    : Math.floor(n);
+}
+
+function novaGlobalUpdateActivityRef(item){
+  if(!item){
+    return null;
+  }
+
+  const ref=
+    item?.ref||
+    item?.activity?.ref;
+
+  if(!ref?.courseId){
+    return null;
+  }
+
+  return {
+    courseId:Number(ref.courseId)||null,
+    cmid:Number(ref.cmid)||null,
+    instance:Number(ref.instance)||null,
+    contextId:Number(ref.contextId)||null,
+    type:String(ref.type||'').toLowerCase()||null
+  };
+}
+
+function novaGlobalUpdateIdentity(item,fallback=''){
+  const ref=
+    novaGlobalUpdateActivityRef(item);
+
+  if(ref){
+    return [
+      'activity',
+      ref.courseId||0,
+      ref.cmid||0,
+      ref.instance||0,
+      ref.type||'activity'
+    ].join(':');
+  }
+
+  if(item?.id!=null){
+    return `${fallback}:id:${item.id}`;
+  }
+
+  return [
+    fallback,
+    item?.courseId||'',
+    item?.course||'',
+    item?.name||'',
+    item?.identity?.name||''
+  ].join(':').toLowerCase();
+}
+
+function novaGlobalUpdateFingerprint(value){
+  try{
+    return JSON.stringify(value);
+  }catch{
+    return String(value||'');
+  }
+}
+
+function novaGlobalUpdateCourseName(item){
+  return (
+    item?.relations?.course?.name||
+    item?.course?.fullname||
+    item?.course?.name||
+    item?.course||
+    activityCourseName(item)
+  );
+}
+
+function novaGlobalUpdateBuildSnapshot(){
+
+  const snapshot={};
+  const rows=[];
+
+  const add=(entry)=>{
+    if(!entry?.id){
+      return;
+    }
+
+    snapshot[entry.id]={
+      fingerprint:entry.fingerprint,
+      title:entry.title,
+      meta:entry.meta,
+      type:entry.type,
+      icon:entry.icon,
+      ref:entry.ref||null,
+      go:entry.go||null,
+      param:entry.param||''
+    };
+
+    rows.push({
+      ...snapshot[entry.id],
+      id:entry.id
+    });
+  };
+
+  /*
+   * COURSES
+   */
+  for(
+    const course of
+    Array.isArray(state.data.courses)
+      ? state.data.courses
+      : []
+  ){
+
+    const title=
+      course?.fullnamedisplay||
+      course?.fullname||
+      course?.shortname||
+      course?.title||
+      'Курс';
+
+    const id=
+      novaGlobalUpdateIdentity(
+        course,
+        'course'
+      );
+
+    add({
+      id,
+      type:'course',
+      icon:'grid',
+      title,
+      meta:'Курс',
+      ref:null,
+      go:'course',
+      param:String(
+        course?.id||
+        course?.ref?.courseId||
+        ''
+      ),
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          shortname:
+            course?.shortname||
+            course?.shortName||
+            '',
+          summary:
+            course?.summary||
+            course?.description||
+            ''
+        })
+    });
+  }
+
+  /*
+   * TASKS
+   */
   for(
     const task of
     Array.isArray(state.data.tasks)
@@ -2142,63 +2469,269 @@ function novaDashboardUpdateItems(limit=5){
       : []
   ){
 
-    const due=
-      novaDashboardTaskDue(
-        task
+    const title=
+      task?.name||
+      task?.identity?.name||
+      'Задание';
+
+    const id=
+      novaGlobalUpdateIdentity(
+        task,
+        'task'
       );
 
-    if(!due){
-      continue;
-    }
-
-    items.push({
+    add({
+      id,
       type:'task',
       icon:'check-square',
-      title:
-        task?.name||
-        task?.identity?.name||
-        'Новое задание',
+      title,
       meta:
-        `Задание · ${activityCourseName(task)}`,
-      time:due,
-      activity:task
+        `Задание · ${novaGlobalUpdateCourseName(task)}`,
+      ref:novaGlobalUpdateActivityRef(task),
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          due:
+            task?.due||
+            activityDue(task)||
+            0,
+          description:
+            task?.description||
+            task?.content?.description||
+            '',
+          state:
+            task?.state||
+            task?.completion||
+            null
+        })
     });
   }
 
+  /*
+   * TESTS
+   */
+  for(
+    const test of
+    Array.isArray(state.data.tests)
+      ? state.data.tests
+      : []
+  ){
+
+    const title=
+      test?.name||
+      test?.identity?.name||
+      'Тест';
+
+    const id=
+      novaGlobalUpdateIdentity(
+        test,
+        'test'
+      );
+
+    add({
+      id,
+      type:'test',
+      icon:'quiz',
+      title,
+      meta:
+        `Тест · ${novaGlobalUpdateCourseName(test)}`,
+      ref:novaGlobalUpdateActivityRef(test),
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          dates:
+            test?.content?.dates||
+            test?.dates||
+            [],
+          description:
+            test?.description||
+            test?.content?.description||
+            '',
+          state:
+            test?.state||
+            null
+        })
+    });
+  }
+
+  /*
+   * MATERIALS
+   */
+  for(
+    const material of
+    Array.isArray(state.data.materials)
+      ? state.data.materials
+      : []
+  ){
+
+    const title=
+      material?.name||
+      material?.identity?.name||
+      'Материал';
+
+    const id=
+      novaGlobalUpdateIdentity(
+        material,
+        'material'
+      );
+
+    add({
+      id,
+      type:'material',
+      icon:'book',
+      title,
+      meta:
+        `Материал · ${novaGlobalUpdateCourseName(material)}`,
+      ref:novaGlobalUpdateActivityRef(material),
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          description:
+            material?.description||
+            material?.content?.description||
+            '',
+          files:
+            material?.content?.files||
+            []
+        })
+    });
+  }
+
+  /*
+   * FILES
+   */
+  for(
+    const entry of
+    Array.isArray(state.data.files)
+      ? state.data.files
+      : []
+  ){
+
+    const activity=
+      entry?.activity||
+      {};
+
+    const file=
+      entry?.file||
+      {};
+
+    const title=
+      file?.filename||
+      activity?.identity?.name||
+      'Файл';
+
+    const id=
+      [
+        'file',
+        novaGlobalUpdateIdentity(
+          activity,
+          'activity'
+        ),
+        title
+      ]
+        .join(':')
+        .toLowerCase();
+
+    add({
+      id,
+      type:'file',
+      icon:'file',
+      title,
+      meta:
+        `Файл · ${novaGlobalUpdateCourseName(activity)}`,
+      ref:
+        novaGlobalUpdateActivityRef(
+          activity
+        ),
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          mimetype:
+            file?.mimetype||
+            '',
+          filesize:
+            Number(file?.filesize||0),
+          filepath:
+            file?.filepath||
+            ''
+        })
+    });
+  }
+
+  /*
+   * MESSAGES
+   */
   for(
     const conversation of
     state.data.messages?.conversations||
     []
   ){
 
+    const messages=
+      Array.isArray(
+        conversation?.messages
+      )
+        ? conversation.messages
+        : [];
+
     const latest=
-      conversation?.messages?.[0]||
+      messages[0]||
       {};
 
-    const timestamp=
-      Number(
+    const title=
+      conversation?.name||
+      'Диалог';
+
+    const latestTimestamp=
+      novaGlobalUpdateNormalizeTimestamp(
         latest?.timecreated||
         conversation?.timemodified||
         conversation?.timecreated||
         0
       );
 
-    if(!timestamp){
-      continue;
-    }
+    const id=
+      [
+        'message',
+        conversation?.id||
+        conversation?.userid||
+        title
+      ]
+        .join(':')
+        .toLowerCase();
 
-    items.push({
+    add({
+      id,
       type:'message',
       icon:'message',
-      title:
-        conversation?.name||
-        'Новое сообщение',
-      meta:'Новое сообщение',
-      time:timestamp,
-      go:'messages'
+      title,
+      meta:
+        Number(
+          conversation?.unreadcount||0
+        )>0
+          ? `Сообщения · ${conversation.unreadcount} новых`
+          : 'Сообщения',
+      go:'messages',
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          unread:
+            Number(
+              conversation?.unreadcount||0
+            ),
+          latest:
+            messageText(
+              latest?.text||
+              latest?.message||
+              ''
+            ),
+          latestTimestamp
+        })
     });
   }
 
+  /*
+   * GRADES
+   */
   for(
     const grade of
     Array.isArray(state.data.grades)
@@ -2206,50 +2739,262 @@ function novaDashboardUpdateItems(limit=5){
       : []
   ){
 
-    const timestamp=
-      Number(
-        grade?.timemodified||
-        grade?.timecreated||
-        0
+    const title=
+      grade?.course||
+      grade?.name||
+      'Оценка';
+
+    const id=
+      novaGlobalUpdateIdentity(
+        grade,
+        'grade'
       );
 
-    if(!timestamp){
-      continue;
-    }
-
-    items.push({
+    add({
+      id,
       type:'grade',
       icon:'chart',
-      title:
-        grade?.course||
-        grade?.name||
-        'Новая оценка',
+      title,
       meta:
         `Оценка · ${grade?.grade??'—'}`,
-      time:timestamp,
-      go:'grades'
+      go:'grades',
+      fingerprint:
+        novaGlobalUpdateFingerprint({
+          title,
+          grade:
+            grade?.grade||
+            '',
+          percentage:
+            grade?.percentage||
+            grade?.contribution||
+            '',
+          range:
+            grade?.range||
+            '',
+          modified:
+            grade?.timemodified||
+            grade?.timecreated||
+            0
+        })
     });
   }
 
-  return items
-    .sort(
-      (a,b)=>
-        Number(b.time||0)-
-        Number(a.time||0)
-    )
+  return {
+    snapshot,
+    rows
+  };
+}
+
+function novaGlobalUpdateReadStore(){
+
+  try{
+    const raw=
+      localStorage.getItem(
+        novaGlobalUpdateStorageKey()
+      );
+
+    if(!raw){
+      return {
+        initialized:false,
+        snapshot:{},
+        events:[]
+      };
+    }
+
+    const parsed=
+      JSON.parse(raw);
+
+    return {
+      initialized:
+        parsed?.initialized===true,
+      snapshot:
+        parsed?.snapshot&&
+        typeof parsed.snapshot==='object'
+          ? parsed.snapshot
+          : {},
+      events:
+        Array.isArray(parsed?.events)
+          ? parsed.events
+          : []
+    };
+
+  }catch{
+    return {
+      initialized:false,
+      snapshot:{},
+      events:[]
+    };
+  }
+}
+
+function novaGlobalUpdateWriteStore(store){
+
+  try{
+    localStorage.setItem(
+      novaGlobalUpdateStorageKey(),
+      JSON.stringify({
+        initialized:Boolean(
+          store.initialized
+        ),
+        snapshot:
+          store.snapshot||
+          {},
+        events:
+          Array.isArray(store.events)
+            ? store.events.slice(0,30)
+            : []
+      })
+    );
+  }catch{
+  }
+}
+
+function novaGlobalUpdateCommit(){
+
+  const built=
+    novaGlobalUpdateBuildSnapshot();
+
+  const store=
+    novaGlobalUpdateReadStore();
+
+  /*
+   * First sync creates the baseline.
+   * We intentionally do NOT call everything "new".
+   */
+  if(!store.initialized){
+
+    novaGlobalUpdateWriteStore({
+      initialized:true,
+      snapshot:built.snapshot,
+      events:[]
+    });
+
+    return [];
+  }
+
+  const events=[];
+
+  for(
+    const row of
+    built.rows
+  ){
+
+    const previous=
+      store.snapshot[row.id];
+
+    if(!previous){
+      events.push({
+        type:row.type,
+        icon:row.icon,
+        title:row.title,
+        meta:row.meta,
+        ref:row.ref||
+          null,
+        go:row.go||
+          null,
+        param:row.param||
+          '',
+        label:'Новое',
+        detectedAt:Date.now()
+      });
+
+      continue;
+    }
+
+    if(
+      previous.fingerprint!==
+      row.fingerprint
+    ){
+      events.push({
+        type:row.type,
+        icon:row.icon,
+        title:row.title,
+        meta:row.meta,
+        ref:row.ref||
+          null,
+        go:row.go||
+          null,
+        param:row.param||
+          '',
+        label:'Обновлено',
+        detectedAt:Date.now()
+      });
+    }
+  }
+
+  /*
+   * Remove items that disappeared from the current Campus view.
+   * A removal is not presented as a "news" item.
+   */
+  const merged=[
+    ...events,
+    ...store.events
+  ];
+
+  const unique=[];
+  const seen=new Set();
+
+  for(
+    const event of
+    merged
+  ){
+
+    const identity=
+      [
+        event.type,
+        event.ref?.courseId||'',
+        event.ref?.cmid||'',
+        event.ref?.instance||'',
+        event.title,
+        event.label,
+        event.detectedAt
+      ].join(':');
+
+    if(seen.has(identity)){
+      continue;
+    }
+
+    seen.add(identity);
+    unique.push(event);
+
+    if(unique.length>=30){
+      break;
+    }
+  }
+
+  novaGlobalUpdateWriteStore({
+    initialized:true,
+    snapshot:built.snapshot,
+    events:unique
+  });
+
+  return unique;
+}
+
+function novaGlobalUpdateEvents(limit=6){
+
+  return novaGlobalUpdateReadStore()
+    .events
     .slice(0,limit);
+}
+
+function novaDashboardUpdateItems(limit=6){
+
+  return novaGlobalUpdateEvents(
+    limit
+  );
 }
 
 function novaDashboardUpdatesMarkup(){
 
   const items=
     novaDashboardUpdateItems(
-      5
+      6
     );
 
   return `
     <section
-      class="nova-command-panel nova-updates-panel"
+      class="nova-command-panel nova-updates-panel nova19-global-updates"
     >
 
       <div
@@ -2259,7 +3004,7 @@ function novaDashboardUpdatesMarkup(){
         <div>
 
           <span>
-            ПОСЛЕДНИЕ ИЗМЕНЕНИЯ
+            ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ
           </span>
 
           <h2>
@@ -2268,81 +3013,129 @@ function novaDashboardUpdatesMarkup(){
 
         </div>
 
-        <span
-          class="nova-command-live"
-        >
-          <i></i>
-          LIVE
-        </span>
+        ${
+          items.length
+            ? `
+              <span class="nova-command-live nova19-live">
+                <i></i>
+                ${items.length} СВЕЖИХ
+              </span>
+            `
+            : `
+              <span class="nova19-sync-state">
+                SYNC
+              </span>
+            `
+        }
 
       </div>
 
       ${
         items.length
           ? `
-            <div class="nova-update-list">
+            <div class="nova-update-list nova19-update-list">
 
               ${
-                items.map(item=>{
+                items
+                  .map(item=>{
 
-                  const attrs=
-                    item.activity
-                      ? `data-activity="${activityRefAttr(item.activity)}"`
-                      : `data-go="${esc(item.go||'dashboard')}"`;
+                    const attrs=
+                      item.ref
+                        ? `
+                          data-activity="${activityRefAttr(
+                            item.ref
+                          )}"
+                        `
+                        : `
+                          data-go="${esc(
+                            item.go||
+                            'dashboard'
+                          )}"
+                          ${
+                            item.param
+                              ? `data-param="${esc(item.param)}"`
+                              : ''
+                          }
+                        `;
 
-                  return `
-                    <button
-                      class="nova-update-row"
-                      type="button"
-                      ${attrs}
-                    >
-
-                      <span
-                        class="nova-update-icon ${esc(item.type)}"
+                    return `
+                      <button
+                        class="nova-update-row nova19-update-row"
+                        type="button"
+                        ${attrs}
                       >
-                        ${icon(item.icon,15)}
-                      </span>
 
-                      <span
-                        class="nova-update-copy"
-                      >
+                        <span
+                          class="nova-update-icon ${esc(
+                            item.type||
+                            'update'
+                          )}"
+                        >
+                          ${icon(
+                            item.icon||
+                            'sparkle',
+                            15
+                          )}
+                        </span>
 
-                        <b>
-                          ${esc(item.title)}
-                        </b>
+                        <span
+                          class="nova-update-copy"
+                        >
 
-                        <small>
-                          ${esc(item.meta)}
-                        </small>
+                          <b>
+                            ${esc(
+                              item.title||
+                              'Изменение'
+                            )}
+                          </b>
 
-                      </span>
+                          <small>
+                            ${esc(
+                              item.meta||
+                              'Campus'
+                            )}
+                          </small>
 
-                      <span
-                        class="nova-update-date"
-                      >
-                        ${
-                          item.type==='task'
-                            ? 'Срок · '
-                            : ''
-                        }
+                        </span>
 
-                        ${esc(
-                          formatDate(item.time)
+                        <span
+                          class="nova19-update-badge ${esc(
+                            item.label||
+                            'Новое'
+                          )}"
+                        >
+                          ${esc(
+                            item.label||
+                            'Новое'
+                          )}
+                        </span>
+
+                        <span
+                          class="nova-update-date"
+                        >
+                          ${esc(
+                            novaGlobalUpdateDate(
+                              item.detectedAt
+                            )
+                          )}
+                        </span>
+
+                        ${icon(
+                          'arrow',
+                          12
                         )}
-                      </span>
 
-                      ${icon('arrow',12)}
-
-                    </button>
-                  `;
-                }).join('')
+                      </button>
+                    `;
+                  })
+                  .join('')
               }
 
             </div>
           `
           : `
             <div
-              class="nova-command-empty compact"
+              class="nova-command-empty compact nova19-empty"
             >
 
               <span>
@@ -2350,14 +3143,17 @@ function novaDashboardUpdatesMarkup(){
               </span>
 
               <div>
+
                 <b>
-                  Пока ничего нового
+                  Изменений пока не обнаружено
                 </b>
 
                 <small>
-                  Новые задания, сообщения
-                  и оценки появятся здесь.
+                  Nova создала базовую точку данных.
+                  Новые и изменённые элементы появятся
+                  после следующей синхронизации с Campus.
                 </small>
+
               </div>
 
             </div>
@@ -2366,6 +3162,62 @@ function novaDashboardUpdatesMarkup(){
 
     </section>
   `;
+}
+
+function novaGlobalUpdateDate(timestamp){
+
+  const ts=
+    novaGlobalUpdateNormalizeTimestamp(
+      timestamp
+    );
+
+  if(!ts){
+    return 'сейчас';
+  }
+
+  const diff=
+    Math.max(
+      0,
+      Date.now()-
+      ts*1000
+    );
+
+  const minutes=
+    Math.floor(
+      diff/60000
+    );
+
+  if(minutes<1){
+    return 'сейчас';
+  }
+
+  if(minutes<60){
+    return `${minutes} мин назад`;
+  }
+
+  const hours=
+    Math.floor(
+      minutes/60
+    );
+
+  if(hours<24){
+    return `${hours} ч назад`;
+  }
+
+  const days=
+    Math.floor(
+      hours/24
+    );
+
+  if(days===1){
+    return 'вчера';
+  }
+
+  if(days<7){
+    return `${days} дн назад`;
+  }
+
+  return formatLong(ts);
 }
 
 function dashboard(){
@@ -2438,115 +3290,304 @@ function dashboard(){
 
   const actionMarkup =
     nextAction
-      ? (
-          nextAction.kind === 'task'
-            ? (() => {
-                const task =
-                  nextAction.task;
+      ? (()=>{
 
-                const info =
-                  novaDashboardDeadlineInfo(
-                    nextAction.due
-                  );
+          if(
+            nextAction.kind==='task'||
+            nextAction.kind==='test'
+          ){
 
-                return `
-                  <button
-                    class="nova-command-action"
-                    type="button"
-                    data-activity="${activityRefAttr(task)}"
-                  >
-                    <span class="nova-command-action-icon tone-${esc(info.tone)}">
-                      ${icon('check-square',20)}
-                    </span>
+            const item=
+              nextAction.item||
+              nextAction.task||
+              nextAction.test||
+              {};
 
-                    <span class="nova-command-action-main">
-                      <span class="nova-command-action-kicker">
-                        БЛИЖАЙШАЯ ЗАДАЧА
-                      </span>
+            const due=
+              nextAction.due||
+              activityDue(item);
 
-                      <b>
-                        ${esc(
-                          task?.name ||
-                          'Ближайшее задание'
-                        )}
-                      </b>
+            const info=
+              novaDashboardDeadlineInfo(
+                due
+              );
 
-                      <small>
-                        ${esc(
-                          activityCourseName(task)
-                        )}
-                      </small>
-                    </span>
+            const isTest=
+              nextAction.kind===
+              'test';
 
-                    <span class="nova-command-action-side">
-                      <strong>До ${esc(formatDate(nextAction.due))}</strong>
-                      <span>${icon('arrow',15)}</span>
-                    </span>
-                  </button>
-                `;
-              })()
-            : `
-                <button
-                  class="nova-command-action"
-                  type="button"
-                  data-go="schedule"
+            const actionText=
+              isTest
+                ? 'Пройти'
+                : 'Продолжить';
+
+            const kicker=
+              isTest
+                ? 'БЛИЖАЙШИЙ ТЕСТ'
+                : 'БЛИЖАЙШЕЕ ЗАДАНИЕ';
+
+            return `
+              <button
+                class="
+                  nova-command-action
+                  nova20-smart-action
+                "
+                type="button"
+                data-activity="${activityRefAttr(item)}"
+              >
+
+                <span
+                  class="
+                    nova-command-action-icon
+                    tone-${esc(info.tone)}
+                  "
                 >
-                  <span class="nova-command-action-icon tone-tomorrow">
-                    ${icon('clock',20)}
+                  ${icon(
+                    isTest
+                      ? 'quiz'
+                      : 'check-square',
+                    20
+                  )}
+                </span>
+
+                <span
+                  class="nova-command-action-main"
+                >
+
+                  <span
+                    class="nova-command-action-kicker"
+                  >
+                    ${kicker}
                   </span>
 
-                  <span class="nova-command-action-main">
-                    <span class="nova-command-action-kicker">
-                      ${
-                        nextAction.lesson?.isTomorrow
-                          ? 'ЗАВТРА'
-                          : 'СЛЕДУЮЩАЯ ПАРА'
-                      }
-                    </span>
+                  <b>
+                    ${esc(
+                      item?.name||
+                      item?.identity?.name||
+                      (
+                        isTest
+                          ? 'Ближайший тест'
+                          : 'Ближайшее задание'
+                      )
+                    )}
+                  </b>
 
-                    <b>
-                      ${esc(
-                        nextAction.lesson?.subject ||
-                        'Ближайшее занятие'
-                      )}
-                    </b>
+                  <small>
+                    ${esc(
+                      activityCourseName(
+                        item
+                      )
+                    )}
+                  </small>
 
-                    <small>
-                      ${esc(
-                        [
-                          nextAction.lesson?.start || '',
-                          nextAction.lesson?.room
-                            ? 'ауд. ' + nextAction.lesson.room
-                            : '',
-                          nextAction.lesson?.teacher || ''
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')
-                      )}
-                    </small>
+                </span>
+
+                <span
+                  class="nova-command-action-side"
+                >
+
+                  <strong>
+                    ${esc(
+                      info.label||
+                      formatDate(due)
+                    )}
+                  </strong>
+
+                  <span
+                    class="nova20-action-label"
+                  >
+                    ${actionText}
+                    ${icon('arrow',15)}
                   </span>
 
-                  <span class="nova-command-action-side">
-                    <strong>
-                      ${esc(
-                        nextAction.lesson?.start ||
-                        '--:--'
-                      )}
-                    </strong>
-                    <span>${icon('arrow',15)}</span>
+                </span>
+
+              </button>
+            `;
+          }
+
+          if(
+            nextAction.kind===
+            'message'
+          ){
+
+            return `
+              <button
+                class="
+                  nova-command-action
+                  nova20-smart-action
+                  nova20-message-action
+                "
+                type="button"
+                data-go="messages"
+              >
+
+                <span
+                  class="
+                    nova-command-action-icon
+                    tone-tomorrow
+                  "
+                >
+                  ${icon('message',20)}
+                </span>
+
+                <span
+                  class="nova-command-action-main"
+                >
+
+                  <span
+                    class="nova-command-action-kicker"
+                  >
+                    ВНИМАНИЕ
                   </span>
-                </button>
-              `
-        )
+
+                  <b>
+                    Новые сообщения
+                  </b>
+
+                  <small>
+                    ${esc(
+                      `${nextAction.unread} ${
+                        nextAction.unread===1
+                          ? 'непрочитанное сообщение'
+                          : 'непрочитанных сообщений'
+                      }`
+                    )}
+                  </small>
+
+                </span>
+
+                <span
+                  class="nova-command-action-side"
+                >
+
+                  <strong>
+                    ${esc(
+                      String(
+                        nextAction.unread
+                      )
+                    )}
+                  </strong>
+
+                  <span
+                    class="nova20-action-label"
+                  >
+                    Открыть
+                    ${icon('arrow',15)}
+                  </span>
+
+                </span>
+
+              </button>
+            `;
+          }
+
+          return `
+            <button
+              class="
+                nova-command-action
+                nova20-smart-action
+              "
+              type="button"
+              data-go="schedule"
+            >
+
+              <span
+                class="
+                  nova-command-action-icon
+                  tone-tomorrow
+                "
+              >
+                ${icon('clock',20)}
+              </span>
+
+              <span
+                class="nova-command-action-main"
+              >
+
+                <span
+                  class="nova-command-action-kicker"
+                >
+                  ${
+                    nextAction.lesson?.isTomorrow
+                      ? 'ЗАВТРА'
+                      : 'СЛЕДУЮЩАЯ ПАРА'
+                  }
+                }
+                
+                <b>
+                  ${esc(
+                    nextAction.lesson?.subject||
+                    'Ближайшее занятие'
+                  )}
+                </b>
+
+                <small>
+                  ${esc(
+                    [
+                      nextAction.lesson?.start||
+                        '',
+                      nextAction.lesson?.room
+                        ? 'ауд. '+
+                          nextAction.lesson.room
+                        : '',
+                      nextAction.lesson?.teacher||
+                        ''
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  )}
+                </small>
+
+              </span>
+
+              <span
+                class="nova-command-action-side"
+              >
+
+                <strong>
+                  ${esc(
+                    nextAction.lesson?.start||
+                    '--:--'
+                  )}
+                </strong>
+
+                <span
+                  class="nova20-action-label"
+                >
+                  Открыть
+                  ${icon('arrow',15)}
+                </span>
+
+              </span>
+
+            </button>
+          `;
+        })()
       : `
-          <div class="nova-command-empty">
-            <span>${icon('check',18)}</span>
+          <div
+            class="
+              nova-command-empty
+              nova20-smart-empty
+            "
+          >
+            <span>
+              ${icon('check',18)}
+            </span>
+
             <div>
-              <b>Сейчас всё спокойно</b>
-              <small>Новых задач с дедлайном и ближайших занятий нет.</small>
+              <b>
+                Сейчас всё спокойно
+              </b>
+
+              <small>
+                Нет срочных заданий, тестов,
+                сообщений или ближайших занятий.
+              </small>
             </div>
           </div>
         `;
+
 
   const agendaMarkup =
     agenda.length
@@ -13990,8 +15031,38 @@ async function loadData(service,force=false,epoch=state.routeEpoch){
 }
 async function loadDashboard(epoch=state.routeEpoch){
   if(!state.connected||epoch!==state.routeEpoch||state.route!=='dashboard')return;
-  state.status.dashboard='success'; state.errors.dashboard=null; render();
-  await Promise.allSettled([loadData('courses',false,epoch),loadData('calendar',false,epoch),loadData('grades',false,epoch),loadData('tasks',false,epoch),loadData('messages',false,epoch)]);
+
+  state.status.dashboard='success';
+  state.errors.dashboard=null;
+
+  render();
+
+  await Promise.allSettled([
+    loadData('courses',false,epoch),
+    loadData('calendar',false,epoch),
+    loadData('grades',false,epoch),
+    loadData('tasks',false,epoch),
+    loadData('messages',false,epoch),
+    loadData('files',false,epoch),
+    loadData('tests',false,epoch),
+    loadData('materials',false,epoch)
+  ]);
+
+  if(
+    epoch!==state.routeEpoch||
+    state.route!=='dashboard'
+  ){
+    return;
+  }
+
+  /*
+   * Commit only after the complete dashboard sync.
+   * This prevents intermediate renders from being
+   * mistaken for a full Campus snapshot.
+   */
+  novaGlobalUpdateCommit();
+
+  render();
 }
 async function loadRouteData(force=false,epoch=state.routeEpoch){
   const r=state.route;if(!state.connected||state.demo)return;
