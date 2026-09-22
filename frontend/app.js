@@ -4145,6 +4145,67 @@ function coursePage(){
         )
     ).length;
 
+
+  const activityKinds=
+    activities.map(activity=>{
+      const type=
+        String(
+          activity?.type||
+          activity?.modname||
+          ''
+        ).toLowerCase();
+
+      const hasFile=
+        Boolean(
+          Array.isArray(activity?.contents) &&
+          activity.contents.some(
+            file=>file?.fileurl
+          )
+        );
+
+      if(type==='quiz' || /quiz|test/.test(type)){
+        return 'tests';
+      }
+
+      if(
+        /assign|assignment|workshop|feedback|choice/.test(type)
+      ){
+        return 'tasks';
+      }
+
+      if(
+        hasFile ||
+        /(^|[-_])file$/.test(type) ||
+        type==='file'
+      ){
+        return 'files';
+      }
+
+      return 'materials';
+    });
+
+  const activityKindCount={
+    all:activities.length,
+    materials:activityKinds.filter(
+      x=>x==='materials'
+    ).length,
+    tasks:activityKinds.filter(
+      x=>x==='tasks'
+    ).length,
+    tests:activityKinds.filter(
+      x=>x==='tests'
+    ).length,
+    files:activityKinds.filter(
+      x=>x==='files'
+    ).length
+  };
+
+  const activeCourseFilter=
+    ['all','materials','tasks','tests','files']
+      .includes(state.courseFilter)
+      ? state.courseFilter
+      : 'all';
+
   const dueItems=
     activities
       .map(
@@ -4160,6 +4221,11 @@ function coursePage(){
     dueItems[0]||
     null;
 
+  const updateItems=
+    novaCourseUpdateItems(
+      activities
+    );
+
   const sectionMarkup=
     sections
       .map(
@@ -4173,6 +4239,7 @@ function coursePage(){
           return `
             <details
               class="course-section nova-course-section"
+              data-course-section="1"
               ${index<2?'open':''}
             >
 
@@ -4395,6 +4462,89 @@ function coursePage(){
         </div>
       `;
 
+  const updatesMarkup=
+    updateItems.length
+      ? `
+        <div class="nova18-updates-list">
+
+          ${
+            updateItems
+              .map(entry=>`
+                <button
+                  type="button"
+                  class="nova18-update-item"
+                  data-activity="${activityRefAttr(entry.item)}"
+                >
+
+                  <span class="nova18-update-icon">
+                    ${icon(
+                      novaCourseUpdateIcon(
+                        entry.item
+                      ),
+                      14
+                    )}
+                  </span>
+
+                  <span class="nova18-update-copy">
+
+                    <small>
+                      ${esc(
+                        novaCourseUpdateDate(
+                          entry.timestamp
+                        )
+                      )}
+                    </small>
+
+                    <b>
+                      ${esc(
+                        novaCourseUpdateKind(
+                          entry.item
+                        )
+                      )}
+                    </b>
+
+                    <span>
+                      ${esc(
+                        entry.item?.name||
+                        entry.item?.identity?.name||
+                        'Активность'
+                      )}
+                    </span>
+
+                  </span>
+
+                  <span class="nova18-update-arrow">
+                    ${icon('arrow',12)}
+                  </span>
+
+                </button>
+              `)
+              .join('')
+          }
+
+        </div>
+      `
+      : `
+        <div class="nova18-updates-empty">
+
+          <span>
+            ${icon('info',15)}
+          </span>
+
+          <div>
+            <b>
+              Изменения не определены
+            </b>
+
+            <small>
+              Campus не передал даты создания
+              или изменения активностей.
+            </small>
+          </div>
+
+        </div>
+      `;
+
   return `
     <section class="page course-page nova-course-page nova18-course-page">
 
@@ -4561,6 +4711,65 @@ function coursePage(){
 
       </div>
 
+      <div class="nova18-course-filters" role="tablist" aria-label="Фильтр содержимого курса">
+
+        <button
+          type="button"
+          class="nova18-course-filter ${activeCourseFilter==='all'?'active':''}"
+          data-course-filter="all"
+          role="tab"
+          aria-selected="${activeCourseFilter==='all'?'true':'false'}"
+        >
+          <span>Обзор</span>
+          <b>${activityKindCount.all}</b>
+        </button>
+
+        <button
+          type="button"
+          class="nova18-course-filter ${activeCourseFilter==='materials'?'active':''}"
+          data-course-filter="materials"
+          role="tab"
+          aria-selected="${activeCourseFilter==='materials'?'true':'false'}"
+        >
+          <span>Материалы</span>
+          <b>${activityKindCount.materials}</b>
+        </button>
+
+        <button
+          type="button"
+          class="nova18-course-filter ${activeCourseFilter==='tasks'?'active':''}"
+          data-course-filter="tasks"
+          role="tab"
+          aria-selected="${activeCourseFilter==='tasks'?'true':'false'}"
+        >
+          <span>Практики</span>
+          <b>${activityKindCount.tasks}</b>
+        </button>
+
+        <button
+          type="button"
+          class="nova18-course-filter ${activeCourseFilter==='tests'?'active':''}"
+          data-course-filter="tests"
+          role="tab"
+          aria-selected="${activeCourseFilter==='tests'?'true':'false'}"
+        >
+          <span>Тесты</span>
+          <b>${activityKindCount.tests}</b>
+        </button>
+
+        <button
+          type="button"
+          class="nova18-course-filter ${activeCourseFilter==='files'?'active':''}"
+          data-course-filter="files"
+          role="tab"
+          aria-selected="${activeCourseFilter==='files'?'true':'false'}"
+        >
+          <span>Файлы</span>
+          <b>${activityKindCount.files}</b>
+        </button>
+
+      </div>
+
       <div class="nova-course-layout nova18-course-layout">
 
         <main>
@@ -4607,6 +4816,28 @@ function coursePage(){
 
           <section class="nova18-next-card">
             ${nextDueMarkup}
+          </section>
+
+          <section class="nova18-updates-card">
+
+            <div class="nova18-updates-head">
+              <div>
+                <span class="nova18-mini-label">
+                  АКТИВНОСТЬ КУРСА
+                </span>
+
+                <b>
+                  Последние изменения
+                </b>
+              </div>
+
+              <span class="nova18-updates-badge">
+                ${updateItems.length||0}
+              </span>
+            </div>
+
+            ${updatesMarkup}
+
           </section>
 
           <section class="nova-course-side-card nova18-side-card">
@@ -4661,24 +4892,580 @@ function coursePage(){
   `;
 }
 
-function activity(a){
-  const file=Array.isArray(a.contents)&&a.contents.find(x=>x.fileurl);
-  const canDownload=Boolean(file?.fileurl);
-  const canOpen=Boolean(a.url || a.cmid || a.id);
-  const directFile=Boolean(canDownload && (!a.url || a.type==='file'));
-  const labels={resource:'Материал',file:'Файл',folder:'Папка',page:'Страница',url:'Ссылка',assign:'Задание',quiz:'Тест',lesson:'Урок',book:'Книга',forum:'Форум',label:'Блок',feedback:'Опрос',workshop:'Семинар',choice:'Выбор',glossary:'Глоссарий'};
-  const label=labels[a.type]||text(a.type||'Активность');
-  const glyph=a.type==='assign'||a.type==='feedback'?'check-square':a.type==='quiz'?'quiz':a.type==='resource'||a.type==='file'||canDownload?'download':a.type==='forum'?'message':'grid';
-  const ref={courseId:a.courseId||a.ref?.courseId||state.data.course?.id,cmid:a.cmid||a.id,instance:a.instance||null,contextId:a.contextId||null,type:a.type||a.modname||'unknown'};
-  const activityAttr=esc(encodeURIComponent(JSON.stringify(ref)));
-  const inner=`<span class="activity-icon ${esc(a.type||'activity')}">${icon(glyph,19)}</span><span><b>${esc(a.name||'Без названия')}</b><small>${esc(label)}${a.description?` · ${esc(text(a.description).slice(0,90))}`:''}${a.availabilityinfo?` · ${esc(text(a.availabilityinfo).slice(0,90))}`:''}${canDownload&&a.type!=='file'?` · ${esc(file.filename||'Файл доступен')}`:''}</small></span><em>${directFile?icon('download',16):canOpen?icon('arrow',16):''}</em>`;
-  if(!canOpen && !directFile) return `<div class="activity activity-static">${inner}</div>`;
-  const attrs=[];
-  if(!directFile) attrs.push(`data-activity="${activityAttr}"`);
-  if(canOpen) attrs.push(`data-view="${esc(a.url||'')}" data-route-url`);
-  if(directFile) attrs.push(`data-download="${esc(file.fileurl)}"`);
-  return `<button class="activity" ${attrs.join(' ')}>${inner}</button>`;
+
+function novaCourseUpdateTimestamp(value){
+  const n=Number(value||0);
+
+  if(!Number.isFinite(n) || n<=0){
+    return 0;
+  }
+
+  /*
+   * Moodle timestamps are normally seconds.
+   * Keep the helper defensive in case a connector returns ms.
+   */
+  return n>20000000000
+    ? Math.floor(n/1000)
+    : Math.floor(n);
 }
+
+function novaCourseActivityTimestamp(item){
+  const candidates=[
+    item?.timemodified,
+    item?.timecreated,
+    item?.content?.timemodified,
+    item?.content?.timecreated,
+    item?.metadata?.timemodified,
+    item?.metadata?.timecreated
+  ];
+
+  for(const value of candidates){
+    const ts=
+      novaCourseUpdateTimestamp(value);
+
+    if(ts){
+      return ts;
+    }
+  }
+
+  return 0;
+}
+
+function novaCourseUpdateKind(item){
+  const created=
+    novaCourseUpdateTimestamp(
+      item?.timecreated||
+      item?.content?.timecreated||
+      item?.metadata?.timecreated
+    );
+
+  const modified=
+    novaCourseUpdateTimestamp(
+      item?.timemodified||
+      item?.content?.timemodified||
+      item?.metadata?.timemodified
+    );
+
+  if(!modified && created){
+    return 'Добавлено';
+  }
+
+  if(
+    created &&
+    modified &&
+    Math.abs(modified-created)<=60
+  ){
+    return 'Добавлено';
+  }
+
+  if(modified){
+    return 'Обновлено';
+  }
+
+  if(created){
+    return 'Добавлено';
+  }
+
+  return 'Изменено';
+}
+
+function novaCourseUpdateDate(ts){
+  if(!ts){
+    return 'Дата не указана';
+  }
+
+  const now=
+    new Date();
+
+  const date=
+    new Date(Number(ts)*1000);
+
+  const sameDay=
+    now.getFullYear()===
+      date.getFullYear() &&
+    now.getMonth()===
+      date.getMonth() &&
+    now.getDate()===
+      date.getDate();
+
+  const yesterday=
+    new Date(now);
+
+  yesterday.setDate(
+    yesterday.getDate()-1
+  );
+
+  const isYesterday=
+    yesterday.getFullYear()===
+      date.getFullYear() &&
+    yesterday.getMonth()===
+      date.getMonth() &&
+    yesterday.getDate()===
+      date.getDate();
+
+  if(sameDay){
+    return `Сегодня · ${formatTime(ts)}`;
+  }
+
+  if(isYesterday){
+    return `Вчера · ${formatTime(ts)}`;
+  }
+
+  return `${formatLong(ts)} · ${formatTime(ts)}`;
+}
+
+function novaCourseUpdateIcon(item){
+  const type=
+    String(
+      item?.type||
+      item?.modname||
+      ''
+    ).toLowerCase();
+
+  if(/quiz|test/.test(type)){
+    return 'quiz';
+  }
+
+  if(/assign|assignment|workshop|feedback|choice/.test(type)){
+    return 'check-square';
+  }
+
+  if(
+    type==='file'||
+    /(^|[-_])file$/.test(type)
+  ){
+    return 'download';
+  }
+
+  return 'book';
+}
+
+function novaCourseUpdateItems(activities){
+  return (Array.isArray(activities)?activities:[])
+    .map(item=>({
+      item,
+      timestamp:
+        novaCourseActivityTimestamp(item)
+    }))
+    .filter(entry=>entry.timestamp>0)
+    .sort(
+      (a,b)=>
+        b.timestamp-a.timestamp
+    )
+    .slice(0,6);
+}
+
+function activity(a){
+
+  const file=
+    Array.isArray(a.contents)
+      ? a.contents.find(
+          x=>x.fileurl
+        )
+      : null;
+
+  const canDownload=
+    Boolean(file?.fileurl);
+
+  const canOpen=
+    Boolean(
+      a.url||
+      a.cmid||
+      a.id
+    );
+
+  const directFile=
+    Boolean(
+      canDownload &&
+      (!a.url || a.type==='file')
+    );
+
+  const type=
+    String(
+      a.type||
+      a.modname||
+      ''
+    ).toLowerCase();
+
+  const kind=
+    type==='quiz'||
+    /quiz|test/.test(type)
+      ? 'tests'
+      : /assign|assignment|workshop|feedback|choice/.test(type)
+        ? 'tasks'
+        : (
+            canDownload||
+            type==='file'||
+            /(^|[-_])file$/.test(type)
+          )
+          ? 'files'
+          : 'materials';
+
+  const labels={
+    resource:'Материал',
+    file:'Файл',
+    folder:'Папка',
+    page:'Страница',
+    url:'Ссылка',
+    assign:'Задание',
+    quiz:'Тест',
+    lesson:'Урок',
+    book:'Книга',
+    forum:'Форум',
+    label:'Блок',
+    feedback:'Опрос',
+    workshop:'Семинар',
+    choice:'Выбор',
+    glossary:'Глоссарий'
+  };
+
+  const label=
+    labels[a.type]||
+    text(a.type||'Активность');
+
+  const glyph=
+    a.type==='assign'||
+    a.type==='feedback'||
+    a.type==='workshop'
+      ? 'check-square'
+      : a.type==='quiz'
+        ? 'quiz'
+        : a.type==='resource'||
+          a.type==='file'||
+          canDownload
+          ? 'download'
+          : a.type==='forum'
+            ? 'message'
+            : 'grid';
+
+  const due=
+    activityDue(a);
+
+  const now=
+    Date.now();
+
+  const isCompleted=(()=>{
+    const completionState=
+      Number(a?.completionstate);
+
+    if(Number.isFinite(completionState)){
+      return completionState>0;
+    }
+
+    if(a?.completion?.state!==undefined){
+      return Number(a.completion.state)>0;
+    }
+
+    if(
+      a?.completed===true||
+      a?.completion?.completed===true
+    ){
+      return true;
+    }
+
+    const normalized=
+      String(
+        a?.status||
+        a?.state||
+        a?.completionstatus||
+        ''
+      ).toLowerCase();
+
+    return (
+      normalized==='complete'||
+      normalized==='completed'||
+      normalized==='done'||
+      normalized==='finished'
+    );
+  })();
+
+  const isIncompleteExplicit=(()=>{
+    const completionState=
+      Number(a?.completionstate);
+
+    if(Number.isFinite(completionState)){
+      return completionState===0;
+    }
+
+    const normalized=
+      String(
+        a?.status||
+        a?.state||
+        a?.completionstatus||
+        ''
+      ).toLowerCase();
+
+    return (
+      normalized==='incomplete'||
+      normalized==='not completed'||
+      normalized==='not_started'||
+      normalized==='not-started'
+    );
+  })();
+
+  let stateTone='neutral';
+  let stateLabel='Без статуса';
+
+  if(isCompleted){
+    stateTone='complete';
+    stateLabel='Выполнено';
+  }else if(due && due<now){
+    stateTone='overdue';
+    stateLabel='Просрочено';
+  }else if(due){
+
+    const dateNow=
+      new Date(now);
+
+    const dateDue=
+      new Date(due);
+
+    const sameDay=
+      dateNow.getFullYear()===
+      dateDue.getFullYear() &&
+      dateNow.getMonth()===
+      dateDue.getMonth() &&
+      dateNow.getDate()===
+      dateDue.getDate();
+
+    const tomorrow=
+      new Date(dateNow);
+
+    tomorrow.setDate(
+      tomorrow.getDate()+1
+    );
+
+    const tomorrowDay=
+      tomorrow.getFullYear()===
+      dateDue.getFullYear() &&
+      tomorrow.getMonth()===
+      dateDue.getMonth() &&
+      tomorrow.getDate()===
+      dateDue.getDate();
+
+    if(sameDay){
+      stateTone='today';
+      stateLabel='Сегодня';
+    }else if(tomorrowDay){
+      stateTone='tomorrow';
+      stateLabel='Завтра';
+    }else{
+      stateTone='scheduled';
+      stateLabel=formatLong(due);
+    }
+
+  }else if(isIncompleteExplicit){
+    stateTone='pending';
+    stateLabel='Не завершено';
+  }
+
+  /*
+   * Контекстное действие.
+   * Здесь не происходит новая бизнес-логика.
+   * Карточка продолжает использовать существующие
+   * data-activity / data-download bindings.
+   */
+  let actionLabel='Открыть';
+  let actionIcon='arrow';
+
+  if(directFile){
+    actionLabel='Скачать';
+    actionIcon='download';
+
+  }else if(
+    kind==='tests' &&
+    !isCompleted
+  ){
+    actionLabel='Пройти';
+    actionIcon='arrow';
+
+  }else if(
+    kind==='tasks' &&
+    !isCompleted
+  ){
+    actionLabel='Продолжить';
+    actionIcon='arrow';
+
+  }else if(
+    isCompleted &&
+    canOpen
+  ){
+    actionLabel='Открыть';
+    actionIcon='arrow';
+  }
+
+  const ref={
+    courseId:
+      a.courseId||
+      a.ref?.courseId||
+      state.data.course?.id,
+
+    cmid:
+      a.cmid||
+      a.id,
+
+    instance:
+      a.instance||
+      null,
+
+    contextId:
+      a.contextId||
+      null,
+
+    type:
+      a.type||
+      a.modname||
+      'unknown'
+  };
+
+  const activityAttr=
+    esc(
+      encodeURIComponent(
+        JSON.stringify(ref)
+      )
+    );
+
+  const descriptionParts=[
+    label
+  ];
+
+  if(a.description){
+    descriptionParts.push(
+      text(a.description).slice(0,90)
+    );
+  }
+
+  if(a.availabilityinfo){
+    descriptionParts.push(
+      text(a.availabilityinfo).slice(0,90)
+    );
+  }
+
+  if(
+    canDownload &&
+    a.type!=='file'
+  ){
+    descriptionParts.push(
+      file.filename||
+      'Файл доступен'
+    );
+  }
+
+  if(
+    due &&
+    !isCompleted
+  ){
+    descriptionParts.push(
+      formatLong(due)
+    );
+  }
+
+  const inner=`
+
+    <span
+      class="activity-icon ${esc(
+        a.type||'activity'
+      )}"
+    >
+      ${icon(glyph,19)}
+    </span>
+
+    <span class="nova18-activity-main">
+
+      <span class="nova18-activity-title-row">
+
+        <b>
+          ${esc(
+            a.name||
+            'Без названия'
+          )}
+        </b>
+
+      </span>
+
+      <small class="nova18-activity-meta">
+        ${esc(
+          descriptionParts.join(' · ')
+        )}
+      </small>
+
+    </span>
+
+    <span
+      class="nova18-activity-status ${stateTone}"
+    >
+      ${esc(stateLabel)}
+    </span>
+
+    <span
+      class="nova18-activity-action ${directFile?'download':''}"
+    >
+      <b>
+        ${esc(actionLabel)}
+      </b>
+      ${icon(actionIcon,14)}
+    </span>
+
+  `;
+
+  if(
+    !canOpen &&
+    !directFile
+  ){
+    return `
+      <div
+        class="activity activity-static nova18-activity-card"
+        data-course-activity="1"
+        data-course-kind="${kind}"
+        data-activity-state="${stateTone}"
+      >
+        ${inner}
+      </div>
+    `;
+  }
+
+  const attrs=[];
+
+  if(!directFile){
+    attrs.push(
+      `data-activity="${activityAttr}"`
+    );
+  }
+
+  if(canOpen){
+    attrs.push(
+      `data-view="${esc(a.url||'')}"`
+    );
+
+    attrs.push(
+      `data-route-url`
+    );
+  }
+
+  if(directFile){
+    attrs.push(
+      `data-download="${esc(
+        file.fileurl
+      )}"`
+    );
+  }
+
+  return `
+    <button
+      class="activity nova18-activity-card"
+      data-course-activity="1"
+      data-course-kind="${kind}"
+      data-activity-state="${stateTone}"
+      aria-label="${esc(
+        `${a.name||'Активность'} · ${actionLabel}`
+      )}"
+      ${attrs.join(' ')}
+    >
+      ${inner}
+    </button>
+  `;
+}
+
 function gradePage(){
   if(state.status.grades==='loading') return `<section class="page">${PageHead({eyebrow:'РЕЗУЛЬТАТЫ',title:'Оценки',sub:'Загружаем данные Campus…'})}${skeletonGrid(5)}</section>`;
   if(state.status.grades==='error') return `<section class="page">${PageHead({eyebrow:'РЕЗУЛЬТАТЫ',title:'Оценки',sub:'Не удалось загрузить отчёт.'})}${statePanel('error','grades')}</section>`;
@@ -12875,6 +13662,65 @@ function bind(){
   );
   $('#calendar-today')?.addEventListener('click',()=>{const d=new Date();state.year=d.getFullYear();state.month=d.getMonth()+1;state.selectedDay=d.getDate();render();loadData('calendar',true)});
   $('#expand-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true));$('#collapse-all')?.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=false));$$('[data-course-action="expand"]').forEach(el=>el.addEventListener('click',()=>$$('.course-section').forEach(x=>x.open=true)));
+
+  $$('[data-course-filter]').forEach(el=>{
+    el.addEventListener(
+      'click',
+      ()=>{
+        const filter=
+          el.dataset.courseFilter||
+          'all';
+
+        state.courseFilter=
+          filter;
+
+        const buttons=
+          $$('[data-course-filter]');
+
+        buttons.forEach(button=>{
+          const active=
+            button.dataset.courseFilter===
+            filter;
+
+          button.classList.toggle(
+            'active',
+            active
+          );
+
+          button.setAttribute(
+            'aria-selected',
+            active
+              ? 'true'
+              : 'false'
+          );
+        });
+
+        $$('.nova-course-section').forEach(section=>{
+          const activities=
+            $$('[data-course-activity]',section);
+
+          let visible=0;
+
+          activities.forEach(item=>{
+            const show=
+              filter==='all'||
+              item.dataset.courseKind===
+                filter;
+
+            item.hidden=!show;
+
+            if(show){
+              visible++;
+            }
+          });
+
+          section.hidden=
+            filter!=='all' &&
+            visible===0;
+        });
+      }
+    );
+  });
   $('#cards-mode')?.addEventListener('click',()=>{state.courseView='cards';localStorage.setItem('nova-course-view','cards');render()});$('#list-mode')?.addEventListener('click',()=>{state.courseView='list';localStorage.setItem('nova-course-view','list');render()});
   $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>showNotifications());
   const s=$('#global-search');
