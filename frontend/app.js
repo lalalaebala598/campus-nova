@@ -3994,8 +3994,7 @@ function coursePage(){
     `;
   }
 
-  const c=
-    state.data.course;
+  const c=state.data.course;
 
   if(!c){
     return `
@@ -4014,25 +4013,15 @@ function coursePage(){
       ? c.sections
       : [];
 
-  const progress=
-    Number.isFinite(
-      Number(c.progress)
-    )
-      ? Number(c.progress)
-      : null;
-
   const activities=
     sections.flatMap(
       section=>
-        Array.isArray(
-          section.activities
-        )
+        Array.isArray(section.activities)
           ? section.activities
           : []
     );
 
-  const count=
-    activities.length;
+  const count=activities.length;
 
   const teachers=
     (
@@ -4047,6 +4036,72 @@ function coursePage(){
           ''
       )
       .filter(Boolean);
+
+  const progressRaw=
+    Number(c.progress);
+
+  const hasNativeProgress=
+    Number.isFinite(progressRaw);
+
+  const completionKnown=
+    activities
+      .some(a=>{
+        return (
+          a?.completionstate!==undefined ||
+          a?.completed!==undefined ||
+          a?.completion?.state!==undefined ||
+          a?.completion?.completed!==undefined
+        );
+      });
+
+  const completedCount=
+    activities.filter(a=>{
+      const stateValue=
+        Number(a?.completionstate);
+
+      if(Number.isFinite(stateValue)){
+        return stateValue>0;
+      }
+
+      if(a?.completion?.state!==undefined){
+        return Number(a.completion.state)>0;
+      }
+
+      if(
+        a?.completed===true ||
+        a?.completion?.completed===true
+      ){
+        return true;
+      }
+
+      const normalized=
+        String(
+          a?.status||
+          a?.state||
+          a?.completionstatus||
+          ''
+        ).toLowerCase();
+
+      return (
+        normalized==='complete'||
+        normalized==='completed'||
+        normalized==='done'||
+        normalized==='finished'
+      );
+    })
+    .length;
+
+  const derivedProgress=
+    !hasNativeProgress &&
+    completionKnown &&
+    count
+      ? (completedCount/count)*100
+      : null;
+
+  const progress=
+    hasNativeProgress
+      ? Math.max(0,Math.min(100,progressRaw))
+      : derivedProgress;
 
   const assignments=
     activities.filter(
@@ -4076,12 +4131,9 @@ function coursePage(){
     activities.filter(
       activity=>
         Boolean(
-          Array.isArray(
-            activity?.contents
-          ) &&
+          Array.isArray(activity?.contents) &&
           activity.contents.some(
-            file=>
-              file?.fileurl
+            file=>file?.fileurl
           )
         ) ||
         /file|resource/i.test(
@@ -4102,10 +4154,7 @@ function coursePage(){
         })
       )
       .filter(item=>item.due)
-      .sort(
-        (a,b)=>
-          a.due-b.due
-      );
+      .sort((a,b)=>a.due-b.due);
 
   const nextDue=
     dueItems[0]||
@@ -4117,9 +4166,7 @@ function coursePage(){
         (section,index)=>{
 
           const list=
-            Array.isArray(
-              section.activities
-            )
+            Array.isArray(section.activities)
               ? section.activities
               : [];
 
@@ -4131,15 +4178,11 @@ function coursePage(){
 
               <summary>
 
-                <span
-                  class="section-number"
-                >
+                <span class="section-number">
                   ${String(index+1).padStart(2,'0')}
                 </span>
 
-                <span
-                  class="nova-course-section-copy"
-                >
+                <span class="nova-course-section-copy">
 
                   <b>
                     ${esc(
@@ -4210,9 +4253,7 @@ function coursePage(){
                 ? `
                   <button
                     class="secondary tiny"
-                    data-view="${esc(
-                      c.fallback.url
-                    )}"
+                    data-view="${esc(c.fallback.url)}"
                   >
                     Открыть отдельно
                     ${icon('arrow',13)}
@@ -4256,9 +4297,7 @@ function coursePage(){
           ? `
             <button
               class="primary"
-              data-view="${esc(
-                c.fallback.url
-              )}"
+              data-view="${esc(c.fallback.url)}"
             >
               Открыть содержимое Campus
               ${icon('arrow',16)}
@@ -4273,18 +4312,91 @@ function coursePage(){
   const body=
     count||sections.length
       ? `
-        <div
-          class="sections nova-course-sections"
-        >
+        <div class="sections nova-course-sections">
           ${sectionMarkup}
         </div>
       `
       : (native||empty);
 
+  const progressLabel=
+    progress!==null
+      ? `${Math.round(progress)}%`
+      : 'Нет данных';
+
+  const completedLabel=
+    completionKnown
+      ? `${completedCount} из ${count} выполнено`
+      : (
+        progress!==null
+          ? 'Прогресс получен из Campus'
+          : 'Данные о выполнении пока недоступны'
+      );
+
+  const progressWidth=
+    progress!==null
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Number(progress)
+          )
+        )
+      : 0;
+
+  const nextDueMarkup=
+    nextDue
+      ? `
+        <div class="nova18-next-content">
+
+          <span class="nova18-mini-label">
+            БЛИЖАЙШИЙ СРОК
+          </span>
+
+          <b>
+            ${esc(
+              nextDue.item?.name||
+              nextDue.item?.identity?.name||
+              'Активность'
+            )}
+          </b>
+
+          <small>
+            ${esc(
+              formatLong(nextDue.due)
+            )}
+          </small>
+
+          <button
+            type="button"
+            class="nova18-next-action"
+            data-activity="${activityRefAttr(nextDue.item)}"
+          >
+            Открыть
+            ${icon('arrow',13)}
+          </button>
+
+        </div>
+      `
+      : `
+        <div class="nova18-next-content">
+
+          <span class="nova18-mini-label">
+            СЛЕДУЮЩЕЕ
+          </span>
+
+          <b>
+            Дедлайнов пока нет
+          </b>
+
+          <small>
+            Новые сроки появятся автоматически.
+          </small>
+
+        </div>
+      `;
+
   return `
-    <section
-      class="page course-page nova-course-page"
-    >
+    <section class="page course-page nova-course-page nova18-course-page">
 
       <button
         class="back-button nova-course-back"
@@ -4294,24 +4406,21 @@ function coursePage(){
         Все курсы
       </button>
 
-      <section class="nova-course-hero">
+      <section class="nova18-course-hero">
 
-        <div
-          class="nova-course-hero-glow"
-        ></div>
+        <div class="nova18-hero-orb nova18-hero-orb-a"></div>
+        <div class="nova18-hero-orb nova18-hero-orb-b"></div>
+        <div class="nova18-hero-grid"></div>
 
-        <div
-          class="nova-course-hero-copy"
-        >
+        <div class="nova18-hero-main">
 
-          <span class="eyebrow">
-            КУРС · ${count}
-            ${
-              count===1
-                ? 'АКТИВНОСТЬ'
-                : 'АКТИВНОСТЕЙ'
-            }
-          </span>
+          <div class="nova18-course-kicker">
+            <span>COURSE OS</span>
+            <i></i>
+            <span>${count} ${
+              count===1 ? 'АКТИВНОСТЬ' : 'АКТИВНОСТЕЙ'
+            }</span>
+          </div>
 
           <h1>
             ${esc(
@@ -4320,161 +4429,143 @@ function coursePage(){
             )}
           </h1>
 
-          <p>
+          <p class="nova18-course-description">
             ${esc(
               c.description||
               'Электронный учебный курс'
             )}
           </p>
 
-          ${
-            teachers.length
-              ? `
-                <div
-                  class="nova-course-teachers"
-                >
-                  ${icon('user',14)}
+          <div class="nova18-course-meta">
 
+            ${
+              teachers.length
+                ? `
                   <span>
+                    ${icon('user',13)}
                     ${esc(
                       teachers.join(' · ')
                     )}
                   </span>
+                `
+                : ''
+            }
 
-                </div>
-              `
-              : ''
-          }
+            <span>
+              ${icon('book',13)}
+              ${sections.length} ${
+                sections.length===1
+                  ? 'раздел'
+                  : 'разделов'
+              }
+            </span>
+
+            <span>
+              ${icon('grid',13)}
+              ${count} ${
+                count===1
+                  ? 'активность'
+                  : 'активностей'
+              }
+            </span>
+
+          </div>
 
         </div>
 
-        <div
-          class="nova-course-progress-card"
-        >
+        <div class="nova18-progress-card">
 
-          <span>
-            ПРОГРЕСС КУРСА
-          </span>
+          <div class="nova18-progress-top">
 
-          <strong>
-            ${
-              progress!==null
-                ? Math.round(progress)+'%'
-                : '—'
-            }
-          </strong>
+            <div>
+              <span class="nova18-mini-label">
+                ПРОГРЕСС КУРСА
+              </span>
 
-          ${
-            progress!==null
-              ? `
-                <div
-                  class="nova-course-progress-track"
-                >
-                  <i
-                    style="width:${Math.max(
-                      0,
-                      Math.min(
-                        100,
-                        Number(progress)
-                      )
-                    )}%"
-                  ></i>
-                </div>
-              `
-              : `
-                <small>
-                  Прогресс пока не указан
-                </small>
-              `
-          }
+              <small>
+                ${esc(completedLabel)}
+              </small>
+            </div>
+
+            <strong>
+              ${progressLabel}
+            </strong>
+
+          </div>
+
+          <div class="nova18-progress-track">
+
+            <i
+              style="width:${progressWidth}%"
+            ></i>
+
+          </div>
+
+          <div class="nova18-progress-bottom">
+
+            <span>
+              ${
+                completionKnown
+                  ? `${completedCount} выполнено`
+                  : 'Отслеживание активностей'
+              }
+            </span>
+
+            <span>
+              ${count} всего
+            </span>
+
+          </div>
 
         </div>
 
       </section>
 
-      <div
-        class="nova-course-stat-grid"
-      >
+      <div class="nova18-course-stats">
 
-        <div>
-          <span>
-            ${icon('book',15)}
-          </span>
-
-          <b>
-            ${sections.length}
-          </b>
-
-          <small>
-            разделов
-          </small>
+        <div class="nova18-stat">
+          <span>${icon('book',16)}</span>
+          <b>${sections.length}</b>
+          <small>разделов</small>
         </div>
 
-        <div>
-          <span>
-            ${icon('grid',15)}
-          </span>
-
-          <b>
-            ${count}
-          </b>
-
-          <small>
-            активностей
-          </small>
+        <div class="nova18-stat">
+          <span>${icon('grid',16)}</span>
+          <b>${count}</b>
+          <small>активностей</small>
         </div>
 
-        <div>
-          <span>
-            ${icon('check-square',15)}
-          </span>
-
-          <b>
-            ${assignments}
-          </b>
-
-          <small>
-            заданий
-          </small>
+        <div class="nova18-stat">
+          <span>${icon('check-square',16)}</span>
+          <b>${assignments}</b>
+          <small>заданий</small>
         </div>
 
-        <div>
-          <span>
-            ${icon('quiz',15)}
-          </span>
-
-          <b>
-            ${tests}
-          </b>
-
-          <small>
-            тестов
-          </small>
+        <div class="nova18-stat">
+          <span>${icon('quiz',16)}</span>
+          <b>${tests}</b>
+          <small>тестов</small>
         </div>
 
-        <div>
-          <span>
-            ${icon('file',15)}
-          </span>
+        <div class="nova18-stat">
+          <span>${icon('file',16)}</span>
+          <b>${files}</b>
+          <small>файлов</small>
+        </div>
 
-          <b>
-            ${files}
-          </b>
-
-          <small>
-            файлов
-          </small>
+        <div class="nova18-stat nova18-stat-focus">
+          <span>${icon('clock',16)}</span>
+          <b>${dueItems.length}</b>
+          <small>сроков</small>
         </div>
 
       </div>
 
-      <div class="nova-course-layout">
+      <div class="nova-course-layout nova18-course-layout">
 
         <main>
 
-          <div
-            class="course-toolbar nova-course-toolbar"
-          >
+          <div class="course-toolbar nova-course-toolbar nova18-toolbar">
 
             <div>
 
@@ -4512,64 +4603,13 @@ function coursePage(){
 
         </main>
 
-        <aside
-          class="nova-course-sidebar"
-        >
+        <aside class="nova-course-sidebar nova18-sidebar">
 
-          <section
-            class="nova-course-side-card"
-          >
-
-            <span>
-              БЛИЖАЙШАЯ АКТИВНОСТЬ
-            </span>
-
-            ${
-              nextDue
-                ? `
-                  <b>
-                    ${esc(
-                      nextDue.item?.name||
-                      nextDue.item?.identity?.name||
-                      'Активность'
-                    )}
-                  </b>
-
-                  <small>
-                    Срок · ${esc(
-                      formatLong(
-                        nextDue.due
-                      )
-                    )}
-                  </small>
-
-                  <button
-                    type="button"
-                    class="nova-course-side-action"
-                    data-activity="${activityRefAttr(
-                      nextDue.item
-                    )}"
-                  >
-                    Открыть
-                    ${icon('arrow',13)}
-                  </button>
-                `
-                : `
-                  <b>
-                    Ближайших сроков нет
-                  </b>
-
-                  <small>
-                    Новые дедлайны появятся автоматически.
-                  </small>
-                `
-            }
-
+          <section class="nova18-next-card">
+            ${nextDueMarkup}
           </section>
 
-          <section
-            class="nova-course-side-card"
-          >
+          <section class="nova-course-side-card nova18-side-card">
 
             <span>
               БЫСТРАЯ НАВИГАЦИЯ
