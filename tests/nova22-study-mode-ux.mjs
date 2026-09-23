@@ -203,7 +203,7 @@ check(
   '22.1 app cache',
   has(
     INDEX,
-    'app.js?v=nova-22-20260923-2'
+    'app.js?v=nova-23-20260923-1'
   )
 );
 
@@ -211,7 +211,7 @@ check(
   '22.1 css cache',
   has(
     INDEX,
-    'dashboard-final.css?v=nova-22-20260923-2'
+    'dashboard-final.css?v=nova-23-20260923-1'
   )
 );
 

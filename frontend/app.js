@@ -10,8 +10,8 @@ const state = {
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   selectedDay: new Date().getDate(),
-  data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null, study: null },
-  status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle', study:'idle' },
+  data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null, study: null, notifications: null },
+  status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle', study:'idle', notifications:'idle' },
   errors: {},
   selectedConversation: null,
   pageCache: new Map(),
@@ -145,7 +145,7 @@ function icon(name,size=18){
 function toast(message,type='info'){const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`<span>${icon(type==='error'?'info':type==='success'?'check':'sparkle',16)}</span><span>${esc(message)}</span>`;$('#toast-root')?.append(el);setTimeout(()=>el.remove(),4200)}
 function expireLocalSession(){
   Object.assign(state,{connected:false,user:null,demo:false});
-  state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};
+  state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null,study:null,notifications:null};
   state.requests={};
   render();
 }
@@ -190,7 +190,7 @@ async function api(path,options={}){
   if(!r.ok||d?.ok===false) throw new Error(d?.error||`Ошибка ${r.status}`);
   return d;
 }
-function routeLabel(r){return {dashboard:'Главная',study:'Учебный режим',search:'Поиск',courses:'Курсы',schedule:'Расписание',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
+function routeLabel(r){return {dashboard:'Главная',study:'Учебный режим',notifications:'Уведомления',search:'Поиск',courses:'Курсы',schedule:'Расписание',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
 function parseRoute(){
   let rawPath=location.pathname;
   if((!rawPath || rawPath==='/') && location.hash && /^#\//.test(location.hash)){ rawPath=location.hash.slice(1); }
@@ -203,7 +203,7 @@ function parseRoute(){
 function navigate(route,param='',replace=false){
   const target=route==='view'?`/content?path=${encodeURIComponent(param)}`:route==='course'?`/course/${encodeURIComponent(param)}`:route==='activity'?`/activity/${encodeURIComponent(param)}`:`/${route==='dashboard'?'':route}`;
   const path=target==='/'?'/':target; const method=replace?'replaceState':'pushState'; history[method]({nova:true,route,param},'',path); state.routeEpoch++; parseRoute(); window.scrollTo({top:0,behavior:'smooth'});
-  const loadingRoute={dashboard:'dashboard',study:'study',courses:'courses',course:'course',schedule:'schedule',grades:'grades',tasks:'tasks',calendar:'calendar',messages:'messages',files:'files',materials:'materials',tests:'tests',activity:'activity',profile:'profile',view:null}[state.route];
+  const loadingRoute={dashboard:'dashboard',study:'study',courses:'courses',course:'course',schedule:'schedule',grades:'grades',tasks:'tasks',calendar:'calendar',messages:'messages',files:'files',materials:'materials',tests:'tests',activity:'activity',profile:'profile',notifications:'notifications',view:null}[state.route];
   if(loadingRoute && !state.demo) state.status[loadingRoute]='loading';
   render(true);
   loadRouteData();
@@ -753,34 +753,890 @@ function injectNovaAccountInlineStyles(){
 
 /* NOVA_ACCOUNT_INLINE_STYLES_20260919 */
 
+
+/* NOVA 23.0 · NOTIFICATIONS CENTER */
+
+const NOVA_NOTIFICATION_STORAGE_KEY = 'nova-notifications-v1';
+const NOVA_NOTIFICATION_FILTER_KEY = 'nova-notifications-filter-v1';
+
+function novaNotificationReadStore(){
+  try{
+    const raw = localStorage.getItem(
+      NOVA_NOTIFICATION_STORAGE_KEY
+    );
+
+    const parsed = raw ? JSON.parse(raw) : {};
+
+    return {
+      read:Array.isArray(parsed?.read)
+        ? parsed.read.map(String)
+        : []
+    };
+  }catch{
+    return {read:[]};
+  }
+}
+
+function novaNotificationWriteStore(store){
+  try{
+    localStorage.setItem(
+      NOVA_NOTIFICATION_STORAGE_KEY,
+      JSON.stringify({
+        read:Array.from(
+          new Set(store?.read || [])
+        ).slice(-300)
+      })
+    );
+  }catch{}
+}
+
+function novaNotificationFilter(){
+  try{
+    const value =
+      localStorage.getItem(
+        NOVA_NOTIFICATION_FILTER_KEY
+      ) || 'all';
+
+    return ['all','unread','important'].includes(value)
+      ? value
+      : 'all';
+  }catch{
+    return 'all';
+  }
+}
+
+function novaNotificationSetFilter(value){
+  const filter =
+    ['all','unread','important'].includes(value)
+      ? value
+      : 'all';
+
+  localStorage.setItem(
+    NOVA_NOTIFICATION_FILTER_KEY,
+    filter
+  );
+
+  render();
+}
+
+function novaNotificationIsRead(id){
+  return novaNotificationReadStore()
+    .read
+    .includes(String(id));
+}
+
+function novaNotificationMarkRead(id){
+  if(!id) return;
+
+  const store =
+    novaNotificationReadStore();
+
+  const value = String(id);
+
+  if(!store.read.includes(value)){
+    store.read.push(value);
+  }
+
+  novaNotificationWriteStore(store);
+  render();
+}
+
+function novaNotificationMarkAllRead(){
+  const store =
+    novaNotificationReadStore();
+
+  for(const item of novaNotificationItems()){
+    if(item.id){
+      store.read.push(String(item.id));
+    }
+  }
+
+  novaNotificationWriteStore(store);
+  render();
+}
+
+function novaNotificationTimestamp(item){
+  const keys = [
+    'duedate',
+    'deadline',
+    'due',
+    'timeend',
+    'timestart',
+    'timestamp',
+    'timecreated',
+    'timemodified'
+  ];
+
+  for(const key of keys){
+    const value = item?.[key];
+
+    if(typeof value === 'number' && value > 0){
+      return value > 100000000000
+        ? value / 1000
+        : value;
+    }
+
+    if(typeof value === 'string' && value.trim()){
+      const parsed = Date.parse(value);
+
+      if(!Number.isNaN(parsed)){
+        return parsed / 1000;
+      }
+
+      const numeric = Number(value);
+
+      if(numeric > 0){
+        return numeric > 100000000000
+          ? numeric / 1000
+          : numeric;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function novaNotificationRelativeTime(ts){
+  const value = Number(ts || 0);
+
+  if(!value){
+    return 'сейчас';
+  }
+
+  const diff =
+    Date.now()/1000 - value;
+
+  if(diff < 60){
+    return 'только что';
+  }
+
+  if(diff < 3600){
+    return `${Math.floor(diff/60)} мин назад`;
+  }
+
+  if(diff < 86400){
+    return `${Math.floor(diff/3600)} ч назад`;
+  }
+
+  if(diff < 172800){
+    return 'вчера';
+  }
+
+  return formatDate(value);
+}
+
+function novaNotificationDueText(ts){
+  if(!ts){
+    return 'Срок не указан';
+  }
+
+  const diff =
+    ts - Date.now()/1000;
+
+  if(diff < 0){
+    return 'Срок уже прошёл';
+  }
+
+  if(diff < 3600){
+    return 'Дедлайн меньше чем через час';
+  }
+
+  if(diff < 86400){
+    return 'Дедлайн сегодня';
+  }
+
+  if(diff < 172800){
+    return 'Дедлайн завтра';
+  }
+
+  return `Дедлайн ${formatDate(ts)}`;
+}
+
+function novaNotificationItems(){
+
+  const rows = [];
+
+  const add = item => {
+    if(!item?.id){
+      return;
+    }
+
+    rows.push({
+      ...item,
+      id:String(item.id),
+      read:novaNotificationIsRead(item.id)
+    });
+  };
+
+  /* WHAT'S NEW */
+
+  if(
+    typeof novaGlobalUpdateReadStore === 'function'
+  ){
+
+    const global =
+      novaGlobalUpdateReadStore();
+
+    for(const event of global?.events || []){
+
+      add({
+        id:[
+          'update',
+          event.type || '',
+          event.title || '',
+          event.detectedAt || ''
+        ].join(':'),
+        type:'update',
+        icon:event.icon || 'sparkle',
+        title:event.title || 'Campus обновился',
+        meta:event.meta || 'Nova',
+        description:event.label || 'Обновление Campus',
+        timestamp:event.detectedAt || 0,
+        priority:event.label === 'Новое' ? 90 : 70,
+        important:event.label === 'Новое',
+        ref:event.ref || null,
+        go:event.go || null,
+        param:event.param || ''
+      });
+
+    }
+  }
+
+  /* TASKS */
+
+  for(const task of Array.isArray(state.data.tasks)
+    ? state.data.tasks
+    : []
+  ){
+
+    const ts =
+      novaNotificationTimestamp(task);
+
+    if(!ts){
+      continue;
+    }
+
+    const diff =
+      ts - Date.now()/1000;
+
+    if(diff > 7*86400){
+      continue;
+    }
+
+    add({
+      id:[
+        'task',
+        task.id || task.name || '',
+        ts
+      ].join(':'),
+      type:'task',
+      icon:'check-square',
+      title:
+        task.name ||
+        task.title ||
+        'Задание',
+      meta:
+        task.course ||
+        task.courseName ||
+        'Задание Campus',
+      description:
+        novaNotificationDueText(ts),
+      timestamp:ts,
+      priority:
+        diff <= 86400
+          ? 100
+          : 75,
+      important:
+        diff <= 86400,
+      ref:
+        typeof novaGlobalUpdateActivityRef === 'function'
+          ? novaGlobalUpdateActivityRef(task)
+          : null
+    });
+
+  }
+
+  /* TESTS */
+
+  for(const test of Array.isArray(state.data.tests)
+    ? state.data.tests
+    : []
+  ){
+
+    const ts =
+      novaNotificationTimestamp(test);
+
+    if(!ts){
+      continue;
+    }
+
+    const diff =
+      ts - Date.now()/1000;
+
+    if(diff > 7*86400){
+      continue;
+    }
+
+    add({
+      id:[
+        'test',
+        test.id || test.name || '',
+        ts
+      ].join(':'),
+      type:'test',
+      icon:'quiz',
+      title:
+        test.name ||
+        test.title ||
+        'Тест',
+      meta:
+        test.course ||
+        test.courseName ||
+        'Тест Campus',
+      description:
+        novaNotificationDueText(ts),
+      timestamp:ts,
+      priority:
+        diff <= 86400
+          ? 105
+          : 80,
+      important:
+        diff <= 86400,
+      ref:
+        typeof novaGlobalUpdateActivityRef === 'function'
+          ? novaGlobalUpdateActivityRef(test)
+          : null
+    });
+
+  }
+
+  /* MESSAGES */
+
+  const conversations =
+    state.data.messages?.conversations || [];
+
+  for(const conversation of conversations){
+
+    const unread =
+      Number(
+        conversation.unreadcount ||
+        conversation.unreadCount ||
+        0
+      );
+
+    if(unread <= 0){
+      continue;
+    }
+
+    const latest =
+      Array.isArray(conversation.messages)
+        ? conversation.messages[0]
+        : null;
+
+    add({
+      id:[
+        'message',
+        conversation.id || conversation.name || '',
+        latest?.timecreated ||
+        conversation.timemodified ||
+        ''
+      ].join(':'),
+      type:'message',
+      icon:'message',
+      title:
+        conversation.name ||
+        'Новое сообщение',
+      meta:
+        `${unread} ${
+          unread === 1
+            ? 'новое сообщение'
+            : 'новых сообщений'
+        }`,
+      description:
+        messageText(
+          latest?.text ||
+          latest?.message ||
+          ''
+        ).slice(0,150),
+      timestamp:
+        Number(
+          latest?.timecreated ||
+          conversation.timemodified ||
+          0
+        ),
+      priority:110,
+      important:true,
+      go:'messages'
+    });
+
+  }
+
+  /* CALENDAR */
+
+  const now =
+    Date.now()/1000;
+
+  for(const event of flattenCalendar(
+    state.data.calendar || {}
+  )){
+
+    const ts =
+      Number(event?.timestart || 0);
+
+    if(
+      !ts ||
+      ts < now ||
+      ts > now + 3*86400
+    ){
+      continue;
+    }
+
+    add({
+      id:[
+        'calendar',
+        event.id || event.name || '',
+        ts
+      ].join(':'),
+      type:'event',
+      icon:'calendar',
+      title:
+        event.name ||
+        'Событие',
+      meta:
+        event.course?.fullname ||
+        event.modulename ||
+        'Календарь',
+      description:
+        ts-now <= 7200
+          ? 'Событие начинается скоро'
+          : 'Ближайшее событие',
+      timestamp:ts,
+      priority:
+        ts-now <= 7200
+          ? 98
+          : 60,
+      important:
+        ts-now <= 7200,
+      go:'calendar'
+    });
+
+  }
+
+  const unique = [];
+  const seen = new Set();
+
+  for(const item of rows){
+
+    if(seen.has(item.id)){
+      continue;
+    }
+
+    seen.add(item.id);
+    unique.push(item);
+
+  }
+
+  unique.sort((a,b)=>{
+
+    const unreadDiff =
+      Number(!a.read) -
+      Number(!b.read);
+
+    if(unreadDiff){
+      return unreadDiff;
+    }
+
+    const priorityDiff =
+      Number(b.priority || 0) -
+      Number(a.priority || 0);
+
+    if(priorityDiff){
+      return priorityDiff;
+    }
+
+    return Number(b.timestamp || 0) -
+      Number(a.timestamp || 0);
+  });
+
+  return unique.slice(0,60);
+}
+
 function notificationItems(){
-  const items=[];
-  const tasks=Array.isArray(state.data.tasks)?state.data.tasks:[];
-  for(const t of tasks.slice(0,5)) items.push({type:'task',title:t.name||'Задание',meta:t.course||'Campus',action:()=>navigate('view',t.url||'/my/')});
-  const msgs=state.data.messages||{};
-  for(const c of (msgs.conversations||[]).filter(x=>Number(x.unreadcount||x.unreadCount||0)>0).slice(0,5)) items.push({type:'message',title:c.name||'Новое сообщение',meta:'Сообщения',action:()=>navigate('messages')});
-  for(const e of flattenCalendar(state.data.calendar||{}).filter(x=>Number(x.timestart||0)*1000>=Date.now()).slice(0,4)) items.push({type:'event',title:e.name||'Событие',meta:e.course?.fullname||'Расписание',action:()=>navigate('calendar')});
-  return items.slice(0,8);
+  return novaNotificationItems();
 }
+
+function notificationsBadge(){
+  return novaNotificationItems()
+    .some(item => !item.read)
+      ? '<i></i>'
+      : '';
+}
+
+function novaNotificationOpen(item){
+
+  if(!item){
+    return;
+  }
+
+  novaNotificationMarkRead(
+    item.id
+  );
+
+  if(
+    item.ref &&
+    typeof openActivity === 'function'
+  ){
+    openActivity(item.ref);
+    return;
+  }
+
+  if(item.go){
+    navigate(
+      item.go,
+      item.param || ''
+    );
+  }
+
+}
+
 function showNotifications(){
-  const existing=$('#notification-modal'); if(existing){existing.remove();return;}
-  const items=notificationItems();
-  const root=document.createElement('div'); root.id='notification-modal'; root.className='modal-backdrop';
-  root.innerHTML=`<div class="modal notification-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Уведомления</h2><p class="modal-sub">События из доступных данных Campus</p></div><button class="icon-btn tiny" id="notifications-close">${icon('close',16)}</button></div><div class="notification-list">${items.map((x,i)=>`<button class="modal-item" data-notify-index="${i}"><span>${icon(x.type==='task'?'check-square':x.type==='message'?'message':'calendar',16)}</span><span><b>${esc(x.title)}</b><small>${esc(x.meta)}</small></span></button>`).join('')||'<div class="inline-empty">Новых уведомлений нет.</div>'}</div></div>`;
-  document.body.append(root);
-  const close=()=>root.remove(); $('#notifications-close')?.addEventListener('click',close); root.addEventListener('click',e=>{if(e.target===root)close()});
-  root.querySelectorAll('[data-notify-index]').forEach((el,i)=>el.addEventListener('click',()=>{const item=items[i];close();item?.action?.()}));
-  const escHandler=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',escHandler)}}; document.addEventListener('keydown',escHandler);
+  navigate('notifications');
 }
-function notificationsBadge(){const messages=state.data.messages||{};const n=(messages.conversations||[]).reduce((sum,c)=>sum+Number(c.unreadcount||c.unreadCount||0),0);return n?'<i></i>':''}
+
+function notificationsPage(){
+
+  if(state.status.notifications === 'loading'){
+
+    return `
+      <section class="page nova-notifications-page">
+        ${PageHead({
+          eyebrow:'ЦЕНТР',
+          title:'Уведомления',
+          sub:'Получаем свежие сигналы Campus…'
+        })}
+        ${skeletonGrid(5)}
+      </section>
+    `;
+  }
+
+  if(state.status.notifications === 'error'){
+
+    return `
+      <section class="page nova-notifications-page">
+        ${PageHead({
+          eyebrow:'ЦЕНТР',
+          title:'Уведомления',
+          sub:'Не удалось получить данные.'
+        })}
+        ${statePanel('error','notifications')}
+      </section>
+    `;
+  }
+
+  const all =
+    novaNotificationItems();
+
+  const filter =
+    novaNotificationFilter();
+
+  const filtered =
+    filter === 'unread'
+      ? all.filter(item=>!item.read)
+      : filter === 'important'
+        ? all.filter(item=>item.important)
+        : all;
+
+  const unread =
+    all.filter(item=>!item.read).length;
+
+  const important =
+    all.filter(item=>item.important).length;
+
+  return `
+    <section class="page nova-notifications-page">
+
+      ${PageHead({
+        eyebrow:'ЦЕНТР УВЕДОМЛЕНИЙ',
+        title:'Уведомления',
+        sub:'Всё важное из Campus в одном месте.',
+        children:`
+          <div class="nova-notifications-head-actions">
+
+            <button
+              class="secondary"
+              data-retry="notifications"
+              type="button"
+            >
+              ${icon('refresh',15)}
+              Обновить
+            </button>
+
+            <button
+              class="secondary"
+              id="notifications-mark-all"
+              type="button"
+              ${unread ? '' : 'disabled'}
+            >
+              ${icon('check',15)}
+              Прочитать всё
+            </button>
+
+          </div>
+        `
+      })}
+
+      <div class="nova-notification-stats">
+
+        <div class="nova-notification-stat">
+          <span>${icon('bell',17)}</span>
+          <div>
+            <b>${unread}</b>
+            <small>непрочитанных</small>
+          </div>
+        </div>
+
+        <div class="nova-notification-stat">
+          <span>${icon('sparkle',17)}</span>
+          <div>
+            <b>${important}</b>
+            <small>важных</small>
+          </div>
+        </div>
+
+        <div class="nova-notification-stat">
+          <span>${icon('grid',17)}</span>
+          <div>
+            <b>${all.length}</b>
+            <small>сигналов</small>
+          </div>
+        </div>
+
+      </div>
+
+      <section class="nova-notifications-panel">
+
+        <div class="nova-notifications-toolbar">
+
+          <div>
+            <span class="eyebrow">ЛЕНТА</span>
+            <h2>Что требует внимания</h2>
+          </div>
+
+          <div class="nova-notification-filters">
+
+            ${[
+              ['all','Все',all.length],
+              ['unread','Непрочитанные',unread],
+              ['important','Важные',important]
+            ].map(([value,label,count])=>`
+
+              <button
+                type="button"
+                class="
+                  nova-notification-filter
+                  ${filter===value?'active':''}
+                "
+                data-notification-filter="${value}"
+              >
+                ${label}
+                <span>${count}</span>
+              </button>
+
+            `).join('')}
+
+          </div>
+
+        </div>
+
+        <div class="nova-notification-list">
+
+          ${
+            filtered.length
+              ? filtered.map(item=>`
+
+                <article
+                  class="
+                    nova-notification
+                    ${item.read?'is-read':'is-unread'}
+                    ${item.important?'is-important':''}
+                  "
+                >
+
+                  <button
+                    type="button"
+                    class="nova-notification-open"
+                    data-notification-open="${esc(item.id)}"
+                  >
+
+                    <span class="nova-notification-icon">
+                      ${icon(item.icon,18)}
+                    </span>
+
+                    <span class="nova-notification-copy">
+
+                      <small>
+                        ${
+                          ({
+                            task:'ЗАДАНИЕ',
+                            test:'ТЕСТ',
+                            message:'СООБЩЕНИЕ',
+                            event:'КАЛЕНДАРЬ',
+                            update:'ОБНОВЛЕНИЕ'
+                          })[item.type] || 'CAMPUS'
+                        }
+                      </small>
+
+                      <b>${esc(item.title)}</b>
+
+                      <em>${esc(item.meta)}</em>
+
+                      ${
+                        item.description
+                          ? `<p>${esc(item.description)}</p>`
+                          : ''
+                      }
+
+                    </span>
+
+                    <span class="nova-notification-right">
+
+                      <time>
+                        ${esc(
+                          novaNotificationRelativeTime(
+                            item.timestamp
+                          )
+                        )}
+                      </time>
+
+                      ${
+                        item.read
+                          ? ''
+                          : '<i></i>'
+                      }
+
+                    </span>
+
+                  </button>
+
+                  ${
+                    item.read
+                      ? ''
+                      : `
+                        <button
+                          type="button"
+                          class="nova-notification-read"
+                          data-notification-read="${esc(item.id)}"
+                          title="Отметить прочитанным"
+                        >
+                          ${icon('check',15)}
+                        </button>
+                      `
+                  }
+
+                </article>
+
+              `).join('')
+              : `
+                <div class="nova-notification-empty">
+
+                  <div>
+                    ${icon('check',25)}
+                  </div>
+
+                  <b>Здесь спокойно</b>
+
+                  <p>
+                    ${
+                      filter === 'unread'
+                        ? 'Непрочитанных уведомлений нет.'
+                        : filter === 'important'
+                          ? 'Важных сигналов нет.'
+                          : 'Новых сигналов из Campus пока нет.'
+                    }
+                  </p>
+
+                </div>
+              `
+          }
+
+        </div>
+
+      </section>
+
+      <div class="nova-notifications-note">
+        ${icon('info',15)}
+        <span>
+          Nova объединяет дедлайны, тесты, сообщения,
+          ближайшие события и What's New.
+        </span>
+      </div>
+
+    </section>
+  `;
+}
+
+async function loadNotificationsData(
+  force=false,
+  epoch=state.routeEpoch
+){
+
+  if(
+    !state.connected ||
+    state.demo ||
+    state.route !== 'notifications'
+  ){
+    return;
+  }
+
+  state.status.notifications='loading';
+  state.errors.notifications=null;
+  render();
+
+  const services = [
+    'tasks',
+    'tests',
+    'messages',
+    'calendar',
+    'materials',
+    'files'
+  ];
+
+  await Promise.allSettled(
+    services.map(service =>
+      loadData(
+        service,
+        force,
+        epoch
+      )
+    )
+  );
+
+  if(
+    epoch !== state.routeEpoch ||
+    state.route !== 'notifications'
+  ){
+    return;
+  }
+
+  const usable = services.some(
+    service =>
+      state.status[service] === 'success'
+  );
+
+  state.status.notifications =
+    usable ? 'success' : 'error';
+
+  render();
+}
+
 function shell(content){
   const active=['course','view'].includes(state.route)?'courses':state.route;
   const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><div class="nova-search-input-shell"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><button class="nova-search-submit" id="global-search-submit" type="button" title="Открыть все результаты">${icon('arrow',14)}</button></div><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
+  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><div class="nova-search-input-shell"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><button class="nova-search-submit" id="global-search-submit" type="button" title="Открыть все результаты">${icon('arrow',14)}</button></div><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления" type="button">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
 }
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
-  const errorTitles={course:'Не удалось загрузить курс.',activity:'Не удалось открыть активность.',grades:'Не удалось загрузить оценки.',tasks:'Не удалось загрузить задания.',files:'Не удалось загрузить файлы.',tests:'Не удалось загрузить тесты.',materials:'Не удалось загрузить материалы.',messages:'Не удалось загрузить сообщения.',profile:'Не удалось загрузить профиль.',calendar:'Не удалось загрузить календарь.',schedule:'Не удалось загрузить расписание.',courses:'Не удалось загрузить курсы.',view:'Не удалось открыть материал.',dashboard:'Не удалось загрузить главную страницу.'};
+  const errorTitles={course:'Не удалось загрузить курс.',activity:'Не удалось открыть активность.',grades:'Не удалось загрузить оценки.',tasks:'Не удалось загрузить задания.',files:'Не удалось загрузить файлы.',tests:'Не удалось загрузить тесты.',materials:'Не удалось загрузить материалы.',messages:'Не удалось загрузить сообщения.',profile:'Не удалось загрузить профиль.',calendar:'Не удалось загрузить календарь.',schedule:'Не удалось загрузить расписание.',courses:'Не удалось загрузить курсы.',view:'Не удалось открыть материал.',dashboard:'Не удалось загрузить главную страницу.',notifications:'Не удалось загрузить уведомления.'};
   const cfg={loading:['Загружаем данные…','Секунду, получаем актуальную информацию из Campus.'],error:[errorTitles[service]||'Не удалось загрузить данные Campus.',state.errors?.[service]||'Проверьте соединение и попробуйте ещё раз.'],empty:['Пока ничего нет','Campus успешно ответил, но для этого раздела данных сейчас нет.']}[kind];
   return `<div class="state-card ${kind}"><div class="state-icon">${kind==='loading'?'<span class="spinner"></span>':icon(kind==='error'?'info':'sparkle',22)}</div><h3>${cfg[0]}</h3><p>${esc(cfg[1])}</p>${retry&&kind==='error'?`<button class="primary" data-retry="${service}">${icon('refresh',16)} Повторить</button>`:''}</div>`;
 }
@@ -16599,6 +17455,7 @@ function render(animateNav=false){
   switch(state.route){
     case 'search':body=searchPage();break;
     case 'study':body=studyPage();break;
+    case 'notifications':body=notificationsPage();break;
     case 'courses':body=coursesPage();break;
     case 'course':body=coursePage();break;
     case 'schedule':body=schedulePage();break;
@@ -16637,7 +17494,60 @@ function bind(){
     catch (error) { console.error('[Nova][Navigation]',{route,param,error}); if(el.tagName==='A') window.location.href=el.getAttribute('href')||'/'; }
   }));
   $$('[data-back]').forEach(el=>el.addEventListener('click',()=>back(el.dataset.back||'dashboard')));
-  $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
+  $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course'||el.dataset.retry==='notifications')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
+
+  $$('[data-notification-filter]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          novaNotificationSetFilter(
+            el.dataset.notificationFilter || 'all'
+          );
+        }
+      );
+    }
+  );
+
+  $$('[data-notification-read]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        event=>{
+          event.stopPropagation();
+
+          novaNotificationMarkRead(
+            el.dataset.notificationRead || ''
+          );
+        }
+      );
+    }
+  );
+
+  $$('[data-notification-open]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          const item =
+            novaNotificationItems()
+              .find(
+                row =>
+                  row.id ===
+                  el.dataset.notificationOpen
+              );
+
+          novaNotificationOpen(item);
+        }
+      );
+    }
+  );
+
+  $('#notifications-mark-all')?.addEventListener(
+    'click',
+    novaNotificationMarkAllRead
+  );
+
   $$('[data-activity]').forEach(el=>el.addEventListener('click',e=>{ if(e.target.closest('[data-download]')) return; const raw=el.dataset.activity; if(raw) { try { openActivity(JSON.parse(decodeURIComponent(raw))); } catch {} } }));
   $$('[data-study-quickstart]').forEach(
     el=>{
@@ -16931,7 +17841,7 @@ function bind(){
     );
   });
   $('#cards-mode')?.addEventListener('click',()=>{state.courseView='cards';localStorage.setItem('nova-course-view','cards');render()});$('#list-mode')?.addEventListener('click',()=>{state.courseView='list';localStorage.setItem('nova-course-view','list');render()});
-  $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>showNotifications());
+  $('#logout')?.addEventListener('click',confirmNovaLogout);$('#notifications')?.addEventListener('click',()=>navigate('notifications'));
   const s=$('#global-search');
 
   if(s){
@@ -17236,6 +18146,7 @@ async function loadRouteData(force=false,epoch=state.routeEpoch){
   const r=state.route;if(!state.connected||state.demo)return;
   if(r==='dashboard')return loadDashboard(epoch);
   if(r==='study')return loadStudyData(force,epoch);
+  if(r==='notifications')return loadNotificationsData(force,epoch);
   if(r==='search')return loadSearchData(epoch);
   if(r==='courses')return loadData('courses',force,epoch);
   if(r==='course')return loadCourse(force,epoch);
