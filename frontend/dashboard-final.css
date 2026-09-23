@@ -15011,3 +15011,324 @@ body.light .nova-ambient-field .nova-ambient-overlay {
     max-width: none !important;
   }
 }
+
+
+/* =========================================================
+   NOVA 27.0 · MESSAGE THREAD UX
+   ========================================================= */
+
+.messages-page .messages-shell{
+  display:grid;
+  grid-template-columns:minmax(270px,330px) minmax(0,1fr);
+  min-height:min(710px,calc(100vh - 255px));
+  overflow:hidden;
+  border:1px solid rgba(145,170,200,.14);
+  border-radius:24px;
+  background:#0b1420;
+}
+
+.messages-page .conversation-list{
+  min-width:0;
+  border-right:1px solid rgba(145,170,200,.14);
+}
+
+.messages-page .conversation-list-head{
+  min-height:70px;
+  padding:18px;
+  border-bottom:1px solid rgba(145,170,200,.14);
+}
+
+.messages-page .conversation-list-head b{
+  display:block;
+  font-size:15px;
+}
+
+.messages-page .conversation-list-head small{
+  display:block;
+  margin-top:5px;
+  opacity:.6;
+  font-size:12px;
+}
+
+.messages-page .conversation-list-body{
+  padding:8px;
+  overflow:auto;
+}
+
+.messages-page .conversation-item{
+  position:relative;
+  display:flex;
+  width:100%;
+  gap:12px;
+  padding:13px 12px;
+  border:0;
+  border-radius:15px;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:background .18s ease;
+}
+
+.messages-page .conversation-item:hover{
+  background:rgba(127,157,190,.08);
+}
+
+.messages-page .conversation-item.active{
+  background:rgba(37,184,255,.09);
+  box-shadow:inset 2px 0 0 #25b8ff;
+}
+
+.messages-page .conversation-item-main{
+  min-width:0;
+  flex:1;
+}
+
+.messages-page .conversation-item-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.messages-page .conversation-item-top b{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+}
+
+.messages-page .conversation-item-top time{
+  flex:0 0 auto;
+  opacity:.55;
+  font-size:10px;
+}
+
+.messages-page .conversation-item-bottom{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+}
+
+.messages-page .conversation-item-bottom small{
+  min-width:0;
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  opacity:.62;
+  font-size:12px;
+}
+
+.messages-page .conversation-unread{
+  flex:0 0 auto;
+  min-width:19px;
+  height:19px;
+  padding:0 5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:#25b8ff;
+  color:#fff;
+  font-size:10px;
+  font-weight:700;
+}
+
+.messages-page .conversation-view{
+  min-width:0;
+  min-height:0;
+}
+
+.messages-page .conversation{
+  height:100%;
+  min-height:710px;
+  display:flex;
+  flex-direction:column;
+}
+
+.messages-page .conversation-head{
+  flex:0 0 auto;
+  min-height:78px;
+  padding:15px 20px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  border-bottom:1px solid rgba(145,170,200,.14);
+}
+
+.messages-page .conversation-head-main{
+  min-width:0;
+}
+
+.messages-page .conversation-head-main h2{
+  margin:0;
+  font-size:15px;
+}
+
+.messages-page .conversation-head-main p{
+  margin:5px 0 0;
+  opacity:.55;
+  font-size:11px;
+}
+
+.messages-page .conversation-body{
+  flex:1 1 auto;
+  min-height:0;
+  padding:22px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+
+.messages-page .nova27-bubble{
+  align-self:flex-start;
+  width:fit-content;
+  max-width:min(72%,680px);
+  padding:10px 13px 8px;
+  border:1px solid rgba(145,170,200,.14);
+  border-radius:17px 17px 17px 6px;
+  background:#101b2a;
+}
+
+.messages-page .nova27-bubble.mine{
+  align-self:flex-end;
+  border-radius:17px 17px 6px 17px;
+  background:rgba(37,184,255,.15);
+  border-color:rgba(37,184,255,.20);
+}
+
+.messages-page .nova27-bubble p{
+  margin:0;
+  font-size:13px;
+  line-height:1.5;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.messages-page .nova27-bubble small{
+  display:block;
+  margin-top:5px;
+  opacity:.55;
+  font-size:9px;
+}
+
+.messages-page .bubble-author{
+  display:block;
+  margin-bottom:5px;
+  color:#25b8ff;
+  font-size:10px;
+  font-weight:650;
+}
+
+.messages-page .nova27-message-form{
+  flex:0 0 auto;
+  padding:12px 15px 14px;
+  border-top:1px solid rgba(145,170,200,.14);
+}
+
+.messages-page .message-compose{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+}
+
+.messages-page .message-compose textarea{
+  min-height:44px;
+  max-height:160px;
+  flex:1;
+  resize:none;
+  padding:12px 13px;
+  border:1px solid rgba(145,170,200,.14);
+  border-radius:15px;
+  background:#101b2a;
+  color:inherit;
+  outline:none;
+  line-height:1.4;
+}
+
+.messages-page .message-compose textarea:focus{
+  border-color:rgba(37,184,255,.45);
+  box-shadow:0 0 0 3px rgba(37,184,255,.08);
+}
+
+.messages-page .message-send{
+  min-width:46px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border-radius:14px;
+}
+
+.messages-page .message-send.is-loading{
+  opacity:.7;
+  pointer-events:none;
+}
+
+.messages-page .message-form-hint{
+  margin:7px 3px 0;
+  opacity:.5;
+  font-size:10px;
+}
+
+.messages-page .message-back{
+  display:none;
+  width:36px;
+  height:36px;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(145,170,200,.14);
+  border-radius:11px;
+  background:#101b2a;
+  color:inherit;
+  font-size:20px;
+  cursor:pointer;
+}
+
+@media (max-width:820px){
+  .messages-page .messages-shell{
+    grid-template-columns:1fr;
+    min-height:calc(100vh - 235px);
+  }
+
+  .messages-page .messages-shell.conversation-open .conversation-list{
+    display:none;
+  }
+
+  .messages-page .messages-shell:not(.conversation-open) .conversation-view{
+    display:none;
+  }
+
+  .messages-page .message-back{
+    display:inline-flex;
+    flex:0 0 36px;
+  }
+
+  .messages-page .conversation{
+    min-height:calc(100vh - 235px);
+  }
+
+  .messages-page .nova27-bubble{
+    max-width:84%;
+  }
+
+  .messages-page .message-form-hint{
+    display:none;
+  }
+
+  .messages-page .message-send span{
+    display:none;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .messages-page .conversation-item{
+    transition:none;
+  }
+}

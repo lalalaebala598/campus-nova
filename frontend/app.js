@@ -1,3 +1,4 @@
+// NOVA 27.0 cache bust: nova27-messages-20260923-1
 const state = {
   connected: false,
   user: null,
@@ -211,6 +212,54 @@ function navigate(route,param='',replace=false){
   loadRouteData();
 }
 function back(fallback='dashboard'){ if(history.state?.nova){history.back();return} navigate(fallback); }
+
+function novaHandlePopState(){
+  state.routeEpoch++;
+
+  parseRoute();
+
+  const loadingRoute = {
+    dashboard:'dashboard',
+    study:'study',
+    courses:'courses',
+    course:'course',
+    schedule:'schedule',
+    grades:'grades',
+    tasks:'tasks',
+    calendar:'calendar',
+    messages:'messages',
+    files:'files',
+    materials:'materials',
+    tests:'tests',
+    activity:'activity',
+    profile:'profile',
+    notifications:'notifications',
+    view:null
+  }[state.route];
+
+  if(
+    loadingRoute &&
+    !state.demo &&
+    state.status[loadingRoute] !== 'loading'
+  ){
+    state.status[loadingRoute] = 'loading';
+  }
+
+  render(true);
+  void loadRouteData(false, state.routeEpoch);
+}
+
+if(
+  typeof window !== 'undefined' &&
+  typeof window.addEventListener === 'function' &&
+  !window.__novaPopStateBound
+){
+  window.__novaPopStateBound = true;
+  window.addEventListener(
+    'popstate',
+    novaHandlePopState
+  );
+}
 function formatDate(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
 function formatLong(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}
 function formatTime(ts){if(!ts)return '—';return new Date(Number(ts)*1000).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
@@ -11692,10 +11741,48 @@ function eventsForSelected(){const events=flattenCalendar(state.data.calendar||{
 /* messages empty-state quality contract */
 const NOVA_MESSAGES_EMPTY_TEXT = 'Новых сообщений нет.';
 
+/* NOVA 27.0 · MESSAGE THREAD UX */
+
+function nova27LatestMessage(conversation){
+  const messages = Array.isArray(conversation?.messages)
+    ? conversation.messages.slice().sort(
+        (a,b) => Number(a?.timecreated||0) - Number(b?.timecreated||0)
+      )
+    : [];
+
+  return messages.length ? messages[messages.length - 1] : null;
+}
+
 function messagesPage(){
-  if(state.status.messages==='loading') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Загружаем диалоги Campus…'})}${skeletonGrid(2)}</section>`;
-  if(state.status.messages==='error') return `<section class="page messages-page">${PageHead({eyebrow:'КОММУНИКАЦИЯ',title:'Сообщения',sub:'Не удалось получить диалоги.'})}${statePanel('error','messages')}</section>`;
-  const m=state.data.messages||{}; const conv=m.conversations||[];
+  if(state.status.messages==='loading'){
+    return `
+      <section class="page messages-page">
+        ${PageHead({
+          eyebrow:'КОММУНИКАЦИЯ',
+          title:'Сообщения',
+          sub:'Загружаем диалоги Campus…'
+        })}
+        ${skeletonGrid(2)}
+      </section>
+    `;
+  }
+
+  if(state.status.messages==='error'){
+    return `
+      <section class="page messages-page">
+        ${PageHead({
+          eyebrow:'КОММУНИКАЦИЯ',
+          title:'Сообщения',
+          sub:'Не удалось получить диалоги.'
+        })}
+        ${statePanel('error','messages')}
+      </section>
+    `;
+  }
+
+  const m = state.data.messages || {};
+  const conv = Array.isArray(m.conversations) ? m.conversations : [];
+
   return `
     <section class="page messages-page">
 
@@ -11707,6 +11794,7 @@ function messagesPage(){
           <button
             class="secondary"
             data-retry="messages"
+            type="button"
           >
             ${icon('refresh',16)}
             Обновить
@@ -11714,122 +11802,98 @@ function messagesPage(){
         `
       })}
 
-      <div
-        class="messages-shell ${
-          state.selectedConversation
-            ? 'conversation-open'
-            : ''
-        }"
-      >
+      <div class="messages-shell ${state.selectedConversation ? 'conversation-open' : ''}">
 
         <aside class="conversation-list">
 
           <div class="conversation-list-head">
-
             <div>
               <b>Диалоги</b>
               <small>
-                ${
-                  conv.length
-                    ? `${conv.length} активных`
-                    : 'Пока пусто'
-                }
+                ${conv.length ? `${conv.length} активных` : 'Пока пусто'}
               </small>
             </div>
-
           </div>
 
           <div class="conversation-list-body">
 
             ${
               conv.map(c=>{
-
                 const selected =
-                  String(c.id) ===
-                  String(state.selectedConversation);
+                  String(c.id) === String(state.selectedConversation);
+
+                const latest = nova27LatestMessage(c);
 
                 const preview =
                   messageText(
-                    c.messages?.[0]?.text ||
-                    c.messages?.[0]?.message ||
+                    latest?.text ||
+                    latest?.message ||
                     'Нет сообщений'
-                  ).slice(0,64);
+                  ).trim().slice(0,72) || 'Нет сообщений';
 
                 const title =
                   c.name ||
+                  c.members?.find?.(
+                    m => String(m?.id) !== String(state.user?.id)
+                  )?.fullname ||
                   'Диалог';
+
+                const unread =
+                  Number(c.unreadcount ?? c.unreadCount ?? 0);
 
                 return `
                   <button
-                    class="
-                      conversation-item
-                      ${selected ? 'active' : ''}
-                    "
+                    class="conversation-item ${selected ? 'active' : ''}"
                     data-conversation="${esc(c.id)}"
                     type="button"
+                    aria-label="Открыть диалог ${esc(title)}"
                   >
-
                     <span class="avatar">
-                      ${esc(title.slice(0,1))}
+                      ${esc(title.slice(0,1).toUpperCase())}
                     </span>
 
                     <span class="conversation-item-main">
 
                       <span class="conversation-item-top">
-
-                        <b>
-                          ${esc(title)}
-                        </b>
+                        <b>${esc(title)}</b>
 
                         ${
-                          c.messages?.[0]?.timecreated
-                            ? `
-                              <time>
-                                ${formatTime(
-                                  c.messages[0].timecreated
-                                )}
-                              </time>
-                            `
+                          latest?.timecreated
+                            ? `<time>${formatTime(latest.timecreated)}</time>`
                             : ''
                         }
-
                       </span>
 
-                      <small>
-                        ${esc(preview)}
-                      </small>
+                      <span class="conversation-item-bottom">
+                        <small>${esc(preview)}</small>
+
+                        ${
+                          unread > 0
+                            ? `<span class="conversation-unread">${unread > 99 ? '99+' : unread}</span>`
+                            : ''
+                        }
+                      </span>
 
                     </span>
-
                   </button>
                 `;
               }).join('') ||
 
               `
                 <div class="conversation-list-empty">
-
                   <div class="conversation-list-empty-icon">
                     ${icon('message',20)}
                   </div>
-
                   <b>Диалогов пока нет</b>
-
-                  <small>
-                    Новые сообщения появятся здесь.
-                  </small>
-
+                  <small>Новые сообщения появятся здесь.</small>
                 </div>
               `
             }
 
           </div>
-
         </aside>
 
-        <main
-          class="conversation-view"
-          id="conversation-view"
-        >
+        <main class="conversation-view" id="conversation-view">
 
           ${
             state.selectedConversation
@@ -11841,7 +11905,6 @@ function messagesPage(){
               `
               : `
                 <div class="conversation-empty">
-
                   <div class="conversation-empty-icon">
                     ${icon('message',26)}
                   </div>
@@ -11852,18 +11915,16 @@ function messagesPage(){
                     Здесь появится история переписки
                     и поле для ответа.
                   </p>
-
                 </div>
               `
           }
 
         </main>
-
       </div>
-
     </section>
   `;
 }
+
 function filesPage(){
   if(state.status.files==='loading'){
     return `
@@ -19161,6 +19222,69 @@ function render(animateNav=false){
     }
   });
 }
+
+function novaBindAnchorNavigation(){
+  if(
+    document.documentElement.dataset.novaAnchorNavigation === '1'
+  ){
+    return;
+  }
+
+  document.documentElement.dataset.novaAnchorNavigation = '1';
+
+  document.addEventListener('click', event=>{
+    const anchor =
+      event.target?.closest?.('a[data-go]');
+
+    if(!anchor) return;
+
+    if(event.defaultPrevented) return;
+
+    if(
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    ){
+      return;
+    }
+
+    const route =
+      anchor.dataset.go || '';
+
+    const param =
+      anchor.dataset.param || '';
+
+    const href =
+      anchor.getAttribute('href') || '/';
+
+    if(!route) return;
+
+    event.preventDefault();
+
+    try{
+      navigate(
+        route === 'course'
+          ? 'course'
+          : route,
+        param
+      );
+    }catch(error){
+      console.error(
+        '[Nova][Navigation]',
+        {
+          route,
+          param,
+          error
+        }
+      );
+
+      window.location.assign(href);
+    }
+  });
+}
+
 function bind(){
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
     if(event.defaultPrevented) return;
@@ -20788,79 +20912,283 @@ async function handleCampusForm(e){
 }
 
 async function openConversation(id){
-  state.selectedConversation=id;render();const view=$('#conversation-view');if(!view)return;const seq=(state.requests.conversation||0)+1;state.requests.conversation=seq;
-  try{const d=await api(`/api/messages/conversation?id=${encodeURIComponent(id)}`);if(state.requests.conversation!==seq||state.route!=='messages'||String(state.selectedConversation)!==String(id))return;view.innerHTML=conversationMarkup(d.conversation);bindMessageForm()}
-  catch(e){if(state.requests.conversation!==seq)return;view.innerHTML=statePanel('error','messages',false);}
-}
-function conversationMarkup(c){const msgs=[...(c?.messages||[])].sort((a,b)=>Number(a.timecreated||0)-Number(b.timecreated||0));const title=c?.name||c?.members?.find?.(m=>String(m.id)!==String(state.user?.id))?.fullname||'Диалог';return `<div class="conversation"><div class="conversation-head"><span class="avatar large">${esc(title.slice(0,1))}</span><div><h2>${esc(title)}</h2><p>${msgs.length} ${msgs.length===1?'сообщение':'сообщений'}</p></div></div><div class="conversation-body">${msgs.map(m=>`<div class="bubble ${String(m.userid||m.user?.id)===String(state.user?.id)?'mine':''}"><p>${esc(messageText(m.text||m.message||''))}</p><small>${m.timecreated?formatLong(m.timecreated)+' · '+formatTime(m.timecreated):''}</small></div>`).join('')||'<div class="inline-empty">История переписки пуста.</div>'}</div><form id="message-form" class="message-form"><textarea name="text" rows="1" required placeholder="Написать сообщение…"></textarea><button class="primary" type="submit" title="Отправить">${icon('send',18)}</button></form></div>`}
-function bindMessageForm(){$('#message-form')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button');const tx=form.querySelector('textarea');const value=tx.value.trim();if(!value)return;btn.disabled=true;try{await api('/api/messages/send',{method:'POST',body:JSON.stringify({conversationId:state.selectedConversation,text:value})});tx.value='';await openConversation(state.selectedConversation);toast('Сообщение отправлено','success')}catch(ex){toast(ex.message,'error')}finally{btn.disabled=false}})}
-window.addEventListener('popstate',()=>{
-  state.routeEpoch++;
-  parseRoute();
-  render(true);
-  loadRouteData(false,state.routeEpoch);
-});window.addEventListener('error',e=>console.error('[Nova]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[Nova]',e.reason));
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#global-search')?.focus()}});
-document.addEventListener('click',e=>{
-  const mobileSidebar=document.querySelector('.sidebar.mobile-open');
+  if(!id) return;
 
-  if(
-    mobileSidebar &&
-    !mobileSidebar.contains(e.target) &&
-    !e.target?.closest?.('#mobile-menu')
-  ){
-    mobileSidebar.classList.remove('mobile-open');
-  }
+  state.selectedConversation = id;
+  render();
 
-  const openProfile=document.querySelector('.profile-menu.open');
+  const view = $('#conversation-view');
+  if(!view) return;
 
-  if(openProfile && !openProfile.contains(e.target)){
-    openProfile.classList.remove('open');
-    document.querySelector('#profile-menu-trigger')?.setAttribute(
-      'aria-expanded',
-      'false'
+  const seq = (state.requests.conversation || 0) + 1;
+  state.requests.conversation = seq;
+
+  try{
+    const d = await api(
+      `/api/messages/conversation?id=${encodeURIComponent(id)}`
     );
+
+    if(
+      state.requests.conversation !== seq ||
+      state.route !== 'messages' ||
+      String(state.selectedConversation) !== String(id)
+    ){
+      return;
+    }
+
+    view.innerHTML = conversationMarkup(d.conversation);
+    bindMessageForm();
+
+    const body = $('#conversation-body');
+    if(body){
+      body.scrollTop = body.scrollHeight;
+    }
+
+    void api(
+      '/api/messages/mark-read',
+      {
+        method:'POST',
+        body:JSON.stringify({
+          conversationId:id
+        })
+      }
+    ).catch(()=>{});
+
+  }catch(e){
+    if(state.requests.conversation !== seq) return;
+
+    view.innerHTML =
+      statePanel('error','messages',false);
   }
+}
 
-  const target=e.target?.closest?.('a[data-go]');
-  if(!target || !target.isConnected || e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  const route=target.dataset.go||''; const param=target.dataset.param||'';
-  e.preventDefault();
-  try{ navigate(route==='course'?'course':route,param); }
-  catch(error){ console.error('[Nova][NavigationFallback]',{route,param,error}); const href=target.getAttribute('href'); if(href) window.location.assign(href); }
-});
+function conversationMarkup(c){
+  const msgs = Array.isArray(c?.messages)
+    ? c.messages.slice().sort(
+        (a,b) => Number(a?.timecreated||0) - Number(b?.timecreated||0)
+      )
+    : [];
 
-document.addEventListener('pointerdown',e=>{
-  const target=e.target?.closest?.(
-    'button,.primary,.secondary,.nav-item,.metric,.course-card,.task-card,.test-card,.activity,.mini-course,.file-row,.panel-action,.quick-actions button'
-  );
+  const title =
+    c?.name ||
+    c?.members?.find?.(
+      m => String(m?.id) !== String(state.user?.id)
+    )?.fullname ||
+    'Диалог';
 
-  if(!target || target.disabled) return;
+  const avatar =
+    title.trim().slice(0,1).toUpperCase() || 'Д';
 
-  target.classList.remove('nova-press');
+  return `
+    <div class="conversation conversation-nova27">
 
-  novaFrame(()=>{
-    target.classList.add('nova-press');
+      <header class="conversation-head">
+
+        <button
+          class="message-back"
+          data-message-back
+          type="button"
+          aria-label="Вернуться к диалогам"
+        >
+          ←
+        </button>
+
+        <span class="avatar large">
+          ${esc(avatar)}
+        </span>
+
+        <div class="conversation-head-main">
+          <h2>${esc(title)}</h2>
+          <p>
+            ${
+              msgs.length
+                ? `${msgs.length} ${msgs.length===1 ? 'сообщение' : 'сообщений'}`
+                : 'Новая переписка'
+            }
+          </p>
+        </div>
+
+      </header>
+
+      <div
+        class="conversation-body"
+        id="conversation-body"
+      >
+
+        ${
+          msgs.map(m=>{
+            const mine =
+              String(
+                m?.userid ||
+                m?.user?.id ||
+                m?.fromid ||
+                ''
+              ) === String(state.user?.id);
+
+            const text =
+              messageText(
+                m?.text ||
+                m?.message ||
+                ''
+              ).trim();
+
+            return `
+              <div class="bubble nova27-bubble ${mine ? 'mine' : ''}">
+
+                ${
+                  !mine
+                    ? `<span class="bubble-author">${esc(title)}</span>`
+                    : ''
+                }
+
+                <p>${esc(text)}</p>
+
+                ${
+                  m?.timecreated
+                    ? `<small>${formatTime(m.timecreated)}</small>`
+                    : ''
+                }
+
+              </div>
+            `;
+          }).join('') ||
+
+          `<div class="inline-empty">История переписки пуста.</div>`
+        }
+
+      </div>
+
+      <form
+        id="message-form"
+        class="message-form nova27-message-form"
+      >
+        <div class="message-compose">
+
+          <textarea
+            name="text"
+            rows="1"
+            required
+            maxlength="4000"
+            autocomplete="off"
+            spellcheck="true"
+            placeholder="Написать сообщение…"
+            aria-label="Текст сообщения"
+          ></textarea>
+
+          <button
+            class="primary message-send"
+            type="submit"
+            title="Отправить"
+            aria-label="Отправить сообщение"
+          >
+            ${icon('send',18)}
+            <span>Отправить</span>
+          </button>
+
+        </div>
+
+        <div class="message-form-hint">
+          Enter — отправить · Shift+Enter — новая строка
+        </div>
+      </form>
+
+    </div>
+  `;
+}
+
+function bindMessageForm(){
+  const form = $('#message-form');
+  if(!form) return;
+
+  const tx = form.querySelector('textarea');
+  const btn = form.querySelector('button');
+
+  if(!tx || !btn) return;
+
+  const autoGrow = ()=>{
+    tx.style.height = 'auto';
+    tx.style.height = Math.min(tx.scrollHeight,160) + 'px';
+  };
+
+  tx.addEventListener('input', autoGrow);
+
+  tx.addEventListener('keydown', event=>{
+    if(
+      event.key === 'Enter' &&
+      !event.shiftKey
+    ){
+      event.preventDefault();
+
+      if(
+        !btn.disabled &&
+        tx.value.trim()
+      ){
+        form.requestSubmit();
+      }
+    }
   });
-});
 
-document.addEventListener('animationend',e=>{
-  if(e.animationName==='novaPress'){
-    e.target.classList.remove('nova-press');
-  }
-});
+  autoGrow();
 
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape') return;
+  form.addEventListener('submit', async event=>{
+    event.preventDefault();
 
-  const sidebar=document.querySelector('.sidebar.mobile-open');
+    const value = tx.value.trim();
 
-  if(sidebar){
-    sidebar.classList.remove('mobile-open');
-  }
-});
+    if(!value || btn.disabled){
+      return;
+    }
 
-/* NOVA_FORCE_DASHBOARD_HOME_OVERRIDES START */
+    const original = btn.innerHTML;
+
+    btn.disabled = true;
+    tx.disabled = true;
+    btn.classList.add('is-loading');
+    btn.innerHTML = '<span>Отправляем…</span>';
+
+    try{
+      await api(
+        '/api/messages/send',
+        {
+          method:'POST',
+          body:JSON.stringify({
+            conversationId:state.selectedConversation,
+            text:value
+          })
+        }
+      );
+
+      tx.value = '';
+      autoGrow();
+
+      await loadData('messages',true);
+
+      toast(
+        'Сообщение отправлено',
+        'success'
+      );
+
+    }catch(ex){
+      toast(
+        ex?.message ||
+        'Не удалось отправить сообщение.',
+        'error'
+      );
+
+    }finally{
+      tx.disabled = false;
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+      btn.innerHTML = original;
+
+      if(document.body.contains(tx)){
+        tx.focus();
+      }
+    }
+  });
+}
+
+
 function injectDashboardHomeOverrides(){
   if(
     typeof document.getElementById!=='function'
