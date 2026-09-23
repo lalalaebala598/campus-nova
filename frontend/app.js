@@ -1,4 +1,3 @@
-// NOVA 28.0 cache bust: login-redesign-20260923-1
 // NOVA 27.4 cache bust: spa-anchor-navigation-20260923-4
 // NOVA 27.0 cache bust: nova27-messages-20260923-4
 const state = {
@@ -18839,146 +18838,97 @@ function viewPage(){
   return `<section class="page content-page"><div class="content-card"><div class="content-toolbar"><button class="back-button" data-back="dashboard">${icon('back',17)} Назад</button><button class="secondary" id="content-refresh">${icon('refresh',16)} Обновить</button></div><h1 id="view-title">${esc(title)}</h1><div id="campus-content">${body}</div></div></section>`;
 }
 function login(){
+  const remembered = state.campusUrl || 'https://campus.fa.ru';
+
   return `
     <div class="auth">
 
       <section class="auth-left">
-
         <div class="auth-inner">
 
-          <div class="auth-wordmark nova-login-brand">
-
+          <div class="auth-wordmark">
             <span class="auth-wordmark-mark">
               ${icon('university',22)}
             </span>
 
             <span class="auth-wordmark-copy">
-
-              <small>
-                CAMPUS NOVA
-              </small>
-
-              <b>
-                Финансовый университет
-              </b>
-
-              <em>
-                Краснодарский филиал
-              </em>
-
+              <small>CAMPUS NOVA</small>
+              <b><span>Ваш</span> Campus</b>
             </span>
-
           </div>
 
-          <div class="eyebrow">
-            ВХОД В CAMPUS
-          </div>
+          <div class="eyebrow">ВХОД В CAMPUS</div>
 
           <h1>
-            Снова <span>здесь.</span>
+            Ваш <span>Campus.</span><br>
+            Но в новом дизайне.
           </h1>
 
           <p class="auth-lead">
-            Войди в Nova, чтобы открыть свои курсы,
-            задания, расписание и оценки.
+            Войдите, чтобы открыть свои курсы,
+            задания, расписание и оценки в Nova.
           </p>
 
-          <form
-            id="login-form"
-            class="nova-login-form"
-          >
+          <form id="login-form">
+
+            <input
+              type="hidden"
+              name="campusUrl"
+              value="${esc(remembered)}"
+            >
 
             <label>
-
               Логин
-
               <input
                 name="username"
                 autocomplete="username"
                 required
-                placeholder="Логин Campus"
-                spellcheck="false"
-                autocapitalize="none"
+                placeholder="Введите логин"
               >
-
             </label>
 
             <label>
-
               Пароль
 
               <div class="password">
-
                 <input
                   id="login-password"
                   name="password"
                   type="password"
                   autocomplete="current-password"
                   required
-                  placeholder="Пароль Campus"
+                  placeholder="Введите пароль"
                 >
 
                 <button
                   type="button"
                   id="toggle-pass"
                   aria-label="Показать пароль"
-                  title="Показать пароль"
                 >
-                  ${icon('eye',16)}
+                  ${icon('eye',15)}
                 </button>
-
               </div>
-
             </label>
 
             <button
-              class="primary wide nova-login-submit"
+              class="primary wide"
               type="submit"
             >
-              <span data-login-icon>
-                ${icon('arrow',17)}
-              </span>
-
-              <span data-login-label>
-                Войти в Campus
-              </span>
+              Войти в Campus
+              ${icon('arrow',17)}
             </button>
 
-            <div class="security nova-login-security">
-
-              ${icon('check',14)}
-
-              <span>
-                Авторизация проходит через Campus.
-                Пароль не сохраняется в Nova.
-              </span>
-
+            <div class="security">
+              ${icon('check',15)}
+              Пароль не сохраняется в профиле Nova.
             </div>
 
-            <div
-              id="login-error"
-              aria-live="polite"
-            ></div>
+            <div id="login-error"></div>
 
           </form>
 
-          <div class="nova-login-footer">
-
-            <span>
-              <i></i>
-              Защищённое подключение
-            </span>
-
-            <span>
-              NOVA / BETA
-            </span>
-
-          </div>
-
         </div>
-
       </section>
-
 
       <section class="auth-visual">
 
@@ -18999,61 +18949,10 @@ function login(){
 
         <div class="auth-visual-overlay"></div>
 
-        <div class="nova-login-visual-top">
-
-          <span class="nova-login-live">
-            <i></i>
-            LIVE · CAMPUS
-          </span>
-
-          <span class="nova-login-version">
-            NOVA / BETA
-          </span>
-
-        </div>
-
         <div class="auth-copy">
-
-          <div class="eyebrow">
-            CAMPUS NOVA
-          </div>
-
-          <span>
-            ЦИФРОВОЙ КАБИНЕТ
-          </span>
-
-          <b>
-            Всё учебное
-            <br>
-            в одном окне.
-          </b>
-
-          <small>
-            Курсы, задания, оценки и расписание
-            остаются данными Campus.
-            Nova делает работу с ними удобнее.
-          </small>
-
-          <div class="auth-copy-tags">
-
-            <span>
-              Курсы
-            </span>
-
-            <span>
-              Задания
-            </span>
-
-            <span>
-              Расписание
-            </span>
-
-            <span>
-              Оценки
-            </span>
-
-          </div>
-
+          <span>Campus Nova</span>
+          <b>Ваш Campus.<br>Новый дизайн.</b>
+          <small>Курсы · задания · оценки · расписание</small>
         </div>
 
       </section>
@@ -20125,131 +20024,7 @@ $$('[data-search-filter]').forEach(
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
 }
-async function doLogin(e){
-  e.preventDefault();
-
-  const form = e.currentTarget;
-  const btn = form.querySelector('button[type=submit]');
-  const err = $('#login-error');
-
-  if(!btn){
-    return;
-  }
-
-  btn.disabled = true;
-  btn.setAttribute('aria-busy','true');
-  btn.classList.add('is-loading');
-
-  if(err){
-    err.innerHTML = '';
-  }
-
-  btn.innerHTML = `
-    <span class="spinner small"></span>
-    <span>Подключаем…</span>
-  `;
-
-  try{
-
-    const data =
-      Object.fromEntries(
-        new FormData(form).entries()
-      );
-
-    const d =
-      await api(
-        '/api/auth/login',
-        {
-          method:'POST',
-          body:JSON.stringify({
-            username:String(
-              data.username || ''
-            ),
-            password:String(
-              data.password || ''
-            )
-          })
-        }
-      );
-
-    state.connected = true;
-
-    state.user = d.user;
-
-    state.campusUrl =
-      d.campusUrl ||
-      'https://campus.fa.ru';
-
-    localStorage.setItem(
-      'nova-campus-url',
-      state.campusUrl
-    );
-
-    state.demo = false;
-
-    state.data = {
-      dashboard:null,
-      courses:null,
-      tasks:null,
-      grades:null,
-      schedule:null,
-      calendar:null,
-      messages:null,
-      files:null,
-      tests:null,
-      materials:null,
-      profile:null,
-      view:null,
-      activity:null,
-      study:null,
-      notifications:null,
-      deadlines:null
-    };
-
-    toast(
-      `Campus подключён · ${campusHost()}`,
-      'success'
-    );
-
-    navigate(
-      'dashboard',
-      '',
-      true
-    );
-
-  }catch(ex){
-
-    if(err){
-      err.innerHTML =
-        `<div class="login-error">${esc(
-          ex.message
-        )}</div>`;
-    }
-
-  }finally{
-
-    btn.disabled = false;
-
-    btn.removeAttribute(
-      'aria-busy'
-    );
-
-    btn.classList.remove(
-      'is-loading'
-    );
-
-    btn.innerHTML = `
-      <span data-login-icon>
-        ${icon('arrow',17)}
-      </span>
-
-      <span data-login-label>
-        Войти в Campus
-      </span>
-    `;
-
-  }
-}
+async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
 function confirmNovaLogout(){
   if(document.querySelector('#nova-logout-modal')) return;
 
