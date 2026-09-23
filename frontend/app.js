@@ -1,4 +1,4 @@
-// NOVA 27.0 cache bust: nova27-messages-20260923-3
+// NOVA 27.0 cache bust: nova27-messages-20260923-4
 const state = {
   connected: false,
   user: null,
@@ -21024,11 +21024,13 @@ async function openConversation(id){
 
 function conversationMarkup(c){
   const msgs = Array.isArray(c?.messages)
-    ? c.messages.slice().sort(
-        (a,b) =>
-          Number(a?.timecreated||0) -
-          Number(b?.timecreated||0)
-      )
+    ? c.messages
+        .slice()
+        .sort(
+          (a,b) =>
+            Number(a?.timecreated||0) -
+            Number(b?.timecreated||0)
+        )
     : [];
 
   const title =
@@ -21066,7 +21068,6 @@ function conversationMarkup(c){
 
         <div class="conversation-head-main">
           <h2>${esc(title)}</h2>
-
           <p>
             ${
               msgs.length
@@ -21102,6 +21103,10 @@ function conversationMarkup(c){
                 ? nova27MessageSenderId(previous)
                 : '';
 
+            const newGroup =
+              index === 0 ||
+              previousSenderId !== senderId;
+
             const senderName =
               mine
                 ? 'Вы'
@@ -21110,11 +21115,7 @@ function conversationMarkup(c){
                     title
                   );
 
-            const isNewGroup =
-              index === 0 ||
-              previousSenderId !== senderId;
-
-            const text =
+            const message =
               messageText(
                 m?.text ||
                 m?.message ||
@@ -21123,32 +21124,36 @@ function conversationMarkup(c){
 
             return `
               <div
-                class="nova27-message-row ${mine ? 'mine' : 'incoming'} ${isNewGroup ? 'group-start' : 'group-continued'}"
+                class="nova27-message-row ${mine ? 'outgoing' : 'incoming'} ${newGroup ? 'group-start' : 'group-continued'}"
                 data-message-author="${esc(senderId)}"
               >
 
-                ${
-                  isNewGroup
-                    ? `
-                      <div class="nova27-message-author">
-                        <span>${esc(senderName)}</span>
-                      </div>
-                    `
-                    : ''
-                }
-
-                <div class="nova27-bubble">
-                  <p>${esc(text)}</p>
+                <div class="nova27-message-stack">
 
                   ${
-                    m?.timecreated
+                    newGroup
                       ? `
-                        <time datetime="${esc(String(m.timecreated))}">
-                          ${formatTime(m.timecreated)}
-                        </time>
+                        <div class="nova27-message-author">
+                          ${esc(senderName)}
+                        </div>
                       `
                       : ''
                   }
+
+                  <div class="nova27-bubble">
+                    <p>${esc(message)}</p>
+
+                    ${
+                      m?.timecreated
+                        ? `
+                          <time>
+                            ${formatTime(m.timecreated)}
+                          </time>
+                        `
+                        : ''
+                    }
+                  </div>
+
                 </div>
 
               </div>
@@ -21161,7 +21166,9 @@ function conversationMarkup(c){
                 ${icon('message',20)}
               </div>
               <b>Пока нет сообщений</b>
-              <span>Начните переписку с первого сообщения.</span>
+              <span>
+                Начните переписку с первого сообщения.
+              </span>
             </div>
           `
         }
@@ -21200,9 +21207,11 @@ function conversationMarkup(c){
         </div>
 
         <div class="message-form-hint">
-          <span>Enter</span> отправить
-          <i>·</i>
-          <span>Shift+Enter</span> новая строка
+          <span>Enter</span>
+          <i>отправить</i>
+          <b>·</b>
+          <span>Shift+Enter</span>
+          <i>новая строка</i>
         </div>
 
       </form>

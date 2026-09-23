@@ -38,6 +38,42 @@ assert.match(
 );
 pass('per-message author identity');
 
+
+assert.match(
+  APP,
+  /class="nova27-message-stack"/,
+  'structured message stack missing'
+);
+pass('NOVA 27.3 structural markup');
+
+assert.match(
+  APP,
+  /class="nova27-message-row \$\{mine \? 'outgoing' : 'incoming'\}/,
+  'incoming/outgoing row split missing'
+);
+pass('incoming/outgoing message rows');
+
+assert.match(
+  APP,
+  /class="message-compose-shell"/,
+  'composer structure missing'
+);
+pass('stable composer structure');
+
+assert.match(
+  CSS,
+  /NOVA 27\.3 · FINAL MESSAGE THREAD LAYOUT/,
+  'final visual lock missing'
+);
+pass('final message visual lock');
+
+assert.match(
+  CSS,
+  /\.message-send\{\s*position:static !important/s,
+  'legacy message button positioning not neutralized'
+);
+pass('message button positioning reset');
+
 assert.ok(
   APP.includes('NOVA 27.0 · MESSAGE THREAD UX'),
   'NOVA 27 marker missing in app.js'
