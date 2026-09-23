@@ -1,4 +1,4 @@
-// NOVA 27.0 cache bust: nova27-messages-20260923-2
+// NOVA 27.0 cache bust: nova27-messages-20260923-3
 const state = {
   connected: false,
   user: null,
@@ -21057,7 +21057,7 @@ function conversationMarkup(c){
           type="button"
           aria-label="Вернуться к диалогам"
         >
-          ←
+          ${icon('back',18)}
         </button>
 
         <span class="avatar large">
@@ -21066,6 +21066,7 @@ function conversationMarkup(c){
 
         <div class="conversation-head-main">
           <h2>${esc(title)}</h2>
+
           <p>
             ${
               msgs.length
@@ -21103,18 +21104,15 @@ function conversationMarkup(c){
 
             const senderName =
               mine
-                ? ''
+                ? 'Вы'
                 : nova27MessageSenderName(
                     m,
                     title
                   );
 
-            const showAuthor =
-              !mine &&
-              (
-                index === 0 ||
-                previousSenderId !== senderId
-              );
+            const isNewGroup =
+              index === 0 ||
+              previousSenderId !== senderId;
 
             const text =
               messageText(
@@ -21125,29 +21123,47 @@ function conversationMarkup(c){
 
             return `
               <div
-                class="bubble nova27-bubble ${mine ? 'mine' : ''}"
+                class="nova27-message-row ${mine ? 'mine' : 'incoming'} ${isNewGroup ? 'group-start' : 'group-continued'}"
                 data-message-author="${esc(senderId)}"
               >
 
                 ${
-                  showAuthor
-                    ? `<span class="bubble-author">${esc(senderName)}</span>`
+                  isNewGroup
+                    ? `
+                      <div class="nova27-message-author">
+                        <span>${esc(senderName)}</span>
+                      </div>
+                    `
                     : ''
                 }
 
-                <p>${esc(text)}</p>
+                <div class="nova27-bubble">
+                  <p>${esc(text)}</p>
 
-                ${
-                  m?.timecreated
-                    ? `<small>${formatTime(m.timecreated)}</small>`
-                    : ''
-                }
+                  ${
+                    m?.timecreated
+                      ? `
+                        <time datetime="${esc(String(m.timecreated))}">
+                          ${formatTime(m.timecreated)}
+                        </time>
+                      `
+                      : ''
+                  }
+                </div>
 
               </div>
             `;
           }).join('') ||
 
-          `<div class="inline-empty">История переписки пуста.</div>`
+          `
+            <div class="conversation-inline-empty">
+              <div class="conversation-inline-empty-icon">
+                ${icon('message',20)}
+              </div>
+              <b>Пока нет сообщений</b>
+              <span>Начните переписку с первого сообщения.</span>
+            </div>
+          `
         }
 
       </div>
@@ -21156,18 +21172,21 @@ function conversationMarkup(c){
         id="message-form"
         class="message-form nova27-message-form"
       >
-        <div class="message-compose">
 
-          <textarea
-            name="text"
-            rows="1"
-            required
-            maxlength="4000"
-            autocomplete="off"
-            spellcheck="true"
-            placeholder="Написать сообщение…"
-            aria-label="Текст сообщения"
-          ></textarea>
+        <div class="message-compose-shell">
+
+          <div class="message-input-wrap">
+            <textarea
+              name="text"
+              rows="1"
+              required
+              maxlength="4000"
+              autocomplete="off"
+              spellcheck="true"
+              placeholder="Написать сообщение…"
+              aria-label="Текст сообщения"
+            ></textarea>
+          </div>
 
           <button
             class="primary message-send"
@@ -21176,20 +21195,21 @@ function conversationMarkup(c){
             aria-label="Отправить сообщение"
           >
             ${icon('send',18)}
-            <span>Отправить</span>
           </button>
 
         </div>
 
         <div class="message-form-hint">
-          Enter — отправить · Shift+Enter — новая строка
+          <span>Enter</span> отправить
+          <i>·</i>
+          <span>Shift+Enter</span> новая строка
         </div>
+
       </form>
 
     </div>
   `;
 }
-
 function bindMessageForm(){
   const form = $('#message-form');
   if(!form) return;
