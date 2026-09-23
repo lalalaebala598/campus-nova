@@ -18711,3 +18711,783 @@ body[data-theme="light"] .nova-schedule-info-v4{
   }
 
 }
+
+
+/* =========================================================
+   NOVA 28.0 · LOGIN REDESIGN
+   ========================================================= */
+
+.auth{
+  position:relative;
+  min-height:100dvh;
+  grid-template-columns:
+    minmax(470px,.92fr)
+    minmax(560px,1.08fr);
+  background:
+    radial-gradient(
+      circle at 15% 8%,
+      rgba(24,183,255,.075),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 8% 90%,
+      rgba(104,92,255,.06),
+      transparent 27%
+    ),
+    var(--bg);
+  overflow:hidden;
+  isolation:isolate;
+}
+
+.auth-left{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100dvh;
+  padding:
+    28px
+    clamp(22px,5vw,76px);
+}
+
+.auth-left::before,
+.auth-left::after{
+  content:"";
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  filter:blur(16px);
+}
+
+.auth-left::before{
+  width:390px;
+  height:390px;
+  left:-290px;
+  top:-220px;
+  background:rgba(24,183,255,.10);
+}
+
+.auth-left::after{
+  width:300px;
+  height:300px;
+  right:-210px;
+  bottom:-190px;
+  background:rgba(105,94,255,.08);
+}
+
+.auth-inner{
+  position:relative;
+  z-index:1;
+  width:min(100%,505px);
+  padding:32px;
+  border:1px solid
+    color-mix(
+      in srgb,
+      var(--line) 88%,
+      transparent
+    );
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(
+        in srgb,
+        var(--surface) 97%,
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--surface-2) 93%,
+        transparent
+      )
+    );
+
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.22),
+    inset 0 1px 0
+      rgba(255,255,255,.05);
+
+  backdrop-filter:
+    blur(24px)
+    saturate(1.08);
+
+  -webkit-backdrop-filter:
+    blur(24px)
+    saturate(1.08);
+
+  animation:
+    novaLoginCardIn
+    .62s
+    cubic-bezier(.2,.78,.24,1)
+    both;
+}
+
+.nova-login-brand{
+  align-items:center;
+  gap:12px;
+  margin-bottom:34px;
+}
+
+.nova-login-brand .auth-wordmark-mark{
+  width:46px;
+  height:46px;
+  flex:0 0 46px;
+  border-radius:15px;
+  box-shadow:
+    0 16px 34px
+      color-mix(
+        in srgb,
+        var(--accent) 22%,
+        transparent
+      ),
+    inset 0 1px 0
+      rgba(255,255,255,.28);
+}
+
+.nova-login-brand .auth-wordmark-copy{
+  min-width:0;
+}
+
+.nova-login-brand .auth-wordmark-copy small{
+  color:var(--muted-2);
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.13em;
+}
+
+.nova-login-brand .auth-wordmark-copy b{
+  margin-top:3px;
+  color:var(--text);
+  font-size:15px;
+  font-weight:850;
+  letter-spacing:-.03em;
+}
+
+.nova-login-brand .auth-wordmark-copy em{
+  display:block;
+  margin-top:3px;
+  color:var(--muted-2);
+  font-size:9px;
+  font-style:normal;
+}
+
+.auth-inner .eyebrow{
+  margin-bottom:10px;
+}
+
+.auth-inner h1{
+  margin:0;
+  color:var(--text);
+  font-size:
+    clamp(
+      48px,
+      5.2vw,
+      68px
+    );
+  line-height:.92;
+  letter-spacing:-.07em;
+  font-weight:850;
+}
+
+.auth-inner h1 span{
+  color:var(--accent);
+}
+
+.auth-inner > p{
+  max-width:430px;
+  margin:14px 0 0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.65;
+}
+
+.nova-login-form{
+  margin-top:26px !important;
+  max-width:none !important;
+}
+
+.auth label{
+  display:block;
+  margin-bottom:13px;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+
+.auth input{
+  height:54px;
+  margin-top:7px;
+  border-radius:16px;
+  background:
+    color-mix(
+      in srgb,
+      var(--surface-2) 92%,
+      transparent
+    );
+  border-color:var(--line);
+  box-shadow:
+    inset 0 1px 0
+      rgba(255,255,255,.025);
+  font-size:12px;
+}
+
+.auth input:focus{
+  border-color:var(--accent);
+  background:var(--surface);
+  box-shadow:
+    0 0 0 4px
+      color-mix(
+        in srgb,
+        var(--accent) 9%,
+        transparent
+      ),
+    0 9px 26px rgba(0,0,0,.06);
+}
+
+.password{
+  position:relative;
+}
+
+.password button{
+  right:7px;
+  top:50%;
+  width:38px;
+  height:38px;
+  transform:translateY(-50%);
+  border-radius:10px;
+}
+
+.password button:hover{
+  background:var(--surface-3);
+}
+
+.nova-login-submit{
+  position:relative;
+  min-height:54px;
+  height:54px;
+  margin-top:7px !important;
+  border-radius:16px;
+  font-size:11.5px;
+  box-shadow:
+    0 16px 34px
+      rgba(8,136,249,.20);
+  overflow:hidden;
+}
+
+.nova-login-submit::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 20%,
+      rgba(255,255,255,.14) 50%,
+      transparent 80%
+    );
+  transform:translateX(-120%);
+  transition:
+    transform .65s ease;
+  pointer-events:none;
+}
+
+.nova-login-submit:hover::after{
+  transform:translateX(120%);
+}
+
+.nova-login-submit.is-loading{
+  cursor:wait;
+  filter:saturate(.92);
+}
+
+.nova-login-security{
+  justify-content:flex-start;
+  align-items:flex-start;
+  margin-top:12px;
+  color:var(--muted-2);
+  font-size:8.5px;
+  line-height:1.45;
+}
+
+.nova-login-security .icon{
+  margin-top:1px;
+  color:var(--good);
+}
+
+.login-error{
+  margin-top:12px;
+  padding:11px 13px;
+  border-radius:13px;
+  border:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--danger) 27%,
+      var(--line)
+    );
+  background:
+    rgba(255,102,125,.075);
+  color:#ff9aaa;
+  font-size:9px;
+  line-height:1.5;
+  box-shadow:none;
+}
+
+.nova-login-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:21px;
+  padding-top:16px;
+  border-top:1px solid var(--line);
+  color:var(--muted-2);
+  font-size:7.5px;
+  letter-spacing:.02em;
+}
+
+.nova-login-footer span:first-child{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.nova-login-footer i{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--good);
+  box-shadow:
+    0 0 10px
+      rgba(48,217,145,.34);
+}
+
+.auth-visual{
+  position:relative;
+  min-width:0;
+  min-height:100dvh;
+  overflow:hidden;
+  background:#0a121d;
+  border-left:
+    1px solid
+    rgba(255,255,255,.05);
+}
+
+.auth-photo{
+  transform:scale(1.035);
+  object-position:center 44%;
+  animation:
+    novaLoginPhotoIn
+    1s
+    cubic-bezier(.2,.72,.22,1)
+    both;
+}
+
+.auth-visual-overlay{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(2,8,15,.57) 0%,
+      rgba(2,8,15,.18) 50%,
+      rgba(2,8,15,.06) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(2,8,15,.07) 0%,
+      rgba(2,8,15,.12) 44%,
+      rgba(2,8,15,.86) 100%
+    );
+}
+
+.nova-login-visual-top{
+  position:absolute;
+  top:28px;
+  left:30px;
+  right:30px;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.nova-login-live,
+.nova-login-version{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:30px;
+  padding:0 11px;
+  border:
+    1px solid
+    rgba(255,255,255,.12);
+  border-radius:10px;
+  color:
+    rgba(255,255,255,.78);
+  background:
+    rgba(3,11,19,.24);
+  backdrop-filter:blur(11px);
+  -webkit-backdrop-filter:blur(11px);
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.13em;
+}
+
+.nova-login-live i{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#4be5a6;
+  box-shadow:
+    0 0 12px
+      rgba(75,229,166,.62);
+  animation:
+    novaLoginLivePulse
+    1.9s
+    ease-in-out
+    infinite;
+}
+
+.nova-login-version{
+  color:
+    rgba(255,255,255,.52);
+}
+
+.auth-copy{
+  z-index:3;
+  left:
+    clamp(
+      30px,
+      4.5vw,
+      72px
+    );
+  right:
+    clamp(
+      30px,
+      4.5vw,
+      72px
+    );
+  bottom:
+    clamp(
+      34px,
+      5vw,
+      68px
+    );
+  animation:
+    novaLoginCopyIn
+    .72s
+    .12s
+    cubic-bezier(.2,.72,.22,1)
+    both;
+}
+
+.auth-copy .eyebrow{
+  margin-bottom:12px;
+  color:#a9ddff;
+}
+
+.auth-copy > span:not(.eyebrow){
+  display:block;
+  font-size:9px;
+  opacity:.62;
+  letter-spacing:.14em;
+}
+
+.auth-copy b{
+  display:block;
+  max-width:680px;
+  margin-top:9px;
+  color:#fff;
+  font-size:
+    clamp(
+      38px,
+      4.25vw,
+      62px
+    );
+  line-height:.95;
+  letter-spacing:-.067em;
+}
+
+.auth-copy small{
+  display:block;
+  max-width:620px;
+  margin-top:16px;
+  color:
+    rgba(255,255,255,.68);
+  font-size:11px;
+  line-height:1.6;
+}
+
+.auth-copy-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:18px;
+}
+
+.auth-copy-tags span{
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:0 10px;
+  border:
+    1px solid
+    rgba(255,255,255,.12);
+  border-radius:10px;
+  color:
+    rgba(255,255,255,.78);
+  background:
+    rgba(4,11,19,.22);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+  font-size:7.5px;
+  font-weight:750;
+}
+
+body[data-theme="light"] .auth{
+  background:
+    radial-gradient(
+      circle at 15% 8%,
+      rgba(8,127,240,.06),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 8% 90%,
+      rgba(105,94,255,.04),
+      transparent 27%
+    ),
+    var(--bg);
+}
+
+body[data-theme="light"] .auth-inner{
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255,255,255,.98),
+      rgba(248,251,255,.96)
+    );
+  border-color:#dbe7f1;
+  box-shadow:
+    0 28px 74px
+      rgba(41,72,103,.12),
+    inset 0 1px 0
+      rgba(255,255,255,.95);
+}
+
+body[data-theme="light"] .auth input{
+  background:#f8fbfe;
+  border-color:#d9e4ef;
+  color:#17304d;
+}
+
+body[data-theme="light"] .auth input:focus{
+  background:#fff;
+  box-shadow:
+    0 0 0 4px
+      rgba(8,127,240,.08),
+    0 9px 26px
+      rgba(43,75,108,.055);
+}
+
+body[data-theme="light"] .nova-login-footer{
+  border-color:#e0e9f2;
+}
+
+body[data-theme="light"] .auth-visual{
+  border-left-color:
+    rgba(27,64,96,.10);
+}
+
+@keyframes novaLoginCardIn{
+  from{
+    opacity:0;
+    transform:
+      translateY(10px)
+      scale(.985);
+  }
+
+  to{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+@keyframes novaLoginPhotoIn{
+  from{
+    opacity:0;
+    transform:scale(1.06);
+  }
+
+  to{
+    opacity:1;
+    transform:scale(1.035);
+  }
+}
+
+@keyframes novaLoginCopyIn{
+  from{
+    opacity:0;
+    transform:translateY(15px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes novaLoginLivePulse{
+  0%,100%{
+    opacity:.72;
+    transform:scale(.92);
+  }
+
+  50%{
+    opacity:1;
+    transform:scale(1.18);
+  }
+}
+
+@media(max-width:1050px){
+
+  .auth{
+    grid-template-columns:
+      minmax(430px,.88fr)
+      minmax(0,1.12fr);
+  }
+
+  .auth-inner{
+    padding:29px;
+  }
+
+  .auth-inner h1{
+    font-size:
+      clamp(
+        46px,
+        5vw,
+        60px
+      );
+  }
+
+  .auth-copy b{
+    font-size:
+      clamp(
+        34px,
+        4.1vw,
+        54px
+      );
+  }
+
+}
+
+@media(max-width:900px){
+
+  .auth{
+    display:block;
+    min-height:100dvh;
+  }
+
+  .auth-left{
+    min-height:100dvh;
+    padding:20px 17px;
+  }
+
+  .auth-inner{
+    width:min(100%,540px);
+    padding:27px;
+  }
+
+  .auth-visual{
+    display:none;
+  }
+
+}
+
+@media(max-width:560px){
+
+  .auth-left{
+    padding:14px;
+  }
+
+  .auth-inner{
+    padding:22px 18px;
+    border-radius:23px;
+  }
+
+  .nova-login-brand{
+    margin-bottom:29px;
+  }
+
+  .nova-login-brand .auth-wordmark-mark{
+    width:42px;
+    height:42px;
+    flex-basis:42px;
+    border-radius:13px;
+  }
+
+  .nova-login-brand
+  .auth-wordmark-copy b{
+    font-size:14px;
+  }
+
+  .auth-inner h1{
+    font-size:
+      clamp(
+        43px,
+        13vw,
+        56px
+      );
+  }
+
+  .auth-inner > p{
+    font-size:11px;
+    line-height:1.58;
+  }
+
+  .nova-login-form{
+    margin-top:22px !important;
+  }
+
+  .auth input{
+    height:52px;
+    border-radius:14px;
+  }
+
+  .nova-login-submit{
+    height:52px;
+    min-height:52px;
+    border-radius:14px;
+  }
+
+  .nova-login-security{
+    font-size:8px;
+  }
+
+  .nova-login-footer{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:7px;
+  }
+
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  .auth-inner,
+  .auth-photo,
+  .auth-copy,
+  .nova-login-live i{
+    animation:none !important;
+  }
+
+  .nova-login-submit::after{
+    display:none;
+  }
+
+}
+
+/* NOVA 28.0 · LOGIN REDESIGN END */
