@@ -10,8 +10,8 @@ const state = {
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   selectedDay: new Date().getDate(),
-  data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null, study: null, notifications: null },
-  status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle', study:'idle', notifications:'idle' },
+  data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null, study: null, notifications: null, deadlines: null },
+  status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle', study:'idle', notifications:'idle', deadlines:'idle' },
   errors: {},
   selectedConversation: null,
   pageCache: new Map(),
@@ -20,6 +20,7 @@ const state = {
   courseView: localStorage.getItem('nova-course-view') || 'cards',
   studyFilter: localStorage.getItem('nova-study-filter') || 'open',
   searchFilter: localStorage.getItem('nova-search-filter') || 'all',
+  deadlineFilter: localStorage.getItem('nova-deadline-filter-v1') || 'active',
   quizNavigationCache: new Map(),
   scheduleImport: (() => {
     try {
@@ -37,7 +38,7 @@ const NOVA_STUDY_STORAGE_KEY = 'nova-study-session-v1';
 const NOVA_STUDY_DURATION_SEC = 60 * 60;
 
 const NAV = [
-  ['dashboard','home','Главная'], ['study','book','Учебный режим'], ['courses','grid','Курсы'], ['schedule','clock','Расписание'], ['grades','chart','Оценки'],
+  ['dashboard','home','Главная'], ['study','book','Учебный режим'], ['courses','grid','Курсы'], ['schedule','clock','Расписание'], ['deadlines','calendar','Дедлайны'], ['grades','chart','Оценки'],
   ['tasks','check-square','Задания'], ['calendar','calendar','Календарь'], ['messages','message','Сообщения'], ['files','folder','Файлы'], ['materials','folder','Материалы'], ['tests','quiz','Тесты']
 ];
 const $ = (s,r=document)=>r.querySelector(s);
@@ -146,7 +147,7 @@ function icon(name,size=18){
 function toast(message,type='info'){const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`<span>${icon(type==='error'?'info':type==='success'?'check':'sparkle',16)}</span><span>${esc(message)}</span>`;$('#toast-root')?.append(el);setTimeout(()=>el.remove(),4200)}
 function expireLocalSession(){
   Object.assign(state,{connected:false,user:null,demo:false});
-  state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null,study:null,notifications:null};
+  state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null,study:null,notifications:null,deadlines:null};
   state.requests={};
   render();
 }
@@ -191,7 +192,7 @@ async function api(path,options={}){
   if(!r.ok||d?.ok===false) throw new Error(d?.error||`Ошибка ${r.status}`);
   return d;
 }
-function routeLabel(r){return {dashboard:'Главная',study:'Учебный режим',notifications:'Уведомления',search:'Поиск',courses:'Курсы',schedule:'Расписание',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
+function routeLabel(r){return {dashboard:'Главная',study:'Учебный режим',notifications:'Уведомления',search:'Поиск',courses:'Курсы',schedule:'Расписание',deadlines:'Дедлайны',grades:'Оценки',tasks:'Задания',calendar:'Календарь',messages:'Сообщения',files:'Файлы',tests:'Тесты',materials:'Материалы',activity:'Активность',profile:'Профиль',course:'Курс',view:'Материал'}[r]||'Campus Nova'}
 function parseRoute(){
   let rawPath=location.pathname;
   if((!rawPath || rawPath==='/') && location.hash && /^#\//.test(location.hash)){ rawPath=location.hash.slice(1); }
@@ -1999,6 +2000,1093 @@ function novaDashboardTaskDue(task){
     activityDue(task) ||
     0
   );
+}
+
+
+/* =========================================================
+   NOVA 25.0 · DEADLINE INTELLIGENCE CORE
+   ========================================================= */
+
+const NOVA_DEADLINE_FILTER_KEY =
+  'nova-deadline-filter-v1';
+
+function novaDeadlineNormalizeTimestamp(value){
+
+  if(
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value > 0
+  ){
+    return value > 100000000000
+      ? Math.floor(value / 1000)
+      : Math.floor(value);
+  }
+
+  if(
+    typeof value === 'string' &&
+    value.trim()
+  ){
+
+    const numeric =
+      Number(value);
+
+    if(
+      Number.isFinite(numeric) &&
+      numeric > 0
+    ){
+      return numeric > 100000000000
+        ? Math.floor(numeric / 1000)
+        : Math.floor(numeric);
+    }
+
+    const parsed =
+      Date.parse(value);
+
+    if(!Number.isNaN(parsed)){
+      return Math.floor(parsed / 1000);
+    }
+  }
+
+  return 0;
+}
+
+function novaDeadlineExtractDue(item){
+
+  if(!item){
+    return 0;
+  }
+
+  const directKeys = [
+    item.due,
+    item.deadline,
+    item.duedate,
+    item.dueDate,
+    item.content?.due?.timestamp,
+    item.content?.due?.time,
+    item.content?.deadline?.timestamp,
+    item.content?.deadline?.time
+  ];
+
+  for(const value of directKeys){
+
+    const timestamp =
+      novaDeadlineNormalizeTimestamp(
+        value
+      );
+
+    if(timestamp){
+      return timestamp;
+    }
+  }
+
+  const activityTimestamp =
+    typeof activityDue === 'function'
+      ? novaDeadlineNormalizeTimestamp(
+          activityDue(item)
+        )
+      : 0;
+
+  if(activityTimestamp){
+    return activityTimestamp;
+  }
+
+  const dates =
+    Array.isArray(item.content?.dates)
+      ? item.content.dates
+      : [];
+
+  for(const date of dates){
+
+    const label =
+      String(
+        date?.label ||
+        date?.type ||
+        ''
+      );
+
+    if(
+      !/due|deadline|срок|оконч/i.test(label)
+    ){
+      continue;
+    }
+
+    const timestamp =
+      novaDeadlineNormalizeTimestamp(
+        date?.timestamp ||
+        date?.time ||
+        date?.value
+      );
+
+    if(timestamp){
+      return timestamp;
+    }
+  }
+
+  return 0;
+}
+
+function novaDeadlineIsCompleted(item){
+
+  if(!item){
+    return false;
+  }
+
+  if(item.completed === true){
+    return true;
+  }
+
+  if(item.completion?.completed === true){
+    return true;
+  }
+
+  if(item.completionstate === 1){
+    return true;
+  }
+
+  const values = [
+    item.status,
+    item.state,
+    item.completion?.status,
+    item.completion?.state
+  ]
+    .map(
+      value =>
+        String(value || '')
+          .toLowerCase()
+          .trim()
+    )
+    .filter(Boolean);
+
+  return values.some(
+    value =>
+      [
+        'complete',
+        'completed',
+        'done',
+        'finished',
+        'завершено',
+        'выполнено'
+      ].includes(value)
+  );
+}
+
+function novaDeadlineBucket(due,now=Date.now()/1000){
+
+  const timestamp =
+    Number(due || 0);
+
+  if(!timestamp){
+    return 'none';
+  }
+
+  const diff =
+    timestamp - now;
+
+  if(diff < 0){
+    return 'overdue';
+  }
+
+  if(diff <= 86400){
+    return 'today';
+  }
+
+  if(diff <= 3 * 86400){
+    return 'soon';
+  }
+
+  return 'later';
+}
+
+function novaDeadlineBucketLabel(bucket){
+
+  return {
+    overdue:'Просрочено',
+    today:'Ближайшие 24 часа',
+    soon:'Ближайшие 3 дня',
+    later:'Позже',
+    completed:'Выполнено',
+    none:'Без срока'
+  }[bucket] || 'Дедлайн';
+}
+
+function novaDeadlinePriority(due,completed=false){
+
+  if(completed){
+    return -100;
+  }
+
+  const now =
+    Date.now()/1000;
+
+  const diff =
+    Number(due || 0) - now;
+
+  if(diff < 0){
+    return 1000 +
+      Math.min(
+        Math.abs(diff) / 3600,
+        240
+      );
+  }
+
+  if(diff <= 3600){
+    return 950 -
+      diff / 3600;
+  }
+
+  if(diff <= 86400){
+    return 900 -
+      diff / 3600;
+  }
+
+  if(diff <= 3 * 86400){
+    return 700 -
+      diff / 86400;
+  }
+
+  return Math.max(
+    100,
+    500 -
+      diff / 86400
+  );
+}
+
+function novaDeadlineWhy(row){
+
+  if(row.completed){
+    return 'Уже выполнено';
+  }
+
+  if(row.bucket === 'overdue'){
+    return 'Срок уже прошёл';
+  }
+
+  if(row.bucket === 'today'){
+    return 'Требует внимания в ближайшие 24 часа';
+  }
+
+  if(row.bucket === 'soon'){
+    return 'Срок наступает в ближайшие 3 дня';
+  }
+
+  return 'Срок пока не близкий';
+}
+
+function novaDeadlineIdentity(item,kind,fallback=''){
+
+  if(
+    typeof novaGlobalUpdateIdentity === 'function'
+  ){
+
+    return novaGlobalUpdateIdentity(
+      item,
+      kind
+    );
+  }
+
+  const ref =
+    item?.ref ||
+    item?.activity?.ref ||
+    null;
+
+  if(ref?.courseId){
+    return [
+      kind,
+      ref.courseId || 0,
+      ref.cmid || 0,
+      ref.instance || 0,
+      ref.type || ''
+    ].join(':');
+  }
+
+  return [
+    kind,
+    item?.id || '',
+    item?.name || '',
+    fallback
+  ].join(':');
+}
+
+function novaDeadlineBuildRow(
+  item,
+  kind,
+  source='campus'
+){
+
+  const due =
+    novaDeadlineExtractDue(
+      item
+    );
+
+  if(!due){
+    return null;
+  }
+
+  const completed =
+    novaDeadlineIsCompleted(
+      item
+    );
+
+  const title =
+    item?.name ||
+    item?.title ||
+    item?.identity?.name ||
+    (kind === 'test' ? 'Тест' : 'Задание');
+
+  const course =
+    activityCourseName(
+      item
+    );
+
+  const ref =
+    typeof novaGlobalUpdateActivityRef === 'function'
+      ? novaGlobalUpdateActivityRef(item)
+      : null;
+
+  const bucket =
+    completed
+      ? 'completed'
+      : novaDeadlineBucket(
+          due
+        );
+
+  return {
+    id:novaDeadlineIdentity(
+      item,
+      kind,
+      String(due)
+    ),
+    source,
+    kind,
+    title,
+    course,
+    due,
+    completed,
+    bucket,
+    bucketLabel:
+      novaDeadlineBucketLabel(
+        bucket
+      ),
+    priority:
+      novaDeadlinePriority(
+        due,
+        completed
+      ),
+    why:
+      novaDeadlineWhy({
+        due,
+        completed,
+        bucket
+      }),
+    ref,
+    go:
+      kind === 'test'
+        ? 'tests'
+        : 'tasks'
+  };
+}
+
+function novaDeadlineItems(){
+
+  const rows = [];
+
+  const add = row => {
+    if(!row){
+      return;
+    }
+
+    if(
+      rows.some(
+        existing =>
+          existing.id === row.id
+      )
+    ){
+      return;
+    }
+
+    rows.push(row);
+  };
+
+  for(
+    const task of
+    Array.isArray(state.data.tasks)
+      ? state.data.tasks
+      : []
+  ){
+
+    add(
+      novaDeadlineBuildRow(
+        task,
+        'task',
+        'task'
+      )
+    );
+  }
+
+  for(
+    const test of
+    Array.isArray(state.data.tests)
+      ? state.data.tests
+      : []
+  ){
+
+    add(
+      novaDeadlineBuildRow(
+        test,
+        'test',
+        'test'
+      )
+    );
+  }
+
+  /*
+   * Calendar contributes deadline-like task/quiz events.
+   * Ordinary lessons and generic calendar events are not
+   * converted into deadlines.
+   */
+  const calendarEvents =
+    flattenCalendar(
+      state.data.calendar || {}
+    );
+
+  for(
+    const event of calendarEvents
+  ){
+
+    const eventKind =
+      typeof calendarEventKind === 'function'
+        ? calendarEventKind(event)
+        : '';
+
+    if(
+      eventKind !== 'task' &&
+      eventKind !== 'quiz'
+    ){
+      continue;
+    }
+
+    const timestamp =
+      novaDeadlineNormalizeTimestamp(
+        event?.timestart
+      );
+
+    if(!timestamp){
+      continue;
+    }
+
+    const pseudoItem = {
+      id:event?.id || event?.name || '',
+      name:event?.name || 'Событие',
+      title:event?.name || 'Событие',
+      course:
+        event?.course?.fullname ||
+        event?.course?.shortname ||
+        '',
+      due:timestamp,
+      ref:event?.ref || null
+    };
+
+    const kind =
+      eventKind === 'quiz'
+        ? 'test'
+        : 'task';
+
+    const row =
+      novaDeadlineBuildRow(
+        pseudoItem,
+        kind,
+        'calendar'
+      );
+
+    if(row){
+      add(row);
+    }
+  }
+
+  return rows.sort(
+    (a,b)=>{
+
+      if(
+        Number(a.completed) !==
+        Number(b.completed)
+      ){
+        return Number(a.completed) -
+          Number(b.completed);
+      }
+
+      const priorityDiff =
+        Number(b.priority || 0) -
+        Number(a.priority || 0);
+
+      if(priorityDiff){
+        return priorityDiff;
+      }
+
+      return Number(a.due || 0) -
+        Number(b.due || 0);
+    }
+  );
+}
+
+function novaDeadlineFilter(){
+
+  const allowed = [
+    'all',
+    'active',
+    'overdue',
+    'today',
+    'soon'
+  ];
+
+  try{
+
+    const stored =
+      localStorage.getItem(
+        NOVA_DEADLINE_FILTER_KEY
+      ) || 'active';
+
+    return allowed.includes(
+      stored
+    )
+      ? stored
+      : 'active';
+
+  }catch{
+    return 'active';
+  }
+}
+
+function novaDeadlineSetFilter(value){
+
+  const filter =
+    [
+      'all',
+      'active',
+      'overdue',
+      'today',
+      'soon'
+    ].includes(value)
+      ? value
+      : 'active';
+
+  state.deadlineFilter =
+    filter;
+
+  try{
+    localStorage.setItem(
+      NOVA_DEADLINE_FILTER_KEY,
+      filter
+    );
+  }catch{}
+
+  render();
+}
+
+function novaDeadlineFilteredItems(
+  items=novaDeadlineItems()
+){
+
+  const filter =
+    novaDeadlineFilter();
+
+  if(filter === 'all'){
+    return items;
+  }
+
+  if(filter === 'overdue'){
+    return items.filter(
+      item =>
+        item.bucket === 'overdue' &&
+        !item.completed
+    );
+  }
+
+  if(filter === 'today'){
+    return items.filter(
+      item =>
+        item.bucket === 'today' &&
+        !item.completed
+    );
+  }
+
+  if(filter === 'soon'){
+    return items.filter(
+      item =>
+        (
+          item.bucket === 'today' ||
+          item.bucket === 'soon'
+        ) &&
+        !item.completed
+    );
+  }
+
+  return items.filter(
+    item =>
+      !item.completed
+  );
+}
+
+function novaDeadlineOpen(id){
+
+  const item =
+    novaDeadlineItems()
+      .find(
+        row =>
+          row.id === String(id || '')
+      );
+
+  if(!item){
+    return;
+  }
+
+  if(
+    item.ref &&
+    typeof openActivity === 'function'
+  ){
+    openActivity(item.ref);
+    return;
+  }
+
+  navigate(
+    item.go || (
+      item.kind === 'test'
+        ? 'tests'
+        : 'tasks'
+    )
+  );
+}
+
+function novaDeadlineStats(
+  items=novaDeadlineItems()
+){
+
+  const active =
+    items.filter(
+      item =>
+        !item.completed
+    );
+
+  return {
+    all:items.length,
+    active:active.length,
+    overdue:active.filter(
+      item =>
+        item.bucket === 'overdue'
+    ).length,
+    today:active.filter(
+      item =>
+        item.bucket === 'today'
+    ).length,
+    soon:active.filter(
+      item =>
+        item.bucket === 'today' ||
+        item.bucket === 'soon'
+    ).length,
+    completed:
+      items.length -
+      active.length
+  };
+}
+
+function deadlinePage(){
+
+  if(
+    state.status.deadlines ===
+    'loading'
+  ){
+
+    return `
+      <section
+        class="page nova-deadlines-page"
+      >
+
+        ${PageHead({
+          eyebrow:'DEADLINE INTELLIGENCE',
+          title:'Дедлайны',
+          sub:'Собираем сроки из заданий, тестов и календаря…'
+        })}
+
+        ${skeletonGrid(6)}
+
+      </section>
+    `;
+  }
+
+  if(
+    state.status.deadlines ===
+    'error'
+  ){
+
+    return `
+      <section
+        class="page nova-deadlines-page"
+      >
+
+        ${PageHead({
+          eyebrow:'DEADLINE INTELLIGENCE',
+          title:'Дедлайны',
+          sub:'Не удалось собрать сроки из Campus.'
+        })}
+
+        ${statePanel(
+          'error',
+          'deadlines'
+        )}
+
+      </section>
+    `;
+  }
+
+  const all =
+    novaDeadlineItems();
+
+  const visible =
+    novaDeadlineFilteredItems(
+      all
+    );
+
+  const stats =
+    novaDeadlineStats(
+      all
+    );
+
+  const filter =
+    novaDeadlineFilter();
+
+  const next =
+    all.find(
+      item =>
+        !item.completed
+    );
+
+  return `
+    <section
+      class="page nova-deadlines-page"
+    >
+
+      ${PageHead({
+        eyebrow:'DEADLINE INTELLIGENCE',
+        title:'Дедлайны',
+        sub:
+          all.length
+            ? `${stats.active} активных сроков · ${stats.overdue} просрочено`
+            : 'Активных дедлайнов сейчас нет.',
+        children:`
+          <button
+            class="secondary"
+            data-retry="deadlines"
+            type="button"
+          >
+            ${icon('refresh',15)}
+            Обновить
+          </button>
+        `
+      })}
+
+      ${
+        next
+          ? `
+            <section
+              class="nova-deadline-next"
+            >
+
+              <div
+                class="nova-deadline-next-icon"
+              >
+                ${icon(
+                  next.kind === 'test'
+                    ? 'quiz'
+                    : 'check-square',
+                  20
+                )}
+              </div>
+
+              <div
+                class="nova-deadline-next-main"
+              >
+
+                <span>
+                  СЛЕДУЮЩИЙ ДЕДЛАЙН
+                </span>
+
+                <b>
+                  ${esc(next.title)}
+                </b>
+
+                <small>
+                  ${esc(next.course)} ·
+                  ${esc(formatLong(next.due))}
+                </small>
+
+              </div>
+
+              <div
+                class="nova-deadline-next-side"
+              >
+
+                <strong
+                  class="tone-${esc(next.bucket)}"
+                >
+                  ${esc(next.bucketLabel)}
+                </strong>
+
+                <small>
+                  ${esc(next.why)}
+                </small>
+
+              </div>
+
+              <button
+                type="button"
+                class="secondary"
+                data-deadline-open="${esc(next.id)}"
+              >
+                Открыть
+                ${icon('arrow',14)}
+              </button>
+
+            </section>
+          `
+          : ''
+      }
+
+      <div
+        class="nova-deadline-stats"
+      >
+
+        <div
+          class="
+            nova-deadline-stat
+            overdue
+          "
+        >
+          <span>${icon('close',16)}</span>
+          <b>${stats.overdue}</b>
+          <small>просрочено</small>
+        </div>
+
+        <div
+          class="
+            nova-deadline-stat
+            today
+          "
+        >
+          <span>${icon('clock',16)}</span>
+          <b>${stats.today}</b>
+          <small>в ближайшие 24 часа</small>
+        </div>
+
+        <div
+          class="
+            nova-deadline-stat
+            soon
+          "
+        >
+          <span>${icon('calendar',16)}</span>
+          <b>${stats.soon}</b>
+          <small>в ближайшие 3 дня</small>
+        </div>
+
+        <div
+          class="
+            nova-deadline-stat
+            all
+          "
+        >
+          <span>${icon('check-square',16)}</span>
+          <b>${stats.active}</b>
+          <small>активных всего</small>
+        </div>
+
+      </div>
+
+      <section
+        class="nova-deadline-panel"
+      >
+
+        <div
+          class="nova-deadline-toolbar"
+        >
+
+          <div>
+            <span class="eyebrow">
+              ПЛАН
+            </span>
+
+            <h2>
+              Что требует внимания
+            </h2>
+
+            <small>
+              Приоритет считается по реальному сроку.
+            </small>
+          </div>
+
+          <div
+            class="nova-deadline-filters"
+          >
+
+            ${[
+              ['active','Активные',stats.active],
+              ['all','Все',stats.all],
+              ['overdue','Просроченные',stats.overdue],
+              ['today','24 часа',stats.today],
+              ['soon','3 дня',stats.soon]
+            ].map(
+              ([value,label,count])=>`
+                <button
+                  type="button"
+                  class="
+                    nova-deadline-filter
+                    ${filter===value?'active':''}
+                  "
+                  data-deadline-filter="${value}"
+                >
+                  ${label}
+                  <span>${count}</span>
+                </button>
+              `
+            ).join('')}
+
+          </div>
+
+        </div>
+
+        <div
+          class="nova-deadline-list"
+        >
+
+          ${
+            visible.length
+              ? visible.map(
+                  item=>`
+                    <article
+                      class="
+                        nova-deadline-row
+                        ${item.completed?'is-completed':''}
+                        tone-${esc(item.bucket)}
+                      "
+                    >
+
+                      <div
+                        class="nova-deadline-kind"
+                      >
+                        ${icon(
+                          item.kind === 'test'
+                            ? 'quiz'
+                            : 'check-square',
+                          18
+                        )}
+                      </div>
+
+                      <div
+                        class="nova-deadline-copy"
+                      >
+
+                        <small>
+                          ${
+                            item.kind === 'test'
+                              ? 'ТЕСТ'
+                              : 'ЗАДАНИЕ'
+                          }
+                          ·
+                          ${esc(item.source)}
+                        </small>
+
+                        <b>
+                          ${esc(item.title)}
+                        </b>
+
+                        <span>
+                          ${esc(item.course)}
+                        </span>
+
+                      </div>
+
+                      <div
+                        class="nova-deadline-when"
+                      >
+
+                        <strong
+                          class="
+                            tone-${esc(item.bucket)}
+                          "
+                        >
+                          ${esc(item.bucketLabel)}
+                        </strong>
+
+                        <time>
+                          ${esc(formatLong(item.due))}
+                        </time>
+
+                        <small>
+                          ${esc(item.why)}
+                        </small>
+
+                      </div>
+
+                      <button
+                        type="button"
+                        class="nova-deadline-open"
+                        data-deadline-open="${esc(item.id)}"
+                        aria-label="Открыть ${esc(item.title)}"
+                      >
+                        ${icon('arrow',15)}
+                      </button>
+
+                    </article>
+                  `
+                ).join('')
+              : `
+                <div
+                  class="
+                    nova-deadline-empty
+                  "
+                >
+
+                  <div>
+                    ${icon('check',23)}
+                  </div>
+
+                  <b>
+                    ${
+                      filter === 'overdue'
+                        ? 'Просроченных дедлайнов нет'
+                        : filter === 'today'
+                          ? 'На ближайшие 24 часа всё спокойно'
+                          : filter === 'soon'
+                            ? 'В ближайшие 3 дня дедлайнов нет'
+                            : 'Активных дедлайнов нет'
+                    }
+                  </b>
+
+                  <p>
+                    Nova проверяет реальные сроки из
+                    заданий, тестов и календаря Campus.
+                  </p>
+
+                </div>
+              `
+          }
+
+        </div>
+
+      </section>
+
+      <div
+        class="nova-deadline-note"
+      >
+        ${icon('info',14)}
+
+        <span>
+          Дедлайн считается по данным Campus.
+          Nova не меняет сроки, статусы или оценки.
+        </span>
+
+      </div>
+
+    </section>
+  `;
 }
 
 function novaDashboardDeadlineInfo(ts){
@@ -6158,6 +7246,66 @@ function searchPage(){
 
     </section>
   `;
+}
+
+async function loadDeadlinesData(
+  force=false,
+  epoch=state.routeEpoch
+){
+
+  if(
+    !state.connected ||
+    state.demo ||
+    state.route !== 'deadlines'
+  ){
+    return;
+  }
+
+  state.status.deadlines =
+    'loading';
+
+  state.errors.deadlines =
+    null;
+
+  render();
+
+  const services = [
+    'tasks',
+    'tests',
+    'calendar'
+  ];
+
+  await Promise.allSettled(
+    services.map(
+      service =>
+        loadData(
+          service,
+          force,
+          epoch
+        )
+    )
+  );
+
+  if(
+    epoch !== state.routeEpoch ||
+    state.route !== 'deadlines'
+  ){
+    return;
+  }
+
+  const usable =
+    services.some(
+      service =>
+        state.status[service] ===
+        'success'
+    );
+
+  state.status.deadlines =
+    usable
+      ? 'success'
+      : 'error';
+
+  render();
 }
 
 async function loadSearchData(
@@ -17804,6 +18952,7 @@ function render(animateNav=false){
     case 'search':body=searchPage();break;
     case 'study':body=studyPage();break;
     case 'notifications':body=notificationsPage();break;
+    case 'deadlines':body=deadlinePage();break;
     case 'courses':body=coursesPage();break;
     case 'course':body=coursePage();break;
     case 'schedule':body=schedulePage();break;
@@ -17842,7 +18991,35 @@ function bind(){
     catch (error) { console.error('[Nova][Navigation]',{route,param,error}); if(el.tagName==='A') window.location.href=el.getAttribute('href')||'/'; }
   }));
   $$('[data-back]').forEach(el=>el.addEventListener('click',()=>back(el.dataset.back||'dashboard')));
-  $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course'||el.dataset.retry==='notifications')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
+  $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course'||el.dataset.retry==='notifications'||el.dataset.retry==='deadlines')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
+
+  $$('[data-deadline-filter]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          novaDeadlineSetFilter(
+            el.dataset.deadlineFilter ||
+            'active'
+          );
+        }
+      );
+    }
+  );
+
+  $$('[data-deadline-open]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          novaDeadlineOpen(
+            el.dataset.deadlineOpen ||
+            ''
+          );
+        }
+      );
+    }
+  );
 
   $$('[data-notification-filter]').forEach(
     el=>{
@@ -18576,6 +19753,7 @@ async function loadRouteData(force=false,epoch=state.routeEpoch){
   if(r==='dashboard')return loadDashboard(epoch);
   if(r==='study')return loadStudyData(force,epoch);
   if(r==='notifications')return loadNotificationsData(force,epoch);
+  if(r==='deadlines')return loadDeadlinesData(force,epoch);
   if(r==='search')return loadSearchData(epoch);
   if(r==='courses')return loadData('courses',force,epoch);
   if(r==='course')return loadCourse(force,epoch);

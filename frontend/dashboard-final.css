@@ -9929,3 +9929,497 @@ body[data-theme="light"] .nova-search-command{
   }
 
 }
+
+
+/* =========================================================
+   NOVA 25.0 · DEADLINE INTELLIGENCE CORE
+   ========================================================= */
+
+.nova-deadlines-page{
+  max-width:1380px!important;
+  padding-top:28px!important;
+  padding-bottom:48px!important;
+}
+
+.nova-deadline-next{
+  display:grid!important;
+  grid-template-columns:48px minmax(0,1fr) auto auto!important;
+  align-items:center!important;
+  gap:13px!important;
+  margin-bottom:14px!important;
+  padding:15px 16px!important;
+  border:1px solid rgba(24,183,255,.16)!important;
+  border-radius:20px!important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(24,183,255,.08),
+      var(--surface)
+    )!important;
+}
+
+.nova-deadline-next-icon{
+  width:48px!important;
+  height:48px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:14px!important;
+  background:rgba(24,183,255,.10)!important;
+  color:var(--accent)!important;
+}
+
+.nova-deadline-next-main{
+  min-width:0!important;
+}
+
+.nova-deadline-next-main>span{
+  display:block!important;
+  color:var(--accent)!important;
+  font-size:6px!important;
+  font-weight:900!important;
+  letter-spacing:.13em!important;
+}
+
+.nova-deadline-next-main>b{
+  display:block!important;
+  margin-top:5px!important;
+  color:var(--text)!important;
+  font-size:12px!important;
+  font-weight:850!important;
+  line-height:1.2!important;
+}
+
+.nova-deadline-next-main>small{
+  display:block!important;
+  margin-top:4px!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+.nova-deadline-next-side{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  gap:4px!important;
+  text-align:right!important;
+}
+
+.nova-deadline-next-side>strong{
+  font-size:8px!important;
+  font-weight:900!important;
+}
+
+.nova-deadline-next-side>small{
+  max-width:210px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  line-height:1.35!important;
+}
+
+.tone-overdue{
+  color:#e06b6b!important;
+}
+
+.tone-today,
+.tone-soon{
+  color:var(--accent)!important;
+}
+
+.tone-later{
+  color:var(--muted)!important;
+}
+
+.tone-completed{
+  color:var(--good)!important;
+}
+
+.nova-deadline-stats{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin-bottom:14px!important;
+}
+
+.nova-deadline-stat{
+  min-height:78px!important;
+  display:grid!important;
+  grid-template-columns:32px 1fr!important;
+  grid-template-rows:auto auto!important;
+  column-gap:10px!important;
+  padding:13px 14px!important;
+  border:1px solid var(--line)!important;
+  border-radius:18px!important;
+  background:var(--surface)!important;
+}
+
+.nova-deadline-stat>span{
+  grid-row:1 / span 2!important;
+  width:32px!important;
+  height:32px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:10px!important;
+  background:var(--surface-2)!important;
+  color:var(--accent)!important;
+}
+
+.nova-deadline-stat>b{
+  color:var(--text)!important;
+  font-size:19px!important;
+  font-weight:900!important;
+  line-height:1!important;
+}
+
+.nova-deadline-stat>small{
+  align-self:start!important;
+  margin-top:3px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  line-height:1.3!important;
+}
+
+.nova-deadline-stat.overdue>span{
+  color:#e06b6b!important;
+  background:rgba(224,107,107,.08)!important;
+}
+
+.nova-deadline-stat.today>span{
+  color:var(--accent)!important;
+  background:rgba(24,183,255,.08)!important;
+}
+
+.nova-deadline-stat.soon>span{
+  color:var(--accent)!important;
+  background:rgba(24,183,255,.07)!important;
+}
+
+.nova-deadline-stat.all>span{
+  color:var(--good)!important;
+  background:rgba(48,217,145,.08)!important;
+}
+
+.nova-deadline-panel{
+  overflow:hidden!important;
+  border:1px solid var(--line)!important;
+  border-radius:22px!important;
+  background:var(--surface)!important;
+}
+
+.nova-deadline-toolbar{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+  padding:18px!important;
+  border-bottom:1px solid var(--line)!important;
+}
+
+.nova-deadline-toolbar h2{
+  margin:5px 0 0!important;
+  color:var(--text)!important;
+  font-size:18px!important;
+  letter-spacing:-.03em!important;
+}
+
+.nova-deadline-toolbar>div>small{
+  display:block!important;
+  margin-top:4px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+}
+
+.nova-deadline-filters{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-end!important;
+  gap:6px!important;
+}
+
+.nova-deadline-filter{
+  appearance:none!important;
+  border:1px solid var(--line)!important;
+  border-radius:999px!important;
+  background:var(--surface-2)!important;
+  color:var(--muted)!important;
+  padding:8px 10px!important;
+  font:inherit!important;
+  font-size:8px!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+}
+
+.nova-deadline-filter span{
+  margin-left:4px!important;
+  opacity:.65!important;
+}
+
+.nova-deadline-filter.active{
+  color:var(--text)!important;
+  border-color:var(--accent)!important;
+  background:rgba(24,183,255,.08)!important;
+}
+
+.nova-deadline-list{
+  display:grid!important;
+}
+
+.nova-deadline-row{
+  display:grid!important;
+  grid-template-columns:42px minmax(0,1fr) minmax(190px,260px) 34px!important;
+  align-items:center!important;
+  gap:12px!important;
+  min-height:76px!important;
+  padding:12px 15px!important;
+  border-bottom:1px solid var(--line)!important;
+  transition:
+    background .18s ease,
+    transform .18s ease!important;
+}
+
+.nova-deadline-row:last-child{
+  border-bottom:0!important;
+}
+
+.nova-deadline-row:hover{
+  background:var(--surface-2)!important;
+}
+
+.nova-deadline-row.is-completed{
+  opacity:.58!important;
+}
+
+.nova-deadline-kind{
+  width:40px!important;
+  height:40px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:12px!important;
+  background:var(--surface-2)!important;
+  color:var(--accent)!important;
+}
+
+.nova-deadline-row.tone-overdue .nova-deadline-kind{
+  color:#e06b6b!important;
+  background:rgba(224,107,107,.08)!important;
+}
+
+.nova-deadline-copy{
+  min-width:0!important;
+}
+
+.nova-deadline-copy>small{
+  display:block!important;
+  color:var(--accent)!important;
+  font-size:6px!important;
+  font-weight:900!important;
+  letter-spacing:.12em!important;
+}
+
+.nova-deadline-copy>b{
+  display:block!important;
+  margin-top:4px!important;
+  color:var(--text)!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  line-height:1.3!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.nova-deadline-copy>span{
+  display:block!important;
+  margin-top:3px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.nova-deadline-when{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  gap:3px!important;
+  text-align:right!important;
+}
+
+.nova-deadline-when>strong{
+  font-size:8px!important;
+  font-weight:900!important;
+}
+
+.nova-deadline-when>time{
+  color:var(--text)!important;
+  font-size:8px!important;
+}
+
+.nova-deadline-when>small{
+  max-width:230px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  line-height:1.35!important;
+}
+
+.nova-deadline-open{
+  width:32px!important;
+  height:32px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:1px solid var(--line)!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:var(--muted)!important;
+  cursor:pointer!important;
+}
+
+.nova-deadline-open:hover{
+  color:var(--text)!important;
+  border-color:var(--accent)!important;
+  background:rgba(24,183,255,.07)!important;
+}
+
+.nova-deadline-empty{
+  display:grid!important;
+  place-items:center!important;
+  padding:56px 20px!important;
+  text-align:center!important;
+}
+
+.nova-deadline-empty>div{
+  width:48px!important;
+  height:48px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:14px!important;
+  color:var(--good)!important;
+  background:rgba(48,217,145,.08)!important;
+}
+
+.nova-deadline-empty>b{
+  margin-top:12px!important;
+  color:var(--text)!important;
+  font-size:12px!important;
+  font-weight:850!important;
+}
+
+.nova-deadline-empty>p{
+  max-width:420px!important;
+  margin:5px auto 0!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  line-height:1.5!important;
+}
+
+.nova-deadline-note{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin-top:10px!important;
+  padding:11px 13px!important;
+  border:1px solid var(--line)!important;
+  border-radius:13px!important;
+  background:var(--surface)!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+}
+
+.nova-deadline-note>.icon{
+  flex:0 0 auto!important;
+  color:var(--accent)!important;
+}
+
+@media(max-width:960px){
+
+  .nova-deadline-next{
+    grid-template-columns:48px minmax(0,1fr)!important;
+  }
+
+  .nova-deadline-next-side{
+    grid-column:2!important;
+    align-items:flex-start!important;
+    text-align:left!important;
+  }
+
+  .nova-deadline-next>button{
+    grid-column:2!important;
+    justify-self:start!important;
+  }
+
+  .nova-deadline-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  .nova-deadline-toolbar{
+    flex-direction:column!important;
+    align-items:flex-start!important;
+  }
+
+  .nova-deadline-filters{
+    justify-content:flex-start!important;
+  }
+
+  .nova-deadline-row{
+    grid-template-columns:40px minmax(0,1fr) 34px!important;
+  }
+
+  .nova-deadline-when{
+    grid-column:2!important;
+    align-items:flex-start!important;
+    text-align:left!important;
+  }
+
+  .nova-deadline-open{
+    grid-column:3!important;
+    grid-row:1 / span 2!important;
+  }
+}
+
+@media(max-width:680px){
+
+  .nova-deadline-stats{
+    grid-template-columns:1fr!important;
+  }
+
+  .nova-deadline-filters{
+    width:100%!important;
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+    padding-bottom:2px!important;
+    scrollbar-width:none!important;
+  }
+
+  .nova-deadline-filters::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  .nova-deadline-filter{
+    flex:0 0 auto!important;
+  }
+
+  .nova-deadline-row{
+    grid-template-columns:38px minmax(0,1fr) 32px!important;
+    gap:9px!important;
+    padding:12px!important;
+  }
+
+  .nova-deadline-kind{
+    width:36px!important;
+    height:36px!important;
+  }
+
+  .nova-deadline-copy>b{
+    white-space:normal!important;
+  }
+
+  .nova-deadline-next-main>small{
+    white-space:normal!important;
+  }
+}
+
+/* NOVA 25.0 · DEADLINE INTELLIGENCE CORE */
