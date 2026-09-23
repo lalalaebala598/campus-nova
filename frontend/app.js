@@ -1,3 +1,4 @@
+// NOVA 27.4 cache bust: spa-anchor-navigation-20260923-4
 // NOVA 27.0 cache bust: nova27-messages-20260923-4
 const state = {
   connected: false,
@@ -19283,14 +19284,18 @@ function render(animateNav=false){
   });
 }
 
+let novaAnchorNavigationBound = false;
+
 function novaBindAnchorNavigation(){
   if(
-    document.documentElement.dataset.novaAnchorNavigation === '1'
+    novaAnchorNavigationBound ||
+    typeof document === 'undefined' ||
+    typeof document.addEventListener !== 'function'
   ){
     return;
   }
 
-  document.documentElement.dataset.novaAnchorNavigation = '1';
+  novaAnchorNavigationBound = true;
 
   document.addEventListener('click', event=>{
     const anchor =
@@ -19311,13 +19316,13 @@ function novaBindAnchorNavigation(){
     }
 
     const route =
-      anchor.dataset.go || '';
+      anchor.dataset?.go || '';
 
     const param =
-      anchor.dataset.param || '';
+      anchor.dataset?.param || '';
 
     const href =
-      anchor.getAttribute('href') || '/';
+      anchor.getAttribute?.('href') || '/';
 
     if(!route) return;
 
@@ -19340,12 +19345,19 @@ function novaBindAnchorNavigation(){
         }
       );
 
-      window.location.assign(href);
+      if(
+        typeof window !== 'undefined' &&
+        typeof window.location?.assign === 'function'
+      ){
+        window.location.assign(href);
+      }
     }
   });
 }
 
+
 function bind(){
+  novaBindAnchorNavigation();
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
     if(event.defaultPrevented) return;
     const route=el.dataset.go; const param=el.dataset.param||'';
