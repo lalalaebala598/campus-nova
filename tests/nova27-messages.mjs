@@ -9,6 +9,35 @@ function pass(name){
   console.log('PASS nova27:', name);
 }
 
+
+assert.match(
+  APP,
+  /function nova27MessageSenderId\(message\)/,
+  'message sender id resolver missing'
+);
+pass('sender id resolver');
+
+assert.match(
+  APP,
+  /message\?\.useridfrom/,
+  'Moodle useridfrom support missing'
+);
+pass('Moodle useridfrom support');
+
+assert.match(
+  APP,
+  /function nova27MessageSenderName\(message/,
+  'message sender name resolver missing'
+);
+pass('sender name resolver');
+
+assert.match(
+  APP,
+  /data-message-author/,
+  'per-message author identity missing'
+);
+pass('per-message author identity');
+
 assert.ok(
   APP.includes('NOVA 27.0 · MESSAGE THREAD UX'),
   'NOVA 27 marker missing in app.js'

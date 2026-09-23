@@ -1,4 +1,4 @@
-// NOVA 27.0 cache bust: nova27-messages-20260923-1
+// NOVA 27.0 cache bust: nova27-messages-20260923-2
 const state = {
   connected: false,
   user: null,
@@ -11743,6 +11743,66 @@ const NOVA_MESSAGES_EMPTY_TEXT = 'Новых сообщений нет.';
 
 /* NOVA 27.0 · MESSAGE THREAD UX */
 
+/* NOVA 27.1 · MESSAGE AUTHOR RESOLUTION */
+
+function nova27MessageSenderId(message){
+  const candidates = [
+    message?.useridfrom,
+    message?.userIdFrom,
+    message?.userid,
+    message?.user?.id,
+    message?.fromid,
+    message?.fromId,
+    message?.senderid,
+    message?.senderId,
+    message?.authorid,
+    message?.authorId,
+    message?.from?.id,
+    message?.sender?.id,
+    message?.author?.id
+  ];
+
+  const found = candidates.find(
+    value => value !== undefined &&
+             value !== null &&
+             String(value).trim() !== ''
+  );
+
+  return found == null ? '' : String(found);
+}
+
+function nova27MessageSenderName(message, fallback='Собеседник'){
+  const candidates = [
+    message?.userfrom?.fullname,
+    message?.userfrom?.fullName,
+    message?.userfrom?.name,
+
+    message?.from?.fullname,
+    message?.from?.fullName,
+    message?.from?.name,
+
+    message?.sender?.fullname,
+    message?.sender?.fullName,
+    message?.sender?.name,
+
+    message?.author?.fullname,
+    message?.author?.fullName,
+    message?.author?.name,
+
+    message?.user?.fullname,
+    message?.user?.fullName,
+    message?.user?.name
+  ];
+
+  const found = candidates.find(
+    value => String(value || '').trim()
+  );
+
+  return found
+    ? String(found).trim()
+    : fallback;
+}
+
 function nova27LatestMessage(conversation){
   const messages = Array.isArray(conversation?.messages)
     ? conversation.messages.slice().sort(
@@ -20965,19 +21025,26 @@ async function openConversation(id){
 function conversationMarkup(c){
   const msgs = Array.isArray(c?.messages)
     ? c.messages.slice().sort(
-        (a,b) => Number(a?.timecreated||0) - Number(b?.timecreated||0)
+        (a,b) =>
+          Number(a?.timecreated||0) -
+          Number(b?.timecreated||0)
       )
     : [];
 
   const title =
     c?.name ||
     c?.members?.find?.(
-      m => String(m?.id) !== String(state.user?.id)
+      m =>
+        String(m?.id) !==
+        String(state.user?.id)
     )?.fullname ||
     'Диалог';
 
   const avatar =
     title.trim().slice(0,1).toUpperCase() || 'Д';
+
+  const currentUserId =
+    String(state.user?.id ?? '');
 
   return `
     <div class="conversation conversation-nova27">
@@ -21016,14 +21083,38 @@ function conversationMarkup(c){
       >
 
         ${
-          msgs.map(m=>{
+          msgs.map((m,index)=>{
+            const senderId =
+              nova27MessageSenderId(m);
+
             const mine =
-              String(
-                m?.userid ||
-                m?.user?.id ||
-                m?.fromid ||
-                ''
-              ) === String(state.user?.id);
+              senderId !== '' &&
+              senderId === currentUserId;
+
+            const previous =
+              index > 0
+                ? msgs[index - 1]
+                : null;
+
+            const previousSenderId =
+              previous
+                ? nova27MessageSenderId(previous)
+                : '';
+
+            const senderName =
+              mine
+                ? ''
+                : nova27MessageSenderName(
+                    m,
+                    title
+                  );
+
+            const showAuthor =
+              !mine &&
+              (
+                index === 0 ||
+                previousSenderId !== senderId
+              );
 
             const text =
               messageText(
@@ -21033,11 +21124,14 @@ function conversationMarkup(c){
               ).trim();
 
             return `
-              <div class="bubble nova27-bubble ${mine ? 'mine' : ''}">
+              <div
+                class="bubble nova27-bubble ${mine ? 'mine' : ''}"
+                data-message-author="${esc(senderId)}"
+              >
 
                 ${
-                  !mine
-                    ? `<span class="bubble-author">${esc(title)}</span>`
+                  showAuthor
+                    ? `<span class="bubble-author">${esc(senderName)}</span>`
                     : ''
                 }
 
