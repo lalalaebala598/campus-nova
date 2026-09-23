@@ -9113,3 +9113,355 @@ summary{
 }
 
 /* NOVA 22.0 · STUDY MODE */
+
+
+/* =========================================================
+   NOVA 22.1 · STUDY MODE CLARITY
+   ========================================================= */
+
+.nova-study-how{
+  display:flex!important;
+  align-items:center!important;
+  gap:20px!important;
+  margin-bottom:18px!important;
+  padding:16px 20px!important;
+  border:1px solid var(--line)!important;
+  border-radius:19px!important;
+  background:var(--surface)!important;
+}
+
+.nova-study-how-head{
+  min-width:145px!important;
+}
+
+.nova-study-how-head .eyebrow{
+  margin-bottom:5px!important;
+}
+
+.nova-study-how-head b{
+  color:var(--text)!important;
+  font-size:12px!important;
+}
+
+.nova-study-how-steps{
+  display:flex!important;
+  align-items:center!important;
+  flex:1!important;
+  gap:10px!important;
+  min-width:0!important;
+}
+
+.nova-study-how-step{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  flex:1!important;
+  min-width:0!important;
+}
+
+.nova-study-how-step > span{
+  display:grid!important;
+  place-items:center!important;
+  width:32px!important;
+  height:32px!important;
+  flex:0 0 auto!important;
+  border:1px solid var(--line)!important;
+  border-radius:10px!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  font-weight:900!important;
+}
+
+.nova-study-how-step.active > span{
+  border-color:rgba(24,183,255,.25)!important;
+  background:rgba(24,183,255,.08)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-how-step b,
+.nova-study-how-step small{
+  display:block!important;
+}
+
+.nova-study-how-step b{
+  color:var(--text)!important;
+  font-size:9px!important;
+}
+
+.nova-study-how-step small{
+  margin-top:3px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  line-height:1.35!important;
+}
+
+.nova-study-how-arrow{
+  display:grid!important;
+  place-items:center!important;
+  color:var(--muted)!important;
+}
+
+.nova-study-focus-step{
+  margin-bottom:10px!important;
+  color:var(--accent)!important;
+  font-size:8px!important;
+  font-weight:900!important;
+  letter-spacing:.13em!important;
+}
+
+.nova-study-main-action{
+  min-width:185px!important;
+}
+
+.nova-study-why{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:10px!important;
+  margin:4px 0 20px!important;
+  padding:13px 14px!important;
+  border:1px solid rgba(24,183,255,.12)!important;
+  border-radius:15px!important;
+  background:rgba(24,183,255,.045)!important;
+}
+
+.nova-study-why-icon{
+  display:grid!important;
+  place-items:center!important;
+  width:29px!important;
+  height:29px!important;
+  flex:0 0 auto!important;
+  border-radius:9px!important;
+  background:rgba(24,183,255,.09)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-why b{
+  display:block!important;
+  color:var(--text)!important;
+  font-size:9px!important;
+}
+
+.nova-study-why p{
+  margin:4px 0 0!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  line-height:1.55!important;
+}
+
+.nova-study-campus-note{
+  display:flex!important;
+  gap:9px!important;
+  align-items:flex-start!important;
+  margin-top:17px!important;
+  padding-top:15px!important;
+  border-top:1px solid var(--line)!important;
+  color:var(--muted)!important;
+}
+
+.nova-study-campus-note > span{
+  color:var(--accent)!important;
+}
+
+.nova-study-campus-note b,
+.nova-study-campus-note p{
+  display:block!important;
+}
+
+.nova-study-campus-note b{
+  color:var(--text)!important;
+  font-size:8px!important;
+}
+
+.nova-study-campus-note p{
+  margin:4px 0 0!important;
+  font-size:8px!important;
+  line-height:1.5!important;
+}
+
+.nova-study-session-explain{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:5px!important;
+  margin:14px 0 18px!important;
+  padding:12px!important;
+  border-radius:14px!important;
+  background:var(--surface-2)!important;
+}
+
+.nova-study-session-explain b{
+  color:var(--text)!important;
+  font-size:9px!important;
+}
+
+.nova-study-session-explain span{
+  color:var(--muted)!important;
+  font-size:8px!important;
+  line-height:1.5!important;
+}
+
+.nova-study-filters{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+  margin-bottom:13px!important;
+}
+
+.nova-study-filter{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  min-height:31px!important;
+  padding:7px 10px!important;
+  border:1px solid var(--line)!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  font-weight:900!important;
+}
+
+.nova-study-filter span{
+  display:grid!important;
+  place-items:center!important;
+  min-width:18px!important;
+  height:18px!important;
+  padding:0 4px!important;
+  border-radius:999px!important;
+  background:rgba(127,127,127,.10)!important;
+  font-size:7px!important;
+}
+
+.nova-study-filter.active{
+  border-color:rgba(24,183,255,.22)!important;
+  background:rgba(24,183,255,.065)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-filter.active span{
+  background:rgba(24,183,255,.12)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-queue-status{
+  display:block!important;
+  margin-bottom:4px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  font-weight:900!important;
+  letter-spacing:.09em!important;
+}
+
+.nova-study-queue-empty{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:20px!important;
+  border:1px dashed var(--line)!important;
+  border-radius:15px!important;
+  background:var(--surface-2)!important;
+}
+
+.nova-study-queue-empty > span{
+  display:grid!important;
+  place-items:center!important;
+  width:36px!important;
+  height:36px!important;
+  flex:0 0 auto!important;
+  border-radius:11px!important;
+  background:rgba(24,183,255,.08)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-queue-empty b,
+.nova-study-queue-empty small{
+  display:block!important;
+}
+
+.nova-study-queue-empty b{
+  color:var(--text)!important;
+  font-size:9px!important;
+}
+
+.nova-study-queue-empty small{
+  margin-top:4px!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  line-height:1.45!important;
+}
+
+.ghost{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  min-height:40px!important;
+  padding:9px 12px!important;
+  border:1px solid transparent!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  font-weight:800!important;
+}
+
+.ghost:hover{
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+}
+
+.nova-study-focus-meta .tone-overdue{
+  color:#d96b6b!important;
+}
+
+.nova-study-focus-meta .tone-today,
+.nova-study-focus-meta .tone-tomorrow,
+.nova-study-focus-meta .tone-soon{
+  color:var(--accent)!important;
+}
+
+@media (max-width:960px){
+
+  .nova-study-how{
+    flex-direction:column!important;
+    align-items:flex-start!important;
+  }
+
+  .nova-study-how-head{
+    min-width:0!important;
+  }
+
+  .nova-study-how-steps{
+    width:100%!important;
+  }
+}
+
+@media (max-width:680px){
+
+  .nova-study-how-steps{
+    flex-direction:column!important;
+    align-items:stretch!important;
+  }
+
+  .nova-study-how-arrow{
+    display:none!important;
+  }
+
+  .nova-study-how-step{
+    flex:0 0 auto!important;
+  }
+
+  .nova-study-main-action{
+    width:100%!important;
+  }
+
+  .nova-study-filters{
+    width:100%!important;
+  }
+
+  .nova-study-filter{
+    flex:1!important;
+    justify-content:center!important;
+  }
+}
+
+/* NOVA 22.1 · STUDY MODE CLARITY */
