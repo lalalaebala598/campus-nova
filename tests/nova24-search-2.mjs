@@ -125,7 +125,7 @@ pass(
 pass(
   'search cache',
   index.includes(
-    'nova-25-1-20260923-1'
+    'nova-26-20260923-1'
   )
 );
 

@@ -10582,3 +10582,2462 @@ body[data-theme="light"] .nova-search-command{
 }
 
 /* NOVA 25.1 · DEADLINE RADAR + STUDY INTELLIGENCE */
+
+/* =========================================================
+   NOVA 26.0 · VISUAL SYSTEM
+   ========================================================= */
+
+:root{
+  --bg:#060b12;
+  --surface:#0c131d;
+  --surface-2:#101925;
+  --surface-3:#152231;
+  --line:#1d2a39;
+  --text:#f5f8fc;
+  --muted:#91a2b5;
+  --muted-2:#65758a;
+
+  --accent:#21b9ff;
+  --accent-2:#6bf0d1;
+  --good:#35d89a;
+  --warn:#ffbb58;
+  --danger:#ff7186;
+  --purple:#aa84ff;
+
+  --control:rgba(255,255,255,.045);
+
+  --nova-shadow-soft:
+    0 12px 32px rgba(0,0,0,.12);
+
+  --nova-shadow-card:
+    0 18px 42px rgba(0,0,0,.16);
+
+  --nova-shadow-float:
+    0 24px 60px rgba(0,0,0,.22);
+
+  --nova-hero-bg:#07111b;
+  --nova-hero-surface:#0a1622;
+  --nova-hero-border:rgba(89,199,255,.18);
+}
+
+html[data-theme="light"]{
+  color-scheme:light;
+
+  --bg:#eef3f7;
+  --surface:#ffffff;
+  --surface-2:#f6f9fb;
+  --surface-3:#eaf0f5;
+  --line:#d6e0e8;
+  --text:#18324c;
+  --muted:#64798d;
+  --muted-2:#8998a8;
+
+  --accent:#087ff0;
+  --accent-2:#1bb98d;
+  --good:#24b881;
+  --warn:#df9a27;
+  --danger:#df5f76;
+  --purple:#8467db;
+
+  --control:rgba(27,62,94,.055);
+
+  --nova-shadow-soft:
+    0 10px 28px rgba(33,67,96,.055);
+
+  --nova-shadow-card:
+    0 16px 34px rgba(33,67,96,.075);
+
+  --nova-shadow-float:
+    0 20px 44px rgba(33,67,96,.10);
+
+  --nova-hero-bg:#f4f7fa;
+  --nova-hero-surface:#f8fafc;
+  --nova-hero-border:#d3dfe8;
+}
+
+body[data-theme="light"]{
+  color-scheme:light;
+}
+
+html,
+body,
+#app{
+  min-height:100%;
+}
+
+body{
+  background-color:var(--bg)!important;
+  background-image:none!important;
+  color:var(--text)!important;
+}
+
+body[data-theme="dark"]{
+  background-color:var(--bg)!important;
+  background-image:none!important;
+}
+
+button,
+input,
+textarea,
+select{
+  font-family:inherit;
+}
+
+.icon{
+  display:block!important;
+  flex:0 0 auto!important;
+  vertical-align:middle!important;
+  overflow:visible!important;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* =========================================================
+   GLOBAL SURFACE CONTRACT
+   ========================================================= */
+
+.panel,
+.side-card,
+.files-card,
+.table-card,
+.content-card,
+.profile-card,
+.calendar-card,
+.events-card,
+.messages-shell,
+.course-group,
+.nova-command-panel,
+.nova-course-side-card,
+.nova-course-toolbar,
+.nova-search-group,
+.nova-search-page-empty{
+  background:var(--surface)!important;
+  border-color:var(--line)!important;
+  box-shadow:var(--nova-shadow-card)!important;
+}
+
+.course-card,
+.task-card,
+.test-card,
+.material-card,
+.activity,
+.event-card,
+.nova-file-main{
+  background:var(--surface-2)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+  box-shadow:var(--nova-shadow-soft)!important;
+}
+
+.course-card:hover,
+.task-card:hover,
+.test-card:hover,
+.material-card:hover,
+.activity:hover,
+.event-card:hover,
+.nova-file-main:hover{
+  background:var(--surface)!important;
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 24%,
+      var(--line)
+    )!important;
+  box-shadow:var(--nova-shadow-float)!important;
+}
+
+/* =========================================================
+   HEADER / TOPBAR
+   ========================================================= */
+
+.topbar{
+  background:
+    color-mix(
+      in srgb,
+      var(--bg) 92%,
+      transparent
+    )!important;
+
+  border-bottom-color:
+    color-mix(
+      in srgb,
+      var(--line) 92%,
+      transparent
+    )!important;
+
+  box-shadow:none!important;
+}
+
+.search,
+.icon-btn,
+.secondary,
+.profile-chip{
+  background:var(--surface)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+  box-shadow:var(--nova-shadow-soft)!important;
+}
+
+.search input{
+  color:var(--text)!important;
+}
+
+.search input::placeholder{
+  color:var(--muted-2)!important;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb,var(--surface) 92%,var(--bg)) 0%,
+      var(--bg) 100%
+    )!important;
+
+  border-right-color:var(--line)!important;
+  box-shadow:none!important;
+}
+
+.nav-item,
+.theme-row{
+  color:var(--muted)!important;
+}
+
+.nav-item:hover,
+.theme-row:hover{
+  color:var(--text)!important;
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 5%,
+      transparent
+    )!important;
+}
+
+.nav-item.active{
+  color:var(--text)!important;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb,var(--accent) 13%,transparent),
+      color-mix(in srgb,var(--accent) 3%,transparent)
+    )!important;
+
+  box-shadow:
+    inset 2px 0 0 var(--accent)!important;
+}
+
+/* =========================================================
+   COURSE GROUPS
+   ========================================================= */
+
+.course-group{
+  overflow:hidden!important;
+}
+
+.course-group-head{
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    32px!important;
+
+  align-items:center!important;
+
+  gap:12px!important;
+
+  min-height:72px!important;
+  padding:14px 16px!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--surface-2) 85%,
+        transparent
+      ),
+      transparent
+    )!important;
+}
+
+.course-group-head:hover{
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 4%,
+      var(--surface-2)
+    )!important;
+}
+
+.course-group-icon{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border-radius:12px!important;
+
+  border:1px solid var(--line)!important;
+
+  background:var(--surface-3)!important;
+  color:var(--accent)!important;
+}
+
+.course-group-title{
+  min-width:0!important;
+  align-self:center!important;
+}
+
+.course-group-title b,
+.course-group-title small{
+  display:block!important;
+  min-width:0!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.course-group-title b{
+  color:var(--text)!important;
+  font-size:13px!important;
+  line-height:1.25!important;
+  font-weight:850!important;
+}
+
+.course-group-title small{
+  margin-top:4px!important;
+  color:var(--muted)!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+}
+
+.course-group-chevron{
+  width:32px!important;
+  height:32px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border-radius:10px!important;
+
+  background:var(--control)!important;
+  color:var(--muted)!important;
+}
+
+.course-group[open] .course-group-chevron{
+  color:var(--accent)!important;
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 7%,
+      var(--control)
+    )!important;
+}
+
+.course-group-body{
+  display:flex!important;
+  flex-direction:column!important;
+
+  gap:6px!important;
+
+  padding:
+    0
+    12px
+    12px!important;
+}
+
+/* =========================================================
+   TASKS / TESTS / MATERIALS
+   ========================================================= */
+
+.material-card,
+.task-card,
+.test-card{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+
+  width:100%!important;
+  min-width:0!important;
+
+  min-height:68px!important;
+
+  border-radius:15px!important;
+
+  text-align:left!important;
+
+  cursor:pointer!important;
+}
+
+.material-card{
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    34px!important;
+
+  align-items:center!important;
+
+  gap:12px!important;
+
+  padding:
+    12px
+    13px!important;
+}
+
+.test-card{
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    34px!important;
+
+  align-items:center!important;
+
+  gap:12px!important;
+
+  padding:
+    12px
+    13px!important;
+}
+
+.material-card-icon,
+.test-icon,
+.task-kind,
+.activity-icon{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+
+  flex:0 0 42px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  box-sizing:border-box!important;
+
+  border-radius:12px!important;
+
+  border:1px solid var(--line)!important;
+
+  background:var(--surface-3)!important;
+  color:var(--accent)!important;
+}
+
+.material-card-icon{
+  position:relative!important;
+  overflow:visible!important;
+}
+
+.material-card-icon-core{
+  width:100%!important;
+  height:100%!important;
+
+  display:grid!important;
+  place-items:center!important;
+}
+
+.material-card-kind{
+  display:none!important;
+}
+
+.material-card-main,
+.test-card-main,
+.task-card-main{
+  min-width:0!important;
+
+  display:grid!important;
+
+  align-content:center!important;
+
+  gap:4px!important;
+}
+
+.material-card-main b,
+.test-card-main b,
+.task-card-main b{
+  display:block!important;
+
+  min-width:0!important;
+
+  color:var(--text)!important;
+
+  font-size:12px!important;
+  line-height:1.25!important;
+
+  font-weight:850!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+.material-card-main small,
+.test-card-main small,
+.task-card-main small{
+  display:block!important;
+
+  margin:0!important;
+
+  color:var(--muted)!important;
+
+  font-size:8.5px!important;
+  line-height:1.2!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.material-card-arrow,
+.test-card-arrow,
+.task-card-arrow{
+  width:34px!important;
+  height:34px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+
+  background:var(--control)!important;
+
+  color:var(--muted)!important;
+}
+
+.material-card:hover .material-card-arrow,
+.test-card:hover .test-card-arrow,
+.task-card:hover .task-card-arrow{
+  color:var(--accent)!important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 7%,
+      var(--control)
+    )!important;
+}
+
+/* =========================================================
+   FILES
+   ========================================================= */
+
+.nova-file-row{
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    40px!important;
+
+  gap:7px!important;
+
+  align-items:stretch!important;
+}
+
+.nova-file-main{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    34px!important;
+
+  align-items:center!important;
+
+  gap:12px!important;
+
+  min-height:68px!important;
+
+  padding:
+    12px
+    13px!important;
+
+  border-radius:15px!important;
+
+  text-align:left!important;
+}
+
+.nova-file-icon{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  box-sizing:border-box!important;
+
+  border-radius:12px!important;
+
+  background:var(--surface-3)!important;
+  border:1px solid var(--line)!important;
+
+  color:var(--accent)!important;
+}
+
+.nova-file-copy{
+  min-width:0!important;
+
+  display:grid!important;
+
+  align-content:center!important;
+
+  gap:4px!important;
+}
+
+.nova-file-copy b,
+.nova-file-copy small{
+  display:block!important;
+
+  min-width:0!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.nova-file-copy b{
+  color:var(--text)!important;
+
+  font-size:12px!important;
+  line-height:1.25!important;
+  font-weight:850!important;
+}
+
+.nova-file-copy small{
+  color:var(--muted)!important;
+
+  margin:0!important;
+
+  font-size:8.5px!important;
+  line-height:1.2!important;
+}
+
+.nova-file-open{
+  width:34px!important;
+  height:34px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+
+  background:var(--control)!important;
+
+  color:var(--muted)!important;
+}
+
+.nova-file-main:hover .nova-file-open{
+  color:var(--accent)!important;
+}
+
+.nova-file-download{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+
+  width:40px!important;
+  height:100%!important;
+
+  min-height:68px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  padding:0!important;
+
+  border:
+    1px solid var(--line)!important;
+
+  border-radius:15px!important;
+
+  background:
+    var(--surface-2)!important;
+
+  color:var(--muted)!important;
+
+  box-shadow:var(--nova-shadow-soft)!important;
+}
+
+.nova-file-download:hover{
+  background:var(--surface)!important;
+  color:var(--accent)!important;
+}
+
+/* =========================================================
+   DASHBOARD HERO · CLEAN AMBIENT
+   ========================================================= */
+
+.nova-ambient-hero{
+  position:relative!important;
+
+  overflow:hidden!important;
+  isolation:isolate!important;
+
+  min-height:330px!important;
+  height:clamp(330px,28vw,410px)!important;
+
+  border-radius:28px!important;
+
+  border:
+    1px solid
+    var(--nova-hero-border)!important;
+
+  background:
+    radial-gradient(
+      circle at 78% 48%,
+      rgba(31,191,255,.09),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      #07111b 0%,
+      #091622 52%,
+      #08131e 100%
+    )!important;
+
+  box-shadow:
+    0 24px 68px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.045)!important;
+}
+
+/* Remove the old decorative horizontal edge. */
+.nova-ambient-hero::after{
+  display:none!important;
+}
+
+/* A single soft internal light plane. */
+.nova-ambient-hero::before{
+  content:""!important;
+
+  position:absolute!important;
+  inset:0!important;
+
+  z-index:1!important;
+
+  pointer-events:none!important;
+
+  background:
+    radial-gradient(
+      circle at 82% 50%,
+      rgba(73,204,255,.075),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 60% 100%,
+      rgba(115,102,255,.055),
+      transparent 36%
+    )!important;
+}
+
+/*
+ * Important:
+ * the field is intentionally larger than the hero.
+ * This prevents blur layers from being clipped at their
+ * own rectangular boundaries.
+ */
+.nova-ambient-field{
+  position:absolute!important;
+
+  inset:-26%!important;
+
+  z-index:0!important;
+
+  overflow:hidden!important;
+
+  pointer-events:none!important;
+}
+
+.nova-aurora{
+  position:absolute!important;
+
+  display:block!important;
+
+  border-radius:50%!important;
+
+  filter:blur(58px)!important;
+
+  will-change:
+    transform,
+    opacity!important;
+
+  transform:translateZ(0)!important;
+}
+
+.nova-aurora-a{
+  width:560px!important;
+  height:390px!important;
+
+  left:49%!important;
+  top:2%!important;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(35,201,255,.28),
+      rgba(35,201,255,.08) 36%,
+      transparent 72%
+    )!important;
+
+  animation:
+    nova26AuroraA
+    18s
+    ease-in-out
+    infinite
+    alternate!important;
+}
+
+.nova-aurora-b{
+  width:470px!important;
+  height:430px!important;
+
+  right:3%!important;
+  top:17%!important;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(112,99,255,.20),
+      rgba(112,99,255,.06) 34%,
+      transparent 70%
+    )!important;
+
+  animation:
+    nova26AuroraB
+    23s
+    ease-in-out
+    infinite
+    alternate!important;
+}
+
+.nova-aurora-c{
+  width:520px!important;
+  height:260px!important;
+
+  left:28%!important;
+  bottom:0!important;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(60,226,190,.11),
+      transparent 72%
+    )!important;
+
+  animation:
+    nova26AuroraC
+    21s
+    ease-in-out
+    infinite
+    alternate!important;
+}
+
+/* Old hard light rays are removed. */
+.nova-light-line{
+  display:none!important;
+}
+
+/* Old grid is intentionally removed from the hero. */
+.nova-ambient-grid{
+  display:none!important;
+}
+
+/* Two quiet orbit lines instead of the old busy system. */
+.nova-orbit{
+  position:absolute!important;
+
+  display:block!important;
+
+  left:77%!important;
+  top:51%!important;
+
+  width:500px!important;
+  height:260px!important;
+
+  margin:
+    -130px
+    0
+    0
+    -250px!important;
+
+  border:
+    1px solid
+    rgba(112,216,255,.105)!important;
+
+  border-radius:50%!important;
+
+  opacity:.8!important;
+
+  transform-origin:center!important;
+
+  animation:
+    nova26OrbitA
+    25s
+    linear
+    infinite!important;
+}
+
+.nova-orbit-b{
+  width:360px!important;
+  height:190px!important;
+
+  margin:
+    -95px
+    0
+    0
+    -180px!important;
+
+  border:
+    1px solid
+    rgba(146,128,255,.085)!important;
+
+  transform:rotate(24deg)!important;
+
+  animation:
+    nova26OrbitB
+    19s
+    linear
+    infinite
+    reverse!important;
+}
+
+.nova-orbit-c{
+  display:none!important;
+}
+
+.nova-orbit-dot{
+  position:absolute!important;
+
+  display:block!important;
+
+  width:5px!important;
+  height:5px!important;
+
+  border-radius:50%!important;
+
+  background:#6ddfff!important;
+
+  box-shadow:
+    0 0 16px
+    rgba(109,223,255,.62)!important;
+}
+
+.nova-orbit-dot-a{
+  left:calc(77% + 175px)!important;
+  top:calc(51% - 98px)!important;
+
+  animation:
+    nova26DotA
+    8s
+    ease-in-out
+    infinite!important;
+}
+
+.nova-orbit-dot-b{
+  left:calc(77% - 92px)!important;
+  top:calc(51% + 74px)!important;
+
+  background:#9e8cff!important;
+
+  box-shadow:
+    0 0 16px
+    rgba(158,140,255,.50)!important;
+
+  animation:
+    nova26DotB
+    11s
+    ease-in-out
+    infinite!important;
+}
+
+.nova-orbit-dot-c{
+  width:4px!important;
+  height:4px!important;
+
+  background:#62e1c0!important;
+
+  box-shadow:
+    0 0 13px
+    rgba(98,225,192,.40)!important;
+
+  animation:
+    nova26DotC
+    5s
+    ease-in-out
+    infinite!important;
+}
+
+.nova-glow-core{
+  position:absolute!important;
+
+  left:77%!important;
+  top:51%!important;
+
+  width:118px!important;
+  height:118px!important;
+
+  margin:
+    -59px
+    0
+    0
+    -59px!important;
+
+  border-radius:50%!important;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(124,229,255,.17),
+      rgba(73,129,255,.055) 34%,
+      transparent 72%
+    )!important;
+
+  filter:blur(7px)!important;
+
+  animation:
+    nova26Core
+    8s
+    ease-in-out
+    infinite!important;
+}
+
+/*
+ * The overlay is now a readable gradient,
+ * not a second decorative image layer.
+ */
+.nova-ambient-overlay{
+  position:absolute!important;
+
+  inset:0!important;
+
+  z-index:2!important;
+
+  pointer-events:none!important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4,11,18,.985) 0%,
+      rgba(4,11,18,.88) 36%,
+      rgba(4,11,18,.48) 68%,
+      rgba(4,11,18,.34) 100%
+    ),
+    radial-gradient(
+      circle at 79% 50%,
+      transparent 0%,
+      rgba(4,11,18,.08) 47%,
+      rgba(4,11,18,.38) 100%
+    )!important;
+}
+
+/* =========================================================
+   HERO CONTENT GEOMETRY
+   ========================================================= */
+
+.nova-ambient-hero .hero-brand{
+  top:22px!important;
+  left:24px!important;
+
+  z-index:6!important;
+
+  display:inline-flex!important;
+  align-items:center!important;
+
+  gap:9px!important;
+
+  padding:
+    8px
+    10px!important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.10)!important;
+
+  border-radius:12px!important;
+
+  background:
+    rgba(5,13,21,.27)!important;
+
+  backdrop-filter:blur(10px)!important;
+  -webkit-backdrop-filter:blur(10px)!important;
+}
+
+.nova-ambient-hero .hero-brand b{
+  color:#f7fbff!important;
+  font-size:12px!important;
+  line-height:1.15!important;
+}
+
+.nova-ambient-hero .hero-brand small{
+  color:rgba(255,255,255,.58)!important;
+  font-size:9px!important;
+  line-height:1.15!important;
+  margin-top:3px!important;
+}
+
+.nova-ambient-hero .hero-brand .icon{
+  color:#fff!important;
+}
+
+.nova-hero-content{
+  position:absolute!important;
+
+  left:32px!important;
+  right:340px!important;
+  bottom:34px!important;
+
+  z-index:6!important;
+
+  max-width:760px!important;
+}
+
+.nova-hero-kicker{
+  color:#89ddff!important;
+
+  font-size:8px!important;
+  font-weight:900!important;
+
+  line-height:1!important;
+
+  letter-spacing:.18em!important;
+  text-transform:uppercase!important;
+}
+
+.nova-hero-time{
+  display:flex!important;
+  align-items:flex-end!important;
+
+  gap:13px!important;
+
+  margin-top:10px!important;
+
+  color:#ffffff!important;
+
+  font-size:
+    clamp(
+      64px,
+      6.2vw,
+      84px
+    )!important;
+
+  line-height:.86!important;
+
+  letter-spacing:-.08em!important;
+
+  font-weight:850!important;
+
+  font-variant-numeric:tabular-nums!important;
+}
+
+.nova-hero-time>span{
+  margin:
+    0
+    0
+    6px!important;
+
+  color:
+    rgba(255,255,255,.53)!important;
+
+  font-size:11px!important;
+
+  line-height:1!important;
+
+  letter-spacing:0!important;
+
+  font-weight:800!important;
+}
+
+.nova-hero-title{
+  max-width:760px!important;
+
+  margin:
+    13px
+    0
+    0!important;
+
+  color:#ffffff!important;
+
+  font-size:
+    clamp(
+      18px,
+      1.8vw,
+      25px
+    )!important;
+
+  line-height:1.16!important;
+
+  letter-spacing:-.028em!important;
+
+  font-weight:850!important;
+}
+
+.nova-hero-details{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+
+  gap:9px!important;
+
+  margin-top:11px!important;
+}
+
+.nova-hero-details>span{
+  display:inline-flex!important;
+  align-items:center!important;
+
+  gap:5px!important;
+
+  color:
+    rgba(255,255,255,.60)!important;
+
+  font-size:8.5px!important;
+
+  line-height:1!important;
+
+  font-weight:750!important;
+}
+
+.nova-hero-details .icon{
+  color:#72ddff!important;
+}
+
+.nova-hero-free span{
+  color:#82ddff!important;
+
+  font-size:8px!important;
+  font-weight:900!important;
+
+  letter-spacing:.17em!important;
+  text-transform:uppercase!important;
+}
+
+.nova-hero-free p{
+  max-width:500px!important;
+
+  margin:
+    9px
+    0
+    0!important;
+
+  color:
+    rgba(255,255,255,.60)!important;
+
+  font-size:11px!important;
+  line-height:1.45!important;
+}
+
+.nova-hero-free small{
+  display:block!important;
+
+  margin-top:9px!important;
+
+  color:
+    rgba(255,255,255,.42)!important;
+
+  font-size:8px!important;
+}
+
+.nova-hero-focus{
+  position:absolute!important;
+
+  right:28px!important;
+  top:50%!important;
+
+  width:268px!important;
+  min-height:214px!important;
+
+  transform:
+    translateY(-50%)!important;
+
+  z-index:6!important;
+
+  padding:20px!important;
+
+  overflow:hidden!important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.14)!important;
+
+  border-radius:23px!important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.075),
+      rgba(255,255,255,.025)
+    ),
+    rgba(6,16,27,.42)!important;
+
+  backdrop-filter:blur(22px)!important;
+  -webkit-backdrop-filter:blur(22px)!important;
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.055)!important;
+}
+
+.nova-hero-focus::before{
+  content:""!important;
+
+  position:absolute!important;
+  inset:0!important;
+
+  border-radius:inherit!important;
+
+  pointer-events:none!important;
+
+  background:
+    radial-gradient(
+      circle at 83% 15%,
+      rgba(55,203,255,.14),
+      transparent 40%
+    )!important;
+}
+
+.nova-hero-focus-top{
+  position:relative!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+
+.nova-hero-focus-top span{
+  color:#82e2ff!important;
+
+  font-size:7px!important;
+  font-weight:900!important;
+
+  letter-spacing:.16em!important;
+}
+
+.nova-hero-focus-top i{
+  width:7px!important;
+  height:7px!important;
+
+  border-radius:50%!important;
+
+  background:#52ddb5!important;
+
+  box-shadow:
+    0 0 14px
+    rgba(82,221,181,.66)!important;
+
+  animation:
+    nova26LivePulse
+    2.8s
+    ease-in-out
+    infinite!important;
+}
+
+.nova-hero-focus>strong{
+  position:relative!important;
+
+  display:block!important;
+
+  margin-top:9px!important;
+
+  color:#ffffff!important;
+
+  font-size:46px!important;
+
+  line-height:.88!important;
+
+  letter-spacing:-.07em!important;
+
+  font-weight:850!important;
+
+  font-variant-numeric:tabular-nums!important;
+}
+
+.nova-hero-focus>b{
+  position:relative!important;
+
+  display:block!important;
+
+  margin-top:11px!important;
+
+  max-width:210px!important;
+
+  color:
+    rgba(255,255,255,.91)!important;
+
+  font-size:10.5px!important;
+
+  line-height:1.35!important;
+
+  font-weight:800!important;
+}
+
+.nova-hero-focus>small{
+  position:relative!important;
+
+  display:block!important;
+
+  margin-top:7px!important;
+
+  max-width:205px!important;
+
+  color:
+    rgba(255,255,255,.52)!important;
+
+  font-size:7.5px!important;
+
+  line-height:1.4!important;
+}
+
+.nova-hero-focus-orb{
+  position:absolute!important;
+
+  right:16px!important;
+  bottom:16px!important;
+
+  width:44px!important;
+  height:44px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border-radius:13px!important;
+
+  color:#77dfff!important;
+
+  border:
+    1px solid
+    rgba(114,219,255,.18)!important;
+
+  background:
+    rgba(73,187,255,.07)!important;
+
+  box-shadow:
+    0 0 24px
+    rgba(41,190,255,.075)!important;
+
+  animation:
+    nova26FocusOrb
+    4.6s
+    ease-in-out
+    infinite!important;
+}
+
+/*
+ * The duplicate statistics inside the hero are removed.
+ * Header statistics stay untouched.
+ */
+.nova-ambient-hero > .hero-stats{
+  display:none!important;
+}
+
+/* =========================================================
+   LIGHT THEME · COMPLETE SEPARATE PAINT
+   ========================================================= */
+
+html[data-theme="light"] body,
+body[data-theme="light"]{
+  background:
+    var(--bg)!important;
+
+  background-image:none!important;
+  color:var(--text)!important;
+}
+
+html[data-theme="light"] .sidebar,
+body[data-theme="light"] .sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f5f8fb 100%
+    )!important;
+
+  border-right-color:#d6e0e8!important;
+
+  box-shadow:
+    7px 0 24px
+    rgba(39,70,97,.035)!important;
+}
+
+html[data-theme="light"] .topbar,
+body[data-theme="light"] .topbar{
+  background:
+    rgba(247,250,252,.94)!important;
+
+  border-bottom-color:#d8e2ea!important;
+
+  box-shadow:
+    0 3px 18px
+    rgba(39,70,97,.035)!important;
+}
+
+html[data-theme="light"] .search,
+html[data-theme="light"] .icon-btn,
+html[data-theme="light"] .secondary,
+html[data-theme="light"] .profile-chip,
+body[data-theme="light"] .search,
+body[data-theme="light"] .icon-btn,
+body[data-theme="light"] .secondary,
+body[data-theme="light"] .profile-chip{
+  background:#ffffff!important;
+
+  border-color:#d5e0e8!important;
+
+  color:#18324c!important;
+
+  box-shadow:
+    0 5px 16px
+    rgba(39,70,97,.045)!important;
+}
+
+html[data-theme="light"] .panel,
+html[data-theme="light"] .side-card,
+html[data-theme="light"] .files-card,
+html[data-theme="light"] .table-card,
+html[data-theme="light"] .content-card,
+html[data-theme="light"] .profile-card,
+html[data-theme="light"] .calendar-card,
+html[data-theme="light"] .events-card,
+html[data-theme="light"] .messages-shell,
+html[data-theme="light"] .course-group,
+html[data-theme="light"] .nova-command-panel,
+html[data-theme="light"] .nova-course-side-card,
+html[data-theme="light"] .nova-course-toolbar,
+body[data-theme="light"] .panel,
+body[data-theme="light"] .side-card,
+body[data-theme="light"] .files-card,
+body[data-theme="light"] .table-card,
+body[data-theme="light"] .content-card,
+body[data-theme="light"] .profile-card,
+body[data-theme="light"] .calendar-card,
+body[data-theme="light"] .events-card,
+body[data-theme="light"] .messages-shell,
+body[data-theme="light"] .course-group,
+body[data-theme="light"] .nova-command-panel,
+body[data-theme="light"] .nova-course-side-card,
+body[data-theme="light"] .nova-course-toolbar{
+  background:#ffffff!important;
+
+  border-color:#d6e0e8!important;
+
+  box-shadow:
+    0 14px 34px
+    rgba(39,70,97,.065)!important;
+}
+
+html[data-theme="light"] .course-card,
+html[data-theme="light"] .task-card,
+html[data-theme="light"] .test-card,
+html[data-theme="light"] .material-card,
+html[data-theme="light"] .activity,
+html[data-theme="light"] .event-card,
+html[data-theme="light"] .nova-file-main,
+body[data-theme="light"] .course-card,
+body[data-theme="light"] .task-card,
+body[data-theme="light"] .test-card,
+body[data-theme="light"] .material-card,
+body[data-theme="light"] .activity,
+body[data-theme="light"] .event-card,
+body[data-theme="light"] .nova-file-main{
+  background:#f8fafc!important;
+
+  border-color:#d8e2ea!important;
+
+  color:#18324c!important;
+
+  box-shadow:
+    0 9px 24px
+    rgba(39,70,97,.045)!important;
+}
+
+html[data-theme="light"] .course-card:hover,
+html[data-theme="light"] .task-card:hover,
+html[data-theme="light"] .test-card:hover,
+html[data-theme="light"] .material-card:hover,
+html[data-theme="light"] .activity:hover,
+html[data-theme="light"] .event-card:hover,
+html[data-theme="light"] .nova-file-main:hover,
+body[data-theme="light"] .course-card:hover,
+body[data-theme="light"] .task-card:hover,
+body[data-theme="light"] .test-card:hover,
+body[data-theme="light"] .material-card:hover,
+body[data-theme="light"] .activity:hover,
+body[data-theme="light"] .event-card:hover,
+body[data-theme="light"] .nova-file-main:hover{
+  background:#ffffff!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 24%,
+      #d8e2ea
+    )!important;
+
+  box-shadow:
+    0 17px 34px
+    rgba(39,70,97,.085)!important;
+}
+
+html[data-theme="light"] .course-group-head,
+body[data-theme="light"] .course-group-head{
+  background:
+    linear-gradient(
+      180deg,
+      #f8fafc,
+      #ffffff
+    )!important;
+}
+
+html[data-theme="light"] .course-group-head:hover,
+body[data-theme="light"] .course-group-head:hover{
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 4%,
+      #f8fafc
+    )!important;
+}
+
+html[data-theme="light"] .course-group-icon,
+html[data-theme="light"] .material-card-icon,
+html[data-theme="light"] .test-icon,
+html[data-theme="light"] .task-kind,
+html[data-theme="light"] .activity-icon,
+html[data-theme="light"] .nova-file-icon,
+body[data-theme="light"] .course-group-icon,
+body[data-theme="light"] .material-card-icon,
+body[data-theme="light"] .test-icon,
+body[data-theme="light"] .task-kind,
+body[data-theme="light"] .activity-icon,
+body[data-theme="light"] .nova-file-icon{
+  background:#edf3f7!important;
+  border-color:#d8e2ea!important;
+  color:#087ff0!important;
+}
+
+html[data-theme="light"] .course-group-title b,
+html[data-theme="light"] .material-card-main b,
+html[data-theme="light"] .test-card-main b,
+html[data-theme="light"] .task-card-main b,
+html[data-theme="light"] .nova-file-copy b,
+body[data-theme="light"] .course-group-title b,
+body[data-theme="light"] .material-card-main b,
+body[data-theme="light"] .test-card-main b,
+body[data-theme="light"] .task-card-main b,
+body[data-theme="light"] .nova-file-copy b{
+  color:#18324c!important;
+}
+
+html[data-theme="light"] .course-group-title small,
+html[data-theme="light"] .material-card-main small,
+html[data-theme="light"] .test-card-main small,
+html[data-theme="light"] .task-card-main small,
+html[data-theme="light"] .nova-file-copy small,
+body[data-theme="light"] .course-group-title small,
+body[data-theme="light"] .material-card-main small,
+body[data-theme="light"] .test-card-main small,
+body[data-theme="light"] .task-card-main small,
+body[data-theme="light"] .nova-file-copy small{
+  color:#6d8092!important;
+}
+
+html[data-theme="light"] .material-card-arrow,
+html[data-theme="light"] .test-card-arrow,
+html[data-theme="light"] .task-card-arrow,
+html[data-theme="light"] .nova-file-open,
+html[data-theme="light"] .nova-file-download,
+body[data-theme="light"] .material-card-arrow,
+body[data-theme="light"] .test-card-arrow,
+body[data-theme="light"] .task-card-arrow,
+body[data-theme="light"] .nova-file-open,
+body[data-theme="light"] .nova-file-download{
+  background:#f2f6f9!important;
+  border-color:#d7e2ea!important;
+  color:#708598!important;
+}
+
+/* =========================================================
+   LIGHT HERO
+   ========================================================= */
+
+html[data-theme="light"] .nova-ambient-hero,
+body[data-theme="light"] .nova-ambient-hero{
+  background:
+    linear-gradient(
+      135deg,
+      #f7f9fb 0%,
+      #eef3f7 55%,
+      #f5f8fa 100%
+    )!important;
+
+  border-color:#d2dee7!important;
+
+  box-shadow:
+    0 20px 52px
+    rgba(39,70,97,.075),
+    inset 0 1px 0 rgba(255,255,255,.92)!important;
+}
+
+html[data-theme="light"] .nova-ambient-hero::before,
+body[data-theme="light"] .nova-ambient-hero::before{
+  background:
+    radial-gradient(
+      circle at 82% 50%,
+      rgba(24,148,235,.045),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 60% 100%,
+      rgba(115,102,255,.025),
+      transparent 36%
+    )!important;
+}
+
+html[data-theme="light"] .nova-aurora-a,
+body[data-theme="light"] .nova-aurora-a{
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(20,155,235,.105),
+      rgba(20,155,235,.025) 38%,
+      transparent 72%
+    )!important;
+}
+
+html[data-theme="light"] .nova-aurora-b,
+body[data-theme="light"] .nova-aurora-b{
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(107,94,224,.075),
+      rgba(107,94,224,.018) 36%,
+      transparent 70%
+    )!important;
+}
+
+html[data-theme="light"] .nova-aurora-c,
+body[data-theme="light"] .nova-aurora-c{
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(47,183,149,.055),
+      transparent 72%
+    )!important;
+}
+
+html[data-theme="light"] .nova-orbit,
+body[data-theme="light"] .nova-orbit{
+  border-color:
+    rgba(65,135,177,.10)!important;
+}
+
+html[data-theme="light"] .nova-orbit-b,
+body[data-theme="light"] .nova-orbit-b{
+  border-color:
+    rgba(112,104,190,.075)!important;
+}
+
+html[data-theme="light"] .nova-orbit-dot,
+body[data-theme="light"] .nova-orbit-dot{
+  opacity:.42!important;
+
+  background:#4aa9df!important;
+
+  box-shadow:
+    0 0 13px
+    rgba(74,169,223,.30)!important;
+}
+
+html[data-theme="light"] .nova-orbit-dot-b,
+body[data-theme="light"] .nova-orbit-dot-b{
+  background:#8b79d8!important;
+
+  box-shadow:
+    0 0 12px
+    rgba(139,121,216,.24)!important;
+}
+
+html[data-theme="light"] .nova-orbit-dot-c,
+body[data-theme="light"] .nova-orbit-dot-c{
+  background:#4fb89b!important;
+
+  box-shadow:
+    0 0 10px
+    rgba(79,184,155,.20)!important;
+}
+
+html[data-theme="light"] .nova-glow-core,
+body[data-theme="light"] .nova-glow-core{
+  opacity:.46!important;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(42,159,222,.10),
+      rgba(96,105,205,.025) 34%,
+      transparent 72%
+    )!important;
+}
+
+html[data-theme="light"] .nova-ambient-overlay,
+body[data-theme="light"] .nova-ambient-overlay{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(248,250,252,.965) 0%,
+      rgba(248,250,252,.88) 36%,
+      rgba(248,250,252,.58) 69%,
+      rgba(248,250,252,.70) 100%
+    ),
+    radial-gradient(
+      circle at 80% 50%,
+      transparent 0%,
+      rgba(236,242,247,.04) 50%,
+      rgba(229,237,243,.16) 100%
+    )!important;
+}
+
+html[data-theme="light"] .nova-ambient-hero .hero-brand,
+body[data-theme="light"] .nova-ambient-hero .hero-brand{
+  background:
+    rgba(255,255,255,.72)!important;
+
+  border-color:#d7e2ea!important;
+
+  box-shadow:
+    0 8px 20px
+    rgba(39,70,97,.045)!important;
+}
+
+html[data-theme="light"] .nova-ambient-hero .hero-brand b,
+body[data-theme="light"] .nova-ambient-hero .hero-brand b{
+  color:#18324c!important;
+}
+
+html[data-theme="light"] .nova-ambient-hero .hero-brand small,
+body[data-theme="light"] .nova-ambient-hero .hero-brand small{
+  color:#728597!important;
+}
+
+html[data-theme="light"] .nova-ambient-hero .hero-brand .icon,
+body[data-theme="light"] .nova-ambient-hero .hero-brand .icon{
+  color:#18324c!important;
+}
+
+html[data-theme="light"] .nova-hero-kicker,
+body[data-theme="light"] .nova-hero-kicker{
+  color:#087ff0!important;
+}
+
+html[data-theme="light"] .nova-hero-time,
+html[data-theme="light"] .nova-hero-title,
+body[data-theme="light"] .nova-hero-time,
+body[data-theme="light"] .nova-hero-title{
+  color:#18324c!important;
+
+  text-shadow:none!important;
+}
+
+html[data-theme="light"] .nova-hero-time>span,
+body[data-theme="light"] .nova-hero-time>span{
+  color:#718497!important;
+}
+
+html[data-theme="light"] .nova-hero-details>span,
+html[data-theme="light"] .nova-hero-free p,
+html[data-theme="light"] .nova-hero-free small,
+body[data-theme="light"] .nova-hero-details>span,
+body[data-theme="light"] .nova-hero-free p,
+body[data-theme="light"] .nova-hero-free small{
+  color:#697e91!important;
+}
+
+html[data-theme="light"] .nova-hero-details .icon,
+body[data-theme="light"] .nova-hero-details .icon{
+  color:#087ff0!important;
+}
+
+html[data-theme="light"] .nova-hero-free span,
+body[data-theme="light"] .nova-hero-free span{
+  color:#087ff0!important;
+}
+
+html[data-theme="light"] .nova-hero-focus,
+body[data-theme="light"] .nova-hero-focus{
+  background:
+    rgba(255,255,255,.79)!important;
+
+  border-color:#d2dee7!important;
+
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+
+  box-shadow:
+    0 19px 42px
+    rgba(39,70,97,.085),
+    inset 0 1px 0
+    rgba(255,255,255,.94)!important;
+}
+
+html[data-theme="light"] .nova-hero-focus::before,
+body[data-theme="light"] .nova-hero-focus::before{
+  background:
+    radial-gradient(
+      circle at 83% 15%,
+      rgba(24,148,235,.055),
+      transparent 42%
+    )!important;
+}
+
+html[data-theme="light"] .nova-hero-focus-top span,
+html[data-theme="light"] .nova-hero-focus>small,
+body[data-theme="light"] .nova-hero-focus-top span,
+body[data-theme="light"] .nova-hero-focus>small{
+  color:#087ff0!important;
+}
+
+html[data-theme="light"] .nova-hero-focus>b,
+body[data-theme="light"] .nova-hero-focus>b{
+  color:#2b4560!important;
+}
+
+html[data-theme="light"] .nova-hero-focus>strong,
+body[data-theme="light"] .nova-hero-focus>strong{
+  color:#18324c!important;
+}
+
+html[data-theme="light"] .nova-hero-focus-orb,
+body[data-theme="light"] .nova-hero-focus-orb{
+  color:#087ff0!important;
+
+  border-color:#bfd3e1!important;
+
+  background:
+    rgba(8,127,240,.055)!important;
+
+  box-shadow:none!important;
+}
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.messages-shell,
+.conversation-list,
+.conversation,
+.conversation-view{
+  min-width:0!important;
+}
+
+.conversation-item{
+  border-radius:14px!important;
+}
+
+.conversation-item:hover,
+.conversation-item.active{
+  background:var(--surface-2)!important;
+}
+
+.conversation-item.active{
+  box-shadow:
+    inset 2px 0 0
+    var(--accent)!important;
+}
+
+.conversation-head{
+  border-bottom-color:var(--line)!important;
+}
+
+.conversation-body{
+  background:
+    radial-gradient(
+      circle at 88% 18%,
+      color-mix(
+        in srgb,
+        var(--accent) 4%,
+        transparent
+      ),
+      transparent 30%
+    )!important;
+}
+
+.bubble{
+  background:var(--surface-2)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+}
+
+.message-form{
+  background:var(--surface)!important;
+  border-top-color:var(--line)!important;
+}
+
+.message-form textarea{
+  background:var(--surface-2)!important;
+  border-color:var(--line)!important;
+  color:var(--text)!important;
+}
+
+/* =========================================================
+   NO STRAY WHITE FLASHES / OLD HARD-CODED HERO ELEMENTS
+   ========================================================= */
+
+html[data-theme="light"] .dashboard-hero .hero-date,
+body[data-theme="light"] .dashboard-hero .hero-date{
+  background:
+    rgba(255,255,255,.72)!important;
+
+  border-color:#d4e0e8!important;
+
+  color:#18324c!important;
+
+  box-shadow:
+    0 8px 20px
+    rgba(39,70,97,.045)!important;
+}
+
+html[data-theme="light"] .nova-search-popover,
+body[data-theme="light"] .nova-search-popover{
+  background:#ffffff!important;
+  border-color:#d6e0e8!important;
+
+  box-shadow:
+    0 22px 52px
+    rgba(39,70,97,.12)!important;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media(max-width:1050px){
+
+  .nova-hero-content{
+    right:320px!important;
+  }
+
+  .nova-hero-focus{
+    width:248px!important;
+  }
+
+}
+
+@media(max-width:860px){
+
+  .nova-ambient-hero{
+    min-height:350px!important;
+    height:390px!important;
+  }
+
+  .nova-hero-content{
+    left:23px!important;
+    right:285px!important;
+    bottom:28px!important;
+  }
+
+  .nova-hero-focus{
+    right:20px!important;
+    width:230px!important;
+    min-height:194px!important;
+  }
+
+  .nova-hero-time{
+    font-size:
+      clamp(
+        56px,
+        8vw,
+        72px
+      )!important;
+  }
+
+  .nova-hero-title{
+    font-size:19px!important;
+  }
+
+}
+
+@media(max-width:760px){
+
+  .course-group-head{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      30px!important;
+
+    min-height:64px!important;
+
+    padding:
+      11px
+      12px!important;
+
+    gap:10px!important;
+  }
+
+  .course-group-icon{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .material-card,
+  .test-card{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+
+    min-height:64px!important;
+
+    gap:10px!important;
+
+    padding:
+      10px!important;
+  }
+
+  .material-card-icon,
+  .test-icon{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .material-card-arrow,
+  .test-card-arrow{
+    width:32px!important;
+    height:32px!important;
+  }
+
+  .nova-file-main{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+
+    min-height:64px!important;
+
+    gap:10px!important;
+    padding:10px!important;
+  }
+
+  .nova-file-icon{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-file-open{
+    width:32px!important;
+    height:32px!important;
+  }
+
+  .nova-file-download{
+    width:36px!important;
+    min-height:64px!important;
+  }
+
+  .nova-ambient-hero{
+    min-height:430px!important;
+    height:430px!important;
+
+    border-radius:22px!important;
+  }
+
+  .nova-ambient-field{
+    inset:-34%!important;
+  }
+
+  .nova-ambient-hero .hero-brand{
+    top:14px!important;
+    left:14px!important;
+  }
+
+  .nova-hero-content{
+    left:17px!important;
+    right:17px!important;
+    bottom:112px!important;
+  }
+
+  .nova-hero-time{
+    font-size:60px!important;
+  }
+
+  .nova-hero-title{
+    font-size:22px!important;
+    max-width:100%!important;
+  }
+
+  .nova-hero-focus{
+    left:17px!important;
+    right:17px!important;
+    top:auto!important;
+    bottom:16px!important;
+
+    width:auto!important;
+    min-height:82px!important;
+
+    transform:none!important;
+
+    padding:13px!important;
+  }
+
+  .nova-hero-focus>strong{
+    font-size:34px!important;
+  }
+
+  .nova-hero-focus>b{
+    max-width:calc(100% - 48px)!important;
+    margin-top:5px!important;
+    font-size:9px!important;
+  }
+
+  .nova-hero-focus>small{
+    display:none!important;
+  }
+
+  .nova-hero-focus-orb{
+    right:13px!important;
+    bottom:13px!important;
+    width:38px!important;
+    height:38px!important;
+  }
+
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  .nova-aurora,
+  .nova-orbit,
+  .nova-orbit-dot,
+  .nova-glow-core,
+  .nova-hero-focus-top i,
+  .nova-hero-focus-orb{
+    animation:none!important;
+  }
+
+}
+
+/* =========================================================
+   NOVA 26.0 · ANIMATION KEYFRAMES
+   ========================================================= */
+
+@keyframes nova26AuroraA{
+  0%{
+    transform:
+      translate3d(
+        -28px,
+        8px,
+        0
+      )
+      scale(.98);
+
+    opacity:.74;
+  }
+
+  50%{
+    transform:
+      translate3d(
+        14px,
+        -18px,
+        0
+      )
+      scale(1.03);
+
+    opacity:.86;
+  }
+
+  100%{
+    transform:
+      translate3d(
+        54px,
+        18px,
+        0
+      )
+      scale(1.08);
+
+    opacity:.76;
+  }
+}
+
+@keyframes nova26AuroraB{
+  0%{
+    transform:
+      translate3d(
+        18px,
+        -10px,
+        0
+      )
+      scale(1);
+  }
+
+  50%{
+    transform:
+      translate3d(
+        -30px,
+        20px,
+        0
+      )
+      scale(1.05);
+  }
+
+  100%{
+    transform:
+      translate3d(
+        -4px,
+        42px,
+        0
+      )
+      scale(1.09);
+  }
+}
+
+@keyframes nova26AuroraC{
+  0%{
+    transform:
+      translate3d(
+        -24px,
+        10px,
+        0
+      )
+      scale(.98);
+  }
+
+  100%{
+    transform:
+      translate3d(
+        34px,
+        -14px,
+        0
+      )
+      scale(1.06);
+  }
+}
+
+@keyframes nova26OrbitA{
+  from{
+    transform:
+      rotate(-17deg)
+      rotate(0deg);
+  }
+
+  to{
+    transform:
+      rotate(-17deg)
+      rotate(360deg);
+  }
+}
+
+@keyframes nova26OrbitB{
+  from{
+    transform:
+      rotate(24deg)
+      rotate(0deg);
+  }
+
+  to{
+    transform:
+      rotate(24deg)
+      rotate(-360deg);
+  }
+}
+
+@keyframes nova26DotA{
+  0%,
+  100%{
+    transform:translate3d(0,0,0);
+    opacity:.55;
+  }
+
+  50%{
+    transform:translate3d(-7px,8px,0) scale(1.35);
+    opacity:1;
+  }
+}
+
+@keyframes nova26DotB{
+  0%,
+  100%{
+    transform:translate3d(0,0,0);
+    opacity:.42;
+  }
+
+  50%{
+    transform:translate3d(5px,-7px,0) scale(1.3);
+    opacity:.9;
+  }
+}
+
+@keyframes nova26DotC{
+  0%,
+  100%{
+    transform:scale(.75);
+    opacity:.38;
+  }
+
+  50%{
+    transform:scale(1.5);
+    opacity:.86;
+  }
+}
+
+@keyframes nova26Core{
+  0%,
+  100%{
+    transform:scale(.88);
+    opacity:.62;
+  }
+
+  50%{
+    transform:scale(1.08);
+    opacity:.95;
+  }
+}
+
+@keyframes nova26LivePulse{
+  0%,
+  100%{
+    transform:scale(.8);
+    opacity:.58;
+  }
+
+  50%{
+    transform:scale(1.25);
+    opacity:1;
+  }
+}
+
+@keyframes nova26FocusOrb{
+  0%,
+  100%{
+    transform:translate3d(0,0,0);
+  }
+
+  50%{
+    transform:translate3d(0,-2px,0);
+  }
+}
+
+/* NOVA 26.0 · VISUAL SYSTEM */
