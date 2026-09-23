@@ -10423,3 +10423,162 @@ body[data-theme="light"] .nova-search-command{
 }
 
 /* NOVA 25.0 · DEADLINE INTELLIGENCE CORE */
+
+
+/* =========================================================
+   NOVA 25.1 · DEADLINE RADAR + STUDY INTELLIGENCE
+   ========================================================= */
+
+.nova-dashboard-deadline-radar{
+  overflow:hidden!important;
+}
+
+.nova-dashboard-deadline-summary{
+  display:inline!important;
+  margin-left:7px!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  font-weight:600!important;
+  letter-spacing:0!important;
+}
+
+.nova-dashboard-deadline-radar-stats{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px!important;
+  margin:0 12px 10px!important;
+}
+
+.nova-dashboard-deadline-radar-stats>span{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:space-between!important;
+  gap:7px!important;
+  padding:8px 10px!important;
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+  background:var(--surface-2)!important;
+}
+
+.nova-dashboard-deadline-radar-stats b{
+  color:var(--text)!important;
+  font-size:13px!important;
+  font-weight:900!important;
+}
+
+.nova-dashboard-deadline-radar-stats small{
+  color:var(--muted)!important;
+  font-size:6px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+
+.nova-dashboard-deadline-radar-stats>span:first-child b{
+  color:#e06b6b!important;
+}
+
+.nova-dashboard-deadline-radar-row{
+  position:relative!important;
+}
+
+.nova-dashboard-deadline-radar-row.tone-overdue
+  .nova-command-deadline-status{
+  background:#e06b6b!important;
+  box-shadow:0 0 0 3px rgba(224,107,107,.08)!important;
+}
+
+.nova-dashboard-deadline-radar-row.tone-today
+  .nova-command-deadline-status,
+.nova-dashboard-deadline-radar-row.tone-soon
+  .nova-command-deadline-status{
+  background:var(--accent)!important;
+  box-shadow:0 0 0 3px rgba(24,183,255,.08)!important;
+}
+
+.nova-study-deadline-intel{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:10px!important;
+  margin:-2px 0 18px!important;
+  padding:12px 13px!important;
+  border:1px solid var(--line)!important;
+  border-radius:15px!important;
+  background:var(--surface-2)!important;
+}
+
+.nova-study-deadline-intel-icon{
+  display:grid!important;
+  place-items:center!important;
+  width:30px!important;
+  height:30px!important;
+  flex:0 0 auto!important;
+  border-radius:9px!important;
+  background:rgba(24,183,255,.08)!important;
+  color:var(--accent)!important;
+}
+
+.nova-study-deadline-intel.tone-overdue{
+  border-color:rgba(224,107,107,.16)!important;
+}
+
+.nova-study-deadline-intel.tone-overdue
+  .nova-study-deadline-intel-icon{
+  color:#e06b6b!important;
+  background:rgba(224,107,107,.08)!important;
+}
+
+.nova-study-deadline-intel>div{
+  min-width:0!important;
+}
+
+.nova-study-deadline-intel b,
+.nova-study-deadline-intel strong,
+.nova-study-deadline-intel small{
+  display:block!important;
+}
+
+.nova-study-deadline-intel b{
+  color:var(--muted)!important;
+  font-size:7px!important;
+  font-weight:900!important;
+  letter-spacing:.1em!important;
+  text-transform:uppercase!important;
+}
+
+.nova-study-deadline-intel strong{
+  margin-top:3px!important;
+  color:var(--text)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+}
+
+.nova-study-deadline-intel small{
+  margin-top:4px!important;
+  color:var(--muted)!important;
+  font-size:7px!important;
+  line-height:1.45!important;
+}
+
+.nova-study-deadline-intel.tone-overdue strong{
+  color:#e06b6b!important;
+}
+
+.nova-study-deadline-intel.tone-today strong,
+.nova-study-deadline-intel.tone-soon strong{
+  color:var(--accent)!important;
+}
+
+@media(max-width:680px){
+
+  .nova-dashboard-deadline-radar-stats{
+    grid-template-columns:1fr!important;
+  }
+
+  .nova-dashboard-deadline-summary{
+    display:block!important;
+    margin:3px 0 0!important;
+  }
+
+}
+
+/* NOVA 25.1 · DEADLINE RADAR + STUDY INTELLIGENCE */

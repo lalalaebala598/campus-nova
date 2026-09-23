@@ -2688,6 +2688,52 @@ function novaDeadlineStats(
   };
 }
 
+function novaDashboardDeadlineRadar(
+  items = novaDeadlineItems()
+){
+
+  const active =
+    items
+      .filter(
+        item =>
+          !item.completed
+      )
+      .slice()
+      .sort(
+        (a,b) =>
+          Number(b.priority || 0) -
+          Number(a.priority || 0)
+      );
+
+  const overdue =
+    active.filter(
+      item =>
+        item.bucket === 'overdue'
+    ).length;
+
+  const today =
+    active.filter(
+      item =>
+        item.bucket === 'today'
+    ).length;
+
+  const soon =
+    active.filter(
+      item =>
+        item.bucket === 'today' ||
+        item.bucket === 'soon'
+    ).length;
+
+  return {
+    items:active.slice(0,5),
+    active:active.length,
+    overdue,
+    today,
+    soon,
+    next:active[0] || null
+  };
+}
+
 function deadlinePage(){
 
   if(
@@ -5202,8 +5248,11 @@ function dashboard(){
   const nextAction =
     novaDashboardNextAction(tasks);
 
+  const deadlineRadar =
+    novaDashboardDeadlineRadar();
+
   const deadlineRows =
-    novaDashboardDeadlineRows(tasks,6);
+    deadlineRadar.items;
 
   const progressCourses =
     novaDashboardProgressCourses(courses,6);
@@ -5577,53 +5626,81 @@ function dashboard(){
   const deadlinesMarkup =
     deadlineRows.length
       ? deadlineRows.map(item => {
-          const info =
-            novaDashboardDeadlineInfo(
-              item.due
-            );
 
           return `
             <button
-              class="nova-command-deadline tone-${esc(info.tone)}"
+              class="
+                nova-command-deadline
+                nova-dashboard-deadline-radar-row
+                tone-${esc(item.bucket)}
+              "
               type="button"
-              data-activity="${activityRefAttr(item.task)}"
+              data-deadline-open="${esc(item.id)}"
             >
-              <span class="nova-command-deadline-status"></span>
 
-              <span class="nova-command-deadline-main">
+              <span
+                class="nova-command-deadline-status"
+              ></span>
+
+              <span
+                class="nova-command-deadline-main"
+              >
+
                 <b>
                   ${esc(
-                    item.task?.name ||
-                    'Задание'
+                    item.title ||
+                    'Учебная активность'
                   )}
                 </b>
 
                 <small>
                   ${esc(
-                    activityCourseName(item.task)
+                    item.course ||
+                    'Без курса'
                   )}
                 </small>
+
               </span>
 
-              <span class="nova-command-deadline-time">
-                ${esc(info.label)}
+              <span
+                class="nova-command-deadline-time"
+              >
+                ${esc(
+                  item.bucketLabel ||
+                  formatLong(item.due)
+                )}
               </span>
 
-              <span class="nova-command-deadline-arrow">
+              <span
+                class="nova-command-deadline-arrow"
+              >
                 ${icon('arrow',12)}
               </span>
+
             </button>
           `;
         }).join('')
       : `
           <div class="nova-command-empty compact">
-            <span>${icon('check',17)}</span>
+
+            <span>
+              ${icon('check',17)}
+            </span>
+
             <div>
-              <b>Дедлайнов не найдено</b>
-              <small>Сроки появятся здесь автоматически из учебных активностей.</small>
+              <b>
+                Дедлайнов не найдено
+              </b>
+
+              <small>
+                Nova проверяет задания,
+                тесты и сроки из календаря.
+              </small>
             </div>
+
           </div>
         `;
+
 
   const progressMarkup =
     progressCourses.length
@@ -5793,24 +5870,69 @@ function dashboard(){
             </div>
           </section>
 
-          <section class="nova-command-panel">
+          <section class="nova-command-panel nova-dashboard-deadline-radar">
+
             <div class="nova-command-panel-head">
+
               <div>
-                <span>СРОКИ</span>
-                <h2>Дедлайны</h2>
+
+                <span>
+                  DEADLINE RADAR
+                </span>
+
+                <h2>
+                  Дедлайны
+                  <small class="nova-dashboard-deadline-summary">
+                    ${
+                      deadlineRadar.active
+                    }
+                    активных
+                    ·
+                    ${
+                      deadlineRadar.today
+                    }
+                    сегодня
+                  </small>
+                </h2>
+
               </div>
+
               <button
                 class="panel-action"
                 type="button"
-                data-go="tasks"
+                data-go="deadlines"
               >
-                Все задания ${icon('arrow',13)}
+                Все дедлайны
+                ${icon('arrow',13)}
               </button>
+
+            </div>
+
+            <div
+              class="nova-dashboard-deadline-radar-stats"
+            >
+
+              <span>
+                <b>${deadlineRadar.overdue}</b>
+                <small>просрочено</small>
+              </span>
+
+              <span>
+                <b>${deadlineRadar.today}</b>
+                <small>24 часа</small>
+              </span>
+
+              <span>
+                <b>${deadlineRadar.soon}</b>
+                <small>3 дня</small>
+              </span>
+
             </div>
 
             <div class="nova-command-deadlines">
               ${deadlinesMarkup}
             </div>
+
           </section>
 
         </div>
@@ -16668,6 +16790,72 @@ function novaStudyFilteredCandidates(
   );
 }
 
+function novaStudyDeadlineContext(
+  candidate
+){
+
+  if(!candidate){
+    return null;
+  }
+
+  const deadlines =
+    typeof novaDeadlineItems === 'function'
+      ? novaDeadlineItems()
+      : [];
+
+  const ref =
+    candidate.ref || {};
+
+  const current =
+    deadlines.find(
+      item => {
+
+        const activity =
+          item.ref || {};
+
+        if(
+          Number(activity.courseId || 0) !==
+          Number(ref.courseId || 0)
+        ){
+          return false;
+        }
+
+        if(
+          Number(activity.cmid || 0) !==
+          Number(ref.cmid || 0)
+        ){
+          return false;
+        }
+
+        if(
+          Number(activity.instance || 0) !==
+          Number(ref.instance || 0)
+        ){
+          return false;
+        }
+
+        return String(
+          activity.type || ''
+        ) === String(
+          ref.type || ''
+        );
+      }
+    );
+
+  if(!current){
+    return null;
+  }
+
+  return {
+    due:current.due,
+    bucket:current.bucket,
+    bucketLabel:current.bucketLabel,
+    why:current.why,
+    priority:current.priority,
+    completed:current.completed
+  };
+}
+
 function novaStudyWhy(candidate){
   if(!candidate){
     return 'Nova пока не может определить следующий шаг.';
@@ -17109,6 +17297,11 @@ function studyPage(){
           label:'Срок не указан'
         };
 
+  const currentDeadlineContext =
+    novaStudyDeadlineContext(
+      current
+    );
+
   const currentType =
     novaStudyKindLabel(
       current?.kind
@@ -17473,6 +17666,49 @@ function studyPage(){
             </div>
 
           </div>
+
+          ${
+            currentDeadlineContext
+              ? `
+                <div
+                  class="
+                    nova-study-deadline-intel
+                    tone-${esc(
+                      currentDeadlineContext.bucket
+                    )}
+                  "
+                >
+
+                  <span
+                    class="nova-study-deadline-intel-icon"
+                  >
+                    ${icon('clock',15)}
+                  </span>
+
+                  <div>
+
+                    <b>
+                      Дедлайн
+                    </b>
+
+                    <strong>
+                      ${esc(
+                        currentDeadlineContext.bucketLabel
+                      )}
+                    </strong>
+
+                    <small>
+                      ${esc(
+                        currentDeadlineContext.why
+                      )}
+                    </small>
+
+                  </div>
+
+                </div>
+              `
+              : ''
+          }
 
 
           <div class="nova-study-focus-actions">
@@ -18992,6 +19228,19 @@ function bind(){
   }));
   $$('[data-back]').forEach(el=>el.addEventListener('click',()=>back(el.dataset.back||'dashboard')));
   $$('[data-retry]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.retry==='course'||el.dataset.retry==='notifications'||el.dataset.retry==='deadlines')return loadRouteData(true); if(el.dataset.retry==='activity')return loadActivity(true); loadData(el.dataset.retry,true)}));
+
+  $$('[data-deadline-open]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          novaDeadlineOpen(
+            el.dataset.deadlineOpen || ''
+          );
+        }
+      );
+    }
+  );
 
   $$('[data-deadline-filter]').forEach(
     el=>{
