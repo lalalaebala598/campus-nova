@@ -14805,3 +14805,67 @@ body.light .nova-ambient-field .nova-ambient-overlay {
     height: 38px !important;
   }
 }
+
+
+/* NOVA 26.3 · HERO POSITION HOTFIX
+   Restore the original out-of-flow focus card geometry.
+   The 26.3 depth layer must never affect hero layout flow.
+*/
+
+.nova-hero-focus {
+  position: absolute !important;
+  z-index: 4 !important;
+
+  right: 28px !important;
+  top: 50% !important;
+  bottom: auto !important;
+  left: auto !important;
+
+  transform: translateY(-50%) !important;
+
+  width: min(270px, 30%) !important;
+  max-width: 270px !important;
+
+  margin: 0 !important;
+  float: none !important;
+  clear: none !important;
+}
+
+.nova-hero-focus::before {
+  position: absolute !important;
+  inset: -1px !important;
+  pointer-events: none !important;
+}
+
+.nova-hero-content {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Keep ambient layers completely outside the hero layout flow. */
+.nova-ambient-field {
+  position: absolute !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 1100px) {
+  .nova-hero-focus {
+    right: 22px !important;
+    width: 255px !important;
+    max-width: 255px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .nova-hero-focus {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 20px !important;
+  }
+}
