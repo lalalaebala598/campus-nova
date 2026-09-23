@@ -14287,3 +14287,521 @@ body[data-theme="light"] .nova-file-download:hover{
 }
 
 /* NOVA 26.2 · FINAL VISUAL LOCK */
+
+
+/* NOVA 26.3 · DEEP VISUAL POLISH */
+
+/* =========================================================
+   26.3 ICON OPTICAL CENTERING
+   ---------------------------------------------------------
+   Геометрический центр SVG != оптический центр stroke/path.
+   Фиксим сам SVG, слот и baseline одновременно.
+   ========================================================= */
+
+.icon {
+  display: block !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  vertical-align: middle !important;
+  transform: translate3d(0, 0.45px, 0) !important;
+  transform-origin: center center !important;
+  transform-box: fill-box !important;
+  overflow: visible !important;
+  shape-rendering: geometricPrecision !important;
+  vector-effect: non-scaling-stroke;
+}
+
+.icon path,
+.icon circle,
+.icon rect,
+.icon line,
+.icon polyline,
+.icon polygon {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Главные иконки карточек */
+.nova-command-action-icon,
+.material-card-icon,
+.material-card-icon-core,
+.nova-file-icon,
+.nova-file-open,
+.nova-file-download {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  justify-self: center !important;
+  line-height: 0 !important;
+  text-align: center !important;
+}
+
+.nova-command-action-icon {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.material-card-icon {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.material-card-icon-core {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.nova-file-icon {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.nova-file-open {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.nova-file-download {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.nova-file-download .icon,
+.nova-file-open .icon,
+.nova-file-icon .icon,
+.material-card-icon-core .icon,
+.nova-command-action-icon .icon {
+  position: relative !important;
+  left: 0 !important;
+  top: 0.2px !important;
+}
+
+/* Sidebar + header */
+.sidebar .icon,
+.sidebar-nav .icon,
+.topbar .icon,
+.header .icon,
+.icon-btn .icon,
+.profile-menu .icon {
+  position: relative !important;
+  top: 0.35px !important;
+}
+
+/* SVG с короткой визуальной высотой */
+svg.icon[data-icon="arrow"],
+svg.icon[data-icon="chevron"],
+svg.icon[data-icon="search"],
+svg.icon[data-icon="clock"] {
+  transform: translate3d(0, 0.55px, 0) !important;
+}
+
+/* =========================================================
+   26.3 COMMAND ACTION
+   --------------------------------------------------------- */
+
+.nova-command-action {
+  grid-template-columns: 52px minmax(0, 1fr) 158px !important;
+  overflow: visible !important;
+}
+
+.nova-command-action-main {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.nova-command-action-side,
+.nova20-smart-action .nova-command-action-side {
+  width: 158px !important;
+  min-width: 158px !important;
+  max-width: 158px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+.nova-command-action-side > strong {
+  display: block !important;
+  width: 100% !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  line-height: 1.05 !important;
+}
+
+.nova20-action-label {
+  min-width: 142px !important;
+  width: 142px !important;
+  height: 34px !important;
+  padding: 0 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  line-height: 1 !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  text-align: center !important;
+}
+
+.nova20-action-label-text {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+.nova20-action-label .icon {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 13px !important;
+  transform: translate3d(0, 0.4px, 0) !important;
+}
+
+.nova20-smart-action {
+  overflow: visible !important;
+}
+
+/* На узких экранах не ломаем карточку */
+@media (max-width: 900px) {
+  .nova-command-action {
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+  }
+
+  .nova-command-action-side,
+  .nova20-smart-action .nova-command-action-side {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    grid-column: 2 !important;
+    align-items: flex-start !important;
+  }
+
+  .nova-command-action-side > strong {
+    text-align: left !important;
+  }
+
+  .nova20-action-label {
+    width: auto !important;
+    min-width: 0 !important;
+    padding-inline: 13px !important;
+  }
+}
+
+/* =========================================================
+   26.3 DEEP AMBIENT HERO
+   ========================================================= */
+
+.nova-ambient-field {
+  position: absolute !important;
+  inset: -16% !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(
+      58% 70% at 74% 42%,
+      rgba(40, 166, 255, 0.075),
+      transparent 62%
+    ),
+    radial-gradient(
+      48% 58% at 22% 78%,
+      rgba(15, 109, 255, 0.055),
+      transparent 70%
+    ),
+    transparent !important;
+}
+
+/* Дальний слой света */
+.nova-ambient-field::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -24% !important;
+  z-index: -3 !important;
+  background:
+    radial-gradient(
+      36% 42% at 70% 38%,
+      rgba(53, 188, 255, 0.24),
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 34% at 38% 74%,
+      rgba(24, 102, 255, 0.16),
+      transparent 74%
+    ),
+    radial-gradient(
+      24% 28% at 84% 76%,
+      rgba(0, 224, 194, 0.10),
+      transparent 78%
+    );
+  filter: blur(42px) saturate(112%);
+  opacity: 0.78;
+  transform: translate3d(0, 0, 0) scale(1.05);
+  animation: nova263Atmosphere 18s ease-in-out infinite alternate;
+}
+
+/* Передний слой: тонкая световая дымка */
+.nova-ambient-field::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -10% !important;
+  z-index: -2 !important;
+  background:
+    radial-gradient(
+      24% 54% at 76% 48%,
+      rgba(45, 182, 255, 0.11),
+      transparent 75%
+    ),
+    radial-gradient(
+      22% 35% at 30% 62%,
+      rgba(70, 132, 255, 0.07),
+      transparent 74%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(255,255,255,0.018) 34%,
+      transparent 52%,
+      rgba(49,182,255,0.035) 78%,
+      transparent 100%
+    );
+  filter: blur(18px);
+  transform-origin: center;
+  animation: nova263DepthDrift 22s ease-in-out infinite;
+}
+
+/* Используем старые живые ambient-элементы, но теперь как глубокий слой */
+.nova-ambient-field [class*="nova-aurora"] {
+  opacity: 0.34 !important;
+  filter: blur(34px) saturate(125%) !important;
+  mix-blend-mode: screen !important;
+}
+
+.nova-ambient-field [class*="nova-orbit"] {
+  opacity: 0.30 !important;
+  filter: blur(0.1px) !important;
+  transform-origin: center !important;
+}
+
+.nova-ambient-field [class*="nova-dot"] {
+  opacity: 0.55 !important;
+  filter: blur(0.15px) !important;
+}
+
+/* Трёхмерная дальняя сетка */
+.nova-ambient-field .nova-ambient-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  opacity: 0.52 !important;
+  background:
+    linear-gradient(
+      rgba(93, 184, 255, 0.028) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(93, 184, 255, 0.028) 1px,
+      transparent 1px
+    );
+  background-size: 84px 84px !important;
+  mask-image:
+    radial-gradient(
+      ellipse 70% 70% at 68% 55%,
+      #000 10%,
+      rgba(0,0,0,0.92) 38%,
+      transparent 82%
+    ) !important;
+  -webkit-mask-image:
+    radial-gradient(
+      ellipse 70% 70% at 68% 55%,
+      #000 10%,
+      rgba(0,0,0,0.92) 38%,
+      transparent 82%
+    ) !important;
+  transform:
+    perspective(900px)
+    rotateX(58deg)
+    scale(1.58)
+    translateY(22%) !important;
+  transform-origin: center center !important;
+  animation: nova263GridMove 24s linear infinite !important;
+}
+
+/* Ядро света около right-side focus */
+.nova-ambient-field [class*="glow-core"] {
+  opacity: 0.9 !important;
+  filter: blur(18px) saturate(125%) !important;
+  transform: scale(1.25) !important;
+  animation:
+    nova263CorePulse 7s ease-in-out infinite !important;
+}
+
+/* Тень и глубина у самой hero-карточки */
+.nova-hero-focus {
+  position: relative !important;
+  z-index: 4 !important;
+  box-shadow:
+    0 22px 65px rgba(0,0,0,0.30),
+    0 0 0 1px rgba(255,255,255,0.035) inset,
+    0 0 80px rgba(26,160,255,0.045) !important;
+}
+
+.nova-hero-focus::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -1px !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.045),
+      transparent 32%,
+      transparent 64%,
+      rgba(42,181,255,0.055)
+    );
+  opacity: 0.9;
+}
+
+/* Лёгкая глубина внутри hero */
+.nova-hero-content {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+@keyframes nova263Atmosphere {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(1.8%, 1.3%, 0) scale(1.095);
+  }
+  100% {
+    transform: translate3d(-0.8%, 2.2%, 0) scale(1.07);
+  }
+}
+
+@keyframes nova263DepthDrift {
+  0% {
+    transform: translate3d(-1%, 0, 0) scale(1.03);
+  }
+  50% {
+    transform: translate3d(1.6%, -1%, 0) scale(1.065);
+  }
+  100% {
+    transform: translate3d(-0.4%, 1.5%, 0) scale(1.045);
+  }
+}
+
+@keyframes nova263GridMove {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 84px 84px, -84px 84px;
+  }
+}
+
+@keyframes nova263CorePulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1.15);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.34);
+  }
+}
+
+/* LIGHT THEME */
+html[data-theme="light"] .nova-ambient-field,
+body.light .nova-ambient-field {
+  background:
+    radial-gradient(
+      58% 70% at 74% 42%,
+      rgba(30, 145, 245, 0.055),
+      transparent 62%
+    ),
+    radial-gradient(
+      48% 58% at 22% 78%,
+      rgba(72, 102, 220, 0.035),
+      transparent 70%
+    ) !important;
+}
+
+html[data-theme="light"] .nova-ambient-field::before,
+body.light .nova-ambient-field::before {
+  background:
+    radial-gradient(
+      36% 42% at 70% 38%,
+      rgba(48, 160, 245, 0.11),
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 34% at 38% 74%,
+      rgba(44, 92, 224, 0.07),
+      transparent 74%
+    ),
+    radial-gradient(
+      24% 28% at 84% 76%,
+      rgba(0, 182, 164, 0.055),
+      transparent 78%
+    ) !important;
+  opacity: 0.72 !important;
+}
+
+html[data-theme="light"] .nova-ambient-field::after,
+body.light .nova-ambient-field::after {
+  opacity: 0.78 !important;
+}
+
+html[data-theme="light"] .nova-ambient-field .nova-ambient-overlay,
+body.light .nova-ambient-field .nova-ambient-overlay {
+  opacity: 0.30 !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .nova-ambient-field::before,
+  .nova-ambient-field::after,
+  .nova-ambient-field .nova-ambient-overlay,
+  .nova-ambient-field [class*="glow-core"] {
+    animation: none !important;
+  }
+}
+
+/* FINAL MOBILE ICON SCALE */
+@media (max-width: 700px) {
+  .nova-command-action-icon {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .nova-file-download {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+  }
+
+  .nova-file-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+}
