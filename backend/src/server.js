@@ -1,5 +1,9 @@
+/* NOVA 28.4 · DASHBOARD CRITICAL PATH */
+/* NOVA 28.3 · DEFERRED GRAPH PREWARM */
+/* NOVA 28.0 · STATIC PERFORMANCE */
 import http from 'node:http';
 import fs from 'node:fs';
+import { createGzip } from 'node:zlib';
 import path from 'node:path';
 import url from 'node:url';
 import { fileURLToPath } from 'node:url';
@@ -482,51 +486,117 @@ function globalFiles(s, { force = false } = {}) {
 }
 
 async function dashboardData(s) {
+  /*
+   * NOVA 28.4
+   *
+   * Dashboard is on the critical navigation path.
+   * Do not walk every enrolled course here just to build tasks.
+   *
+   * The client already requests /api/tasks independently,
+   * where the shared Activity Graph provides the complete
+   * global task index.
+   *
+   * Keeping task aggregation out of this endpoint removes a
+   * large amount of Campus work from the first dashboard load.
+   */
+
   const now = new Date();
+
   const jobs = {
-    courses: () => sessionFlight(s, 'courses', () => s.campus.getAdapter().listCourses()),
-    calendar: () => sessionFlight(s, `calendar:${now.getFullYear()}:${now.getMonth()+1}:${now.getDate()}`, () => s.campus.calendar({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() })),
-    grades: () => sessionFlight(s, 'grades-overview', () => s.campus.getAdapter().loadGrades()),
+    courses: () =>
+      sessionFlight(
+        s,
+        'courses',
+        () => s.campus.getAdapter().listCourses()
+      ),
+
+    calendar: () =>
+      sessionFlight(
+        s,
+        `calendar:${now.getFullYear()}:${now.getMonth()+1}:${now.getDate()}`,
+        () =>
+          s.campus.calendar({
+            year: now.getFullYear(),
+            month: now.getMonth() + 1,
+            day: now.getDate()
+          })
+      ),
+
+    grades: () =>
+      sessionFlight(
+        s,
+        'grades-overview',
+        () => s.campus.getAdapter().loadGrades()
+      )
   };
-  const entries = await Promise.all(Object.entries(jobs).map(async ([key, fn]) => {
-    try { return [key, { ok: true, value: await fn() }]; }
-    catch (e) { if (isAuthError(e)) throw e; return [key, { ok: false, error: e?.message || 'Не удалось загрузить блок.' }]; }
-  }));
-  const blocks = Object.fromEntries(entries);
-  const courses = blocks.courses.ok ? blocks.courses.value : null;
-  let tasks = null;
-  if (Array.isArray(courses)) {
-    try {
-      /*
-       * Dashboard tasks must include every enrolled course.
-       * Keep concurrency limited so a large course list does not
-       * create a burst of Campus requests.
-       */
-      const courseData =
-        (await mapLimit(
-          courses,
-          4,
-          c => s.campus.course(c.id)
-        )).filter(Boolean);
-      tasks = [];
-      for (const c of courseData) for (const sec of c.sections || []) for (const a of sec.activities || []) if (['assign', 'quiz'].includes(a.type)) {
-        const due = (a.dates || []).find(x => /срок|due|deadline/i.test(x.label || ''));
-        tasks.push({ id: a.id, courseId: c.id, course: c.title, name: a.name, type: a.type, url: a.url, due: due?.timestamp || null });
-      }
-      const events = flattenCalendar(blocks.calendar.ok ? blocks.calendar.value : null);
-      for (const e of events) for (const t of tasks) if (!t.due && t.courseId === Number(e.course?.id) && (e.modulename === t.type || t.type === 'assign')) { t.due = e.timestart; break; }
-      tasks.sort((a,b) => Number(a.due || 9e18) - Number(b.due || 9e18));
-      blocks.tasks = { ok: true, value: tasks };
-    } catch (e) { blocks.tasks = { ok: false, error: e?.message || 'Не удалось загрузить задания.' }; }
-  } else {
-    blocks.tasks = { ok: false, error: 'Задания зависят от списка курсов.' };
-  }
+
+  const entries =
+    await Promise.all(
+      Object.entries(jobs).map(
+        async ([key, fn]) => {
+          try {
+            return [
+              key,
+              {
+                ok: true,
+                value: await fn()
+              }
+            ];
+          } catch (e) {
+            if (isAuthError(e)) {
+              throw e;
+            }
+
+            return [
+              key,
+              {
+                ok: false,
+                error:
+                  e?.message ||
+                  'Не удалось загрузить блок.'
+              }
+            ];
+          }
+        }
+      )
+    );
+
+  const blocks =
+    Object.fromEntries(entries);
+
   return {
-    courses: blocks.courses.ok ? blocks.courses.value : [],
-    calendar: blocks.calendar.ok ? blocks.calendar.value : {},
-    grades: blocks.grades.ok ? blocks.grades.value : [],
-    tasks: blocks.tasks.ok ? blocks.tasks.value : [],
-    errors: Object.fromEntries(Object.entries(blocks).filter(([,v]) => !v.ok).map(([k,v]) => [k, v.error]))
+    courses:
+      blocks.courses.ok
+        ? blocks.courses.value
+        : [],
+
+    calendar:
+      blocks.calendar.ok
+        ? blocks.calendar.value
+        : {},
+
+    grades:
+      blocks.grades.ok
+        ? blocks.grades.value
+        : [],
+
+    /*
+     * Tasks are intentionally empty here.
+     * /api/tasks is the authoritative global task loader.
+     */
+    tasks: [],
+
+    errors:
+      Object.fromEntries(
+        Object.entries(blocks)
+          .filter(([, value]) => !value.ok)
+          .map(
+            ([key, value]) => [
+              key,
+              value.error
+            ]
+          )
+      )
   };
 }
 
@@ -610,16 +680,22 @@ async function api(req, res, route, q) {
         () => s.campus.getAdapter().listCourses()
       );
 
-      // Start warming the course/activity graph without blocking
-      // the response. Opening a course or the tasks/tests section
-      // can then reuse data that is already being fetched.
-      void ensureActivityGraph(s)
-        .catch(error => {
-          console.debug(
-            '[Nova][Prewarm]',
-            String(error?.message || error)
-          );
-        });
+      /*
+       * Do not compete with the user's first navigation.
+       *
+       * The course list is the critical response here.
+       * Activity graph warming is deliberately deferred so
+       * the next click gets the connection/CPU budget first.
+       */
+      setTimeout(() => {
+        void ensureActivityGraph(s)
+          .catch(error => {
+            console.debug(
+              '[Nova][Prewarm]',
+              String(error?.message || error)
+            );
+          });
+      }, 1200);
 
       return json(res, 200, {
         ok: true,
@@ -912,16 +988,136 @@ async function api(req, res, route, q) {
 }
 
 const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2'};
-function staticFile(res,p){ const rel=p==='/'?'/index.html':p; const file=path.normalize(path.join(FRONTEND,rel)); const rootPrefix=FRONTEND.endsWith(path.sep)?FRONTEND:FRONTEND+path.sep; if(file!==FRONTEND&&!file.startsWith(rootPrefix))return false; if(!fs.existsSync(file)||fs.statSync(file).isDirectory())return false; res.writeHead(200,{'content-type':MIME[path.extname(file).toLowerCase()]||'application/octet-stream','cache-control':'no-cache'}); fs.createReadStream(file).pipe(res); return true; }
+function staticFile(res,p,req=null){
+  const rel=p==='/'?'/index.html':p;
+
+  const file=path.normalize(
+    path.join(FRONTEND,rel)
+  );
+
+  const rootPrefix=
+    FRONTEND.endsWith(path.sep)
+      ? FRONTEND
+      : FRONTEND+path.sep;
+
+  if(
+    file!==FRONTEND &&
+    !file.startsWith(rootPrefix)
+  ){
+    return false;
+  }
+
+  if(
+    !fs.existsSync(file) ||
+    fs.statSync(file).isDirectory()
+  ){
+    return false;
+  }
+
+  const stat=fs.statSync(file);
+  const ext=path.extname(file).toLowerCase();
+
+  const type=
+    MIME[ext] ||
+    'application/octet-stream';
+
+  const versioned=
+    /(?:[?&])v=/.test(
+      req?.url || ''
+    );
+
+  const etag=
+    `W/"${stat.size.toString(16)}-${Math.trunc(stat.mtimeMs).toString(16)}"`;
+
+  const cacheControl=
+    ext==='.html'
+      ? 'no-cache'
+      : versioned
+        ? 'public,max-age=31536000,immutable'
+        : 'public,max-age=3600';
+
+  if(
+    req?.headers?.['if-none-match']===
+    etag
+  ){
+    res.writeHead(
+      304,
+      {
+        etag,
+        'cache-control':cacheControl,
+        vary:'Accept-Encoding'
+      }
+    );
+
+    res.end();
+    return true;
+  }
+
+  const headers={
+    'content-type':type,
+    'cache-control':cacheControl,
+    etag,
+    'last-modified':stat.mtime.toUTCString(),
+    vary:'Accept-Encoding',
+    'x-content-type-options':'nosniff'
+  };
+
+  const compressible=
+    /^(?:text\/|application\/(?:javascript|json|xml)|image\/svg\+xml)/i
+      .test(type);
+
+  const acceptsGzip=
+    /(?:^|,|;)\s*gzip\s*(?:;|,|$)/i.test(
+      req?.headers?.['accept-encoding'] || ''
+    );
+
+  if(
+    compressible &&
+    acceptsGzip &&
+    stat.size>=1024
+  ){
+    headers['content-encoding']='gzip';
+
+    res.writeHead(
+      200,
+      headers
+    );
+
+    return fs
+      .createReadStream(file)
+      .pipe(
+        createGzip({
+          level:6
+        })
+      )
+      .pipe(res);
+  }
+
+  headers['content-length']=stat.size;
+
+  res.writeHead(
+    200,
+    headers
+  );
+
+  fs
+    .createReadStream(file)
+    .pipe(res);
+
+  return true;
+}
 
 const server=http.createServer(async(req,res)=>{
   try{
     const parsed=url.parse(req.url||'/',true); const route=parsed.pathname||'/'; const q=new URLSearchParams(parsed.query);
     if(route.startsWith('/api/')||route==='/campus'||route.startsWith('/campus/')) return api(req,res,route,q);
-    if(req.method==='GET'&&staticFile(res,route)) return;
+    if(req.method==='GET'&&staticFile(res,route,req)) return;
     if(req.method==='GET'){ const index=path.join(FRONTEND,'index.html'); const body=fs.readFileSync(index,'utf8'); return html(res,200,body); }
     return html(res,405,'<h1>Method Not Allowed</h1>');
   }catch(e){ console.error(e); json(res,500,{ok:false,error:e.message||'Server error'}); }
 });
 setInterval(()=>{const cut=Date.now()-TTL; for(const[id,s]of sessions) if(s.lastSeen<cut) sessions.delete(id);},60000).unref();
+server.keepAliveTimeout=65_000;
+server.headersTimeout=70_000;
+
 server.listen(PORT,HOST,()=>console.log(`Campus Nova ${APP_VERSION} running on http://${HOST}:${PORT}`));

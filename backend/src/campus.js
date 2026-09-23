@@ -1,3 +1,4 @@
+// NOVA 28.5 · SERVER MICRO CACHE
 import crypto from 'node:crypto';
 import { SessionManager } from './session-manager.js';
 import { ContractRegistry } from './contract-registry.js';
@@ -1258,16 +1259,75 @@ export class CampusSession {
     catch (e) { if (e?.code === 'AUTH_EXPIRED') throw e; return false; }
   }
   async profilePage() {
-    if (!this.userid) return this.user;
-    return this._singleFlight('profile', async () => {
-      if (!this.sesskey && this.token) return { ...this.user, page: null, description: '' };
+    if (!this.userid) {
+      return this.user;
+    }
+
+    const cached = this.cacheGet(
+      'profile-data',
+      60000
+    );
+
+    if (cached !== null) {
+      return cached;
+    }
+
+    return this._singleFlight(
+      'profile',
+      async () => {
+        const again = this.cacheGet(
+          'profile-data',
+          60000
+        );
+
+        if (again !== null) {
+          return again;
+        }
+      if (!this.sesskey && this.token) {
+        return this.cacheSet(
+          'profile-data',
+          {
+            ...this.user,
+            page: null,
+            description: ''
+          }
+        );
+      }
       try {
         const r = await this.get(`/user/profile.php?id=${this.userid}`); const html = await r.text();
         if (isLoginHtml(html)) throw authExpired();
         const full = parseUser(html, this.userid);
-        return { ...full, description: textOnly(html.match(/<div[^>]*class=["'][^"']*description[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || ''), page: parsePage(html, `/user/profile.php?id=${this.userid}`) };
+        return this.cacheSet(
+          'profile-data',
+          {
+            ...full,
+            description:
+              textOnly(
+                html.match(
+                  /<div[^>]*class=["'][^"']*description[^"']*["'][^>]*>([\s\S]*?)<\/div>/i
+                )?.[1] || ''
+              ),
+            page: parsePage(
+              html,
+              `/user/profile.php?id=${this.userid}`
+            )
+          }
+        );
       } catch (e) {
-        if (e?.code === 'AUTH_EXPIRED' && this.token && this.user) return { ...this.user, page: null, description: '' };
+        if (
+          e?.code === 'AUTH_EXPIRED' &&
+          this.token &&
+          this.user
+        ) {
+          return this.cacheSet(
+            'profile-data',
+            {
+              ...this.user,
+              page: null,
+              description: ''
+            }
+          );
+        }
         throw e;
       }
     });
@@ -1415,13 +1475,35 @@ export class CampusSession {
     });
   }
   async gradesOverview() {
+    const cached = this.cacheGet(
+      'grades-overview-data',
+      20000
+    );
+
+    if (cached !== null) {
+      return cached;
+    }
+
     return this._singleFlight('grades-overview', async () => {
+      const again = this.cacheGet(
+        'grades-overview-data',
+        20000
+      );
+
+      if (again !== null) {
+        return again;
+      }
       let pageError = null;
       try {
         const p = await this.page('/grade/report/overview/index.php');
         if (p.status >= 400) throw new Error(`Campus вернул ${p.status} для оценок.`);
         const rows = parseGradeOverview(p.text);
-        if (rows.length || !this.token) return rows;
+        if (rows.length || !this.token) {
+          return this.cacheSet(
+            'grades-overview-data',
+            rows
+          );
+        }
       } catch (e) {
         pageError = e;
         if (e?.code === 'AUTH_EXPIRED' && !this.token) throw e;
@@ -1430,27 +1512,74 @@ export class CampusSession {
         try {
           const data = await this.rest('gradereport_overview_get_course_grades', { userid: Number(this.userid) });
           const rows = normalizeRestCourseGrades(data);
-          if (rows.length || data) return rows;
+          if (rows.length || data) {
+            return this.cacheSet(
+              'grades-overview-data',
+              rows
+            );
+          }
         } catch (e) { pageError = pageError || e; }
       }
       throw pageError || new Error('Campus не вернул оценки.');
     });
   }
   async gradesByCourse(id) {
-    const courseId = Number(id); if (!Number.isInteger(courseId) || courseId <= 0) throw new Error('Некорректный курс для отчёта.');
-    return this._singleFlight(`grades:${courseId}`, async () => {
+    const courseId = Number(id);
+
+    if (!Number.isInteger(courseId) || courseId <= 0) {
+      throw new Error(
+        'Некорректный курс для отчёта.'
+      );
+    }
+
+    const cacheKey =
+      `grades-data:${courseId}`;
+
+    const cached = this.cacheGet(
+      cacheKey,
+      20000
+    );
+
+    if (cached !== null) {
+      return cached;
+    }
+
+    return this._singleFlight(
+      `grades:${courseId}`,
+      async () => {
+        const again = this.cacheGet(
+          cacheKey,
+          20000
+        );
+
+        if (again !== null) {
+          return again;
+        }
       let pageError = null;
       try {
         const p = await this.page(`/grade/report/user/index.php?id=${encodeURIComponent(courseId)}`);
         if (p.status >= 400) throw new Error(`Campus вернул ${p.status} для отчёта.`);
         const rows = parseUserGrades(p.text);
-        if (rows.length || !this.token) return rows;
+
+        if (rows.length || !this.token) {
+          return this.cacheSet(
+            cacheKey,
+            rows
+          );
+        }
       } catch (e) { pageError = e; if (e?.code === 'AUTH_EXPIRED' && !this.token) throw e; }
       if (this.token) {
         try {
           const data = await this.rest('gradereport_user_get_grade_items', { courseid: courseId, userid: Number(this.userid), groupid: 0 });
-          const rows = normalizeRestGradeItems(data);
-          if (rows.length || data) return rows;
+          const rows =
+            normalizeRestGradeItems(data);
+
+          if (rows.length || data) {
+            return this.cacheSet(
+              cacheKey,
+              rows
+            );
+          }
         } catch (e) { pageError = pageError || e; }
       }
       throw pageError || new Error('Campus не вернул оценки по курсу.');

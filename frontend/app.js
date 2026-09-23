@@ -1,4 +1,6 @@
-// NOVA 27.4 cache bust: spa-anchor-navigation-20260923-4
+// NOVA 28.2 · ACTIVITY INSTANT CACHE
+// NOVA 28.1 · COURSE INSTANT CACHE
+// NOVA 28.0 · INSTANT DATA CACHE\n// NOVA 27.4 cache bust: spa-anchor-navigation-20260923-4
 // NOVA 27.0 cache bust: nova27-messages-20260923-4
 const state = {
   connected: false,
@@ -13,6 +15,9 @@ const state = {
   month: new Date().getMonth() + 1,
   selectedDay: new Date().getDate(),
   data: { dashboard: null, courses: null, tasks: null, grades: null, schedule: null, calendar: null, messages: null, files: null, tests: null, materials: null, profile: null, view: null, activity: null, study: null, notifications: null, deadlines: null },
+  dataUpdatedAt: {},
+  courseCache: new Map(),
+
   status: { dashboard:'idle', search:'idle', courses:'idle', course:'idle', tasks:'idle', grades:'idle', schedule:'idle', calendar:'idle', messages:'idle', files:'idle', tests:'idle', materials:'idle', profile:'idle', view:'idle', activity:'idle', study:'idle', notifications:'idle', deadlines:'idle' },
   errors: {},
   selectedConversation: null,
@@ -151,6 +156,9 @@ function expireLocalSession(){
   Object.assign(state,{connected:false,user:null,demo:false});
   state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null,study:null,notifications:null,deadlines:null};
   state.requests={};
+  state.dataUpdatedAt={};
+  state.courseCache.clear();
+  state.pageCache.clear();
   render();
 }
 async function api(path,options={}){
@@ -208,7 +216,19 @@ function navigate(route,param='',replace=false){
   const target=route==='view'?`/content?path=${encodeURIComponent(param)}`:route==='course'?`/course/${encodeURIComponent(param)}`:route==='activity'?`/activity/${encodeURIComponent(param)}`:`/${route==='dashboard'?'':route}`;
   const path=target==='/'?'/':target; const method=replace?'replaceState':'pushState'; history[method]({nova:true,route,param},'',path); state.routeEpoch++; parseRoute(); window.scrollTo({top:0,behavior:'smooth'});
   const loadingRoute={dashboard:'dashboard',study:'study',courses:'courses',course:'course',schedule:'schedule',grades:'grades',tasks:'tasks',calendar:'calendar',messages:'messages',files:'files',materials:'materials',tests:'tests',activity:'activity',profile:'profile',notifications:'notifications',view:null}[state.route];
-  if(loadingRoute && !state.demo) state.status[loadingRoute]='loading';
+  if(
+    loadingRoute &&
+    !state.demo
+  ){
+    if(
+      novaHasData(loadingRoute)
+    ){
+      state.status[loadingRoute]='success';
+    }else{
+      state.status[loadingRoute]='loading';
+    }
+  }
+
   render(true);
   loadRouteData();
 }
@@ -20024,7 +20044,8 @@ $$('[data-search-filter]').forEach(
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
 }
-async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
+async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.dataUpdatedAt={};state.courseCache.clear();state.pageCache.clear();state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};
+state.activityCache?.clear();state.activityCache=new Map();toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
 function confirmNovaLogout(){
   if(document.querySelector('#nova-logout-modal')) return;
 
@@ -20071,37 +20092,221 @@ function confirmNovaLogout(){
 
 async function logout(){await api('/api/auth/logout',{method:'POST'}).catch(()=>{});Object.assign(state,{connected:false,user:null,demo:false});render();history.replaceState({},'', '/');toast('Campus отключён')}
 async function loadDemo(){const d=await api('/api/demo/snapshot');state.demo=true;state.connected=true;state.user={fullname:'Никита'};localStorage.removeItem('nova-demo');state.data.courses=d.courses||[];state.data.calendar={weeks:[],...d.calendar};state.data.grades=(d.grades||[]).flatMap(x=>x.items||[]).map(i=>({name:i.name,grade:i.grade,percentage:i.percentage,range:i.range}));state.data.tasks=[];state.data.messages={conversations:[]};state.data.view=null;state.status.view='idle';state.status.dashboard='success';state.status.courses='success';state.status.calendar='success';state.status.grades='success';state.status.tasks='success';state.status.messages='success';state.status.files='success';state.status.tests='success';state.data.files=[];state.data.tests=[];navigate('dashboard','',true)}
-async function loadData(service,force=false,epoch=state.routeEpoch){
-  if(!service || (epoch!==state.routeEpoch && state.route!==service)) return;
-  const seq=(state.requests[service]||0)+1; state.requests[service]=seq;
-  state.status[service]='loading';state.errors[service]=null;render();
-  try{
-    let d;
-    if(service==='dashboard')d=await api('/api/dashboard');
-    else if(service==='courses')d=await api('/api/courses');
-    else if(service==='tasks')d=await api('/api/tasks');
-    else if(service==='grades')d=await api('/api/grades');
-    else if(service==='calendar'||service==='schedule')d=await api(`/api/calendar?year=${state.year}&month=${state.month}&day=${state.selectedDay}`);
-    else if(service==='messages')d=await api('/api/messages');
-    else if(service==='files')d=await api('/api/files');
-    else if(service==='tests')d=await api('/api/tests');
-    else if(service==='materials')d=await api('/api/materials');
-    else if(service==='profile')d=await api('/api/profile');
-    else return;
-    if(epoch!==state.routeEpoch || state.requests[service]!==seq) return;
-    if(service==='dashboard'){state.data.dashboard=d.data||d;state.data.courses=(d.data||d).courses||[];state.data.tasks=(d.data||d).tasks||[];state.data.grades=(d.data||d).grades||[];state.data.calendar=(d.data||d).calendar||{};}
-    else if(service==='courses')state.data.courses=d.courses||[];
-    else if(service==='grades')state.data.grades=d.courses||d.items||[];
-    else if(service==='calendar'||service==='schedule'){state.data.calendar=d.calendar||{};state.data.schedule=d.calendar||{};}
-    else state.data[service]=d[service]||d.profile||d;
-    state.status[service]='success';render();
-    if(service==='messages'&&state.selectedConversation&&state.route==='messages') openConversation(state.selectedConversation);
-  }catch(e){
-    if(state.requests[service]!==seq) return;
-    if(!state.connected) return;
-    state.errors[service]=e.message;state.status[service]='error';render();
+const NOVA_CLIENT_DATA_TTL=20000;
+
+const NOVA_COURSE_CACHE_TTL=120000;
+
+function novaCourseCacheEntry(id){
+  state.courseCache ||= new Map();
+  const key=String(id||'');
+  if(!key)return null;
+  return state.courseCache.get(key)||null;
+}
+
+const NOVA_ACTIVITY_CACHE_TTL=120000;
+
+function novaActivityCacheKey(){
+  return String(state.param||'');
+}
+
+function novaActivityCacheEntry(){
+  state.activityCache ||= new Map();
+
+  const key=novaActivityCacheKey();
+
+  if(!key){
+    return null;
+  }
+
+  return state.activityCache.get(key)||null;
+}
+
+function novaActivityCacheDelete(){
+  state.activityCache ||= new Map();
+
+  const key=novaActivityCacheKey();
+
+  if(key){
+    state.activityCache.delete(key);
   }
 }
+
+
+
+
+
+function novaHasData(service){
+  const value=state.data?.[service];
+  return value!==null && value!==undefined;
+}
+
+function novaDataIsFresh(service){
+  if(!novaHasData(service)){
+    return false;
+  }
+
+  const updatedAt=
+    Number(
+      state.dataUpdatedAt?.[service]||0
+    );
+
+  return updatedAt>0 &&
+    Date.now()-updatedAt<NOVA_CLIENT_DATA_TTL;
+}
+
+async function loadData(service,force=false,epoch=state.routeEpoch){
+  if(
+    !service ||
+    (epoch!==state.routeEpoch &&
+     state.route!==service)
+  ){
+    return;
+  }
+
+  const hasData=
+    novaHasData(service);
+
+  if(
+    !force &&
+    novaDataIsFresh(service)
+  ){
+    state.status[service]='success';
+    state.errors[service]=null;
+    return;
+  }
+
+  const background=
+    hasData &&
+    !force;
+
+  const seq=
+    (state.requests[service]||0)+1;
+
+  state.requests[service]=seq;
+  state.errors[service]=null;
+
+  if(background){
+    /*
+     * Не убираем уже показанные данные.
+     * Campus обновляется в фоне.
+     */
+    state.status[service]='success';
+  }else{
+    state.status[service]='loading';
+    render();
+  }
+
+  try{
+    let d;
+
+    if(service==='dashboard'){
+      d=await api('/api/dashboard');
+    }else if(service==='courses'){
+      d=await api('/api/courses');
+    }else if(service==='tasks'){
+      d=await api('/api/tasks');
+    }else if(service==='grades'){
+      d=await api('/api/grades');
+    }else if(
+      service==='calendar' ||
+      service==='schedule'
+    ){
+      d=await api(
+        `/api/calendar?year=${state.year}&month=${state.month}&day=${state.selectedDay}`
+      );
+    }else if(service==='messages'){
+      d=await api('/api/messages');
+    }else if(service==='files'){
+      d=await api('/api/files');
+    }else if(service==='tests'){
+      d=await api('/api/tests');
+    }else if(service==='materials'){
+      d=await api('/api/materials');
+    }else if(service==='profile'){
+      d=await api('/api/profile');
+    }else{
+      return;
+    }
+
+    if(
+      state.requests[service]!==seq
+    ){
+      return;
+    }
+
+    if(service==='dashboard'){
+      state.data.dashboard=d.data||d;
+      state.data.courses=(d.data||d).courses||[];
+      state.data.tasks=(d.data||d).tasks||[];
+      state.data.grades=(d.data||d).grades||[];
+      state.data.calendar=(d.data||d).calendar||{};
+    }else if(service==='courses'){
+      state.data.courses=d.courses||[];
+    }else if(service==='grades'){
+      state.data.grades=d.courses||d.items||[];
+    }else if(
+      service==='calendar' ||
+      service==='schedule'
+    ){
+      state.data.calendar=d.calendar||{};
+      state.data.schedule=d.calendar||{};
+    }else{
+      state.data[service]=
+        d[service]||
+        d.profile||
+        d;
+    }
+
+    state.dataUpdatedAt[service]=
+      Date.now();
+
+    state.status[service]='success';
+
+    /*
+     * Перерисовываем только текущий маршрут.
+     * Кэш обновляется и после ухода со страницы.
+     */
+    if(epoch===state.routeEpoch){
+      render();
+
+      if(
+        service==='messages' &&
+        state.selectedConversation &&
+        state.route==='messages'
+      ){
+        openConversation(
+          state.selectedConversation
+        );
+      }
+    }
+
+  }catch(e){
+    if(
+      state.requests[service]!==seq ||
+      !state.connected
+    ){
+      return;
+    }
+
+    /*
+     * Ошибка фонового refresh не превращает
+     * рабочую страницу обратно в skeleton.
+     */
+    if(background){
+      console.debug(
+        '[Nova][CacheRefresh]',
+        service,
+        e?.message||e
+      );
+      return;
+    }
+
+    state.errors[service]=e.message;
+    state.status[service]='error';
+    render();
+  }
+}
+
 async function loadDashboard(epoch=state.routeEpoch){
   if(!state.connected||epoch!==state.routeEpoch||state.route!=='dashboard')return;
 
@@ -20162,9 +20367,129 @@ async function loadRouteData(force=false,epoch=state.routeEpoch){
   if(r==='view')return loadView(force,epoch);
 }
 async function loadCourse(force=false,epoch=state.routeEpoch){
-  const id=state.param;if(!id)return;const seq=(state.requests.course||0)+1;state.requests.course=seq;state.status.course='loading';state.errors.course=null;render();
-  try{const params=new URLSearchParams({id:String(id)});if(force)params.set('refresh','1');const d=await api(`/api/course?${params.toString()}`);if(epoch!==state.routeEpoch||state.route!=='course'||state.param!==id||state.requests.course!==seq)return;state.data.course=d.course;state.status.course='success';render()}
-  catch(e){if(state.requests.course!==seq||!state.connected)return;if(epoch!==state.routeEpoch||state.route!=='course'||state.param!==id)return;state.status.course='error';state.errors.course=e.message;render()}
+  const id=state.param;
+
+  if(!id){
+    return;
+  }
+
+  state.courseCache ||= new Map();
+
+  const key=String(id);
+  const seq=(state.requests.course||0)+1;
+
+  state.requests.course=seq;
+  state.errors.course=null;
+
+  const cached=
+    !force
+      ? novaCourseCacheEntry(id)
+      : null;
+
+  /*
+   * Уже открывавшийся курс показываем мгновенно.
+   */
+  if(cached?.data){
+    state.data.course=cached.data;
+    state.status.course='success';
+    render();
+
+    /*
+     * Свежий кэш вообще не требует запроса.
+     */
+    if(
+      Date.now()-Number(cached.t||0)
+      < NOVA_COURSE_CACHE_TTL
+    ){
+      return;
+    }
+  }else{
+    state.status.course='loading';
+    render();
+  }
+
+  try{
+    const params=
+      new URLSearchParams({
+        id:key
+      });
+
+    if(force){
+      params.set(
+        'refresh',
+        '1'
+      );
+    }
+
+    const d=
+      await api(
+        `/api/course?${params.toString()}`
+      );
+
+    if(
+      epoch!==state.routeEpoch ||
+      state.route!=='course' ||
+      state.param!==id ||
+      state.requests.course!==seq
+    ){
+      return;
+    }
+
+    const course=d?.course||null;
+
+    if(!course){
+      throw new Error(
+        'Campus не вернул данные курса.'
+      );
+    }
+
+    state.courseCache.set(
+      key,
+      {
+        data:course,
+        t:Date.now()
+      }
+    );
+
+    state.data.course=course;
+    state.status.course='success';
+    state.errors.course=null;
+
+    render();
+
+  }catch(e){
+    if(
+      state.requests.course!==seq ||
+      !state.connected
+    ){
+      return;
+    }
+
+    if(
+      epoch!==state.routeEpoch ||
+      state.route!=='course' ||
+      state.param!==id
+    ){
+      return;
+    }
+
+    /*
+     * Ошибка фонового обновления не убивает
+     * уже отображённый курс.
+     */
+    if(cached?.data){
+      console.debug(
+        '[Nova][CourseCacheRefresh]',
+        id,
+        e?.message||e
+      );
+      return;
+    }
+
+    state.status.course='error';
+    state.errors.course=e.message;
+    render();
+  }
 }
 
 function encodeActivityRef(ref){return btoa(JSON.stringify(ref)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
@@ -20175,16 +20500,141 @@ async function loadActivity(
   epoch=state.routeEpoch,
   throwOnError=false
 ){
-  const seq=(state.requests.activity||0)+1;state.requests.activity=seq;state.status.activity='loading';state.errors.activity=null;state.data.activity=null;render();
-  try{const ref=decodeActivityRef(state.param);const q=new URLSearchParams(ref);q.set('action','open');if(force)q.set('refresh','1');const d=await api(`/api/activity?${q}`);if(epoch!==state.routeEpoch||state.requests.activity!==seq||state.route!=='activity')return;if(d.fallback){state.data.activity=d;state.status.activity='success';render();$('#open-activity-fallback')?.addEventListener('click',()=>openCampusPath(d.fallback.url));return;}state.data.activity=d;state.status.activity='success';render();bindCampusContent();}
-  catch(e){
-    if(state.requests.activity!==seq||!state.connected){
+  const key=novaActivityCacheKey();
+  const seq=(state.requests.activity||0)+1;
+
+  state.requests.activity=seq;
+  state.errors.activity=null;
+
+  state.activityCache ||= new Map();
+
+  const cached=
+    !force && key
+      ? state.activityCache.get(key)
+      : null;
+
+  /*
+   * Уже открывавшуюся активность показываем сразу.
+   */
+  if(cached?.data){
+    state.data.activity=cached.data;
+    state.status.activity='success';
+    render();
+
+    /*
+     * Свежий кэш полностью снимает повторный запрос.
+     */
+    if(
+      Date.now()-Number(cached.t||0)
+      < NOVA_ACTIVITY_CACHE_TTL
+    ){
+      bindCampusContent();
+      return;
+    }
+  }else{
+    state.status.activity='loading';
+    state.data.activity=null;
+    render();
+  }
+
+  try{
+    const ref=decodeActivityRef(state.param);
+    const q=new URLSearchParams(ref);
+
+    q.set(
+      'action',
+      'open'
+    );
+
+    if(force){
+      q.set(
+        'refresh',
+        '1'
+      );
+    }
+
+    const d=
+      await api(
+        `/api/activity?${q}`
+      );
+
+    if(
+      epoch!==state.routeEpoch ||
+      state.requests.activity!==seq ||
+      state.route!=='activity'
+    ){
+      return;
+    }
+
+    /*
+     * Fallback тоже можно кэшировать,
+     * поскольку он относится к конкретной ref.
+     */
+    if(d.fallback){
+      state.data.activity=d;
+      state.activityCache.set(
+        key,
+        {
+          data:d,
+          t:Date.now()
+        }
+      );
+      state.status.activity='success';
+      render();
+
+      $('#open-activity-fallback')
+        ?.addEventListener(
+          'click',
+          ()=>openCampusPath(d.fallback.url)
+        );
+
+      return;
+    }
+
+    state.data.activity=d;
+
+    state.activityCache.set(
+      key,
+      {
+        data:d,
+        t:Date.now()
+      }
+    );
+
+    state.status.activity='success';
+    state.errors.activity=null;
+
+    render();
+    bindCampusContent();
+
+  }catch(e){
+    if(
+      state.requests.activity!==seq ||
+      !state.connected
+    ){
       if(throwOnError) throw e;
       return;
     }
 
-    if(epoch!==state.routeEpoch||state.route!=='activity'){
+    if(
+      epoch!==state.routeEpoch ||
+      state.route!=='activity'
+    ){
       if(throwOnError) throw e;
+      return;
+    }
+
+    /*
+     * Ошибка фонового обновления не убивает
+     * уже отображённую активность.
+     */
+    if(cached?.data){
+      console.debug(
+        '[Nova][ActivityCacheRefresh]',
+        key,
+        e?.message||e
+      );
+
       return;
     }
 
@@ -20197,7 +20647,15 @@ async function loadActivity(
     }
   }
 }
+
 async function executeActivityAction(action){
+  /*
+   * Любое изменение делает старый read-cache недействительным.
+   * Следующее открытие получит состояние из Campus.
+   */
+  novaActivityCacheDelete();
+
+
   const current=state.data.activity?.activity; if(!current?.ref)return;
   const form=$('#campus-content form'); const values={};
   if(form){
@@ -20483,6 +20941,12 @@ async function loadView(force=false,epoch=state.routeEpoch){
 }
 
 async function uploadAssignmentFiles(files) {
+  /*
+   * Загрузка файла меняет состояние задания.
+   */
+  novaActivityCacheDelete();
+
+
   const list = $('#assignment-upload-list');
   const status = $('#assignment-upload-status');
 
