@@ -176,7 +176,7 @@ check(
   'app cache bust',
   has(
     INDEX,
-    'app.js?v=nova-23-20260923-1'
+    'app.js?v=nova-24-20260923-1'
   )
 );
 
@@ -184,7 +184,7 @@ check(
   'css cache bust',
   has(
     INDEX,
-    'dashboard-final.css?v=nova-23-20260923-1'
+    'dashboard-final.css?v=nova-24-20260923-1'
   )
 );
 

@@ -19,6 +19,7 @@ const state = {
   routeEpoch: 0,
   courseView: localStorage.getItem('nova-course-view') || 'cards',
   studyFilter: localStorage.getItem('nova-study-filter') || 'open',
+  searchFilter: localStorage.getItem('nova-search-filter') || 'all',
   quizNavigationCache: new Map(),
   scheduleImport: (() => {
     try {
@@ -1632,7 +1633,7 @@ async function loadNotificationsData(
 function shell(content){
   const active=['course','view'].includes(state.route)?'courses':state.route;
   const nav=NAV.map(([r,i,l])=>{const href=r==='dashboard'?'/':`/${r}`;return `<a class="nav-item ${active===r?'active':''}" href="${href}" data-go="${r}" aria-current="${active===r?'page':'false'}">${icon(i,18)}<span>${l}</span></a>`}).join('');
-  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><div class="nova-search-input-shell"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd>Ctrl K</kbd></label><button class="nova-search-submit" id="global-search-submit" type="button" title="Открыть все результаты">${icon('arrow',14)}</button></div><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления" type="button">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
+  return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}<div class="uni"><b>Финансовый университет</b><span>Краснодарский филиал</span></div></div><div class="nav-caption">УЧЕБНАЯ СРЕДА</div><nav class="nav">${nav}</nav><div class="sidebar-bottom"><button class="nav-item ${active==='profile'?'active':''}" data-go="profile">${icon('user',18)}<span>Профиль</span></button><button class="theme-row" id="theme-sidebar">${icon(state.theme==='dark'?'sun':'moon',17)}<span>${state.theme==='dark'?'Светлая тема':'Тёмная тема'}</span></button><span class="connection"><i></i>${state.demo?'Демо-режим':'Campus подключён'}</span></div></aside><main class="main"><header class="topbar"><div class="crumb"><button class="mobile-menu" id="mobile-menu">${icon('grid',18)}</button><span>Campus Nova</span><b>›</b><strong>${esc(routeLabel(state.route))}</strong></div><div class="top-actions"><div class="nova-global-search-wrap"><div class="nova-search-input-shell"><label class="search" for="global-search"><span>${icon('search',17)}</span><input id="global-search" value="${esc(state.search)}" placeholder="Найти в Nova…" autocomplete="off" spellcheck="false"><kbd class="nova-search-command">Ctrl K</kbd></label><button class="nova-search-submit" id="global-search-submit" type="button" title="Открыть все результаты">${icon('arrow',14)}</button></div><div id="nova-search-popover" class="nova-search-popover" aria-live="polite"></div></div><button class="icon-btn" id="theme-top" title="Сменить тему">${icon(state.theme==='dark'?'sun':'moon',17)}</button><button class="icon-btn ${notificationsBadge()?'has-dot':''}" id="notifications" title="Уведомления" type="button">${icon('bell',17)}${notificationsBadge()}</button><div class="profile-menu" id="profile-menu"><button class="profile-chip" id="profile-menu-trigger" type="button" aria-expanded="false" aria-controls="profile-popover"><span class="avatar">${avatar()}</span><span><b>${esc(firstName())}</b><small>Студент</small></span>${icon('chevron',14)}</button><div class="profile-popover" id="profile-popover"><div class="profile-popover-head"><span class="avatar large">${avatar()}</span><div><b>${esc(state.user?.fullname||'Студент')}</b><small>Студент</small></div></div><div class="profile-popover-meta"><span><small>Статус</small><b>Campus подключён</b></span><span><small>ID пользователя</small><b>${esc(state.user?.id||'—')}</b></span></div><div class="profile-popover-actions"><button class="profile-popover-item" data-go="profile" type="button"><span class="profile-popover-icon">${icon('user',15)}</span><span><b>Профиль</b><small>Данные аккаунта и подключение</small></span>${icon('next',14)}</button><button class="profile-popover-item danger" id="profile-logout" type="button"><span class="profile-popover-icon">${icon('close',15)}</span><span><b>Выйти</b><small>Завершить сессию Campus</small></span></button></div></div></div></div></header><div id="page">${content}</div></main></div>`;
 }
 function skeletonGrid(n=6){return `<div class="skeleton-grid">${Array.from({length:n},()=>'<div class="skeleton-card"><span></span><span></span><span></span></div>').join('')}</div>`}
 function statePanel(kind,service,retry=true){
@@ -4375,7 +4376,7 @@ function dashboard(){
                       : 'СЛЕДУЮЩАЯ ПАРА'
                   }
                 }
-                
+
                 <b>
                   ${esc(
                     nextAction.lesson?.subject||
@@ -5143,48 +5144,228 @@ function novaSearchItems(){
   return items;
 }
 
-function novaSearchResults(query=''){
 
-  const q=
+function novaSearchTokens(value=''){
+  return novaSearchText(value)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s_-]/gu,' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function novaSearchFilter(){
+  const value =
+    localStorage.getItem(
+      'nova-search-filter'
+    ) || 'all';
+
+  const allowed = [
+    'all',
+    'course',
+    'teacher',
+    'task',
+    'test',
+    'material',
+    'file',
+    'message',
+    'grade'
+  ];
+
+  return allowed.includes(value)
+    ? value
+    : 'all';
+}
+
+function novaSearchSetFilter(value){
+  const allowed = [
+    'all',
+    'course',
+    'teacher',
+    'task',
+    'test',
+    'material',
+    'file',
+    'message',
+    'grade'
+  ];
+
+  const filter =
+    allowed.includes(value)
+      ? value
+      : 'all';
+
+  state.searchFilter = filter;
+
+  localStorage.setItem(
+    'nova-search-filter',
+    filter
+  );
+
+  render();
+}
+
+function novaSearchRecent(){
+  try{
+    const raw =
+      localStorage.getItem(
+        'nova-search-recent-v1'
+      );
+
+    const list =
+      raw ? JSON.parse(raw) : [];
+
+    return Array.isArray(list)
+      ? list
+          .map(novaSearchText)
+          .filter(Boolean)
+          .slice(0,8)
+      : [];
+  }catch{
+    return [];
+  }
+}
+
+function novaSearchRemember(query=''){
+  const value =
+    novaSearchText(query);
+
+  if(!value){
+    return;
+  }
+
+  const next =
+    novaSearchRecent()
+      .filter(
+        item =>
+          item.toLowerCase() !==
+          value.toLowerCase()
+      );
+
+  next.unshift(value);
+
+  localStorage.setItem(
+    'nova-search-recent-v1',
+    JSON.stringify(
+      next.slice(0,8)
+    )
+  );
+}
+
+function novaSearchClearRecent(){
+  localStorage.removeItem(
+    'nova-search-recent-v1'
+  );
+
+  render();
+}
+
+function novaSearchScore(item, query=''){
+
+  const q =
     novaSearchText(query)
       .toLowerCase();
 
   if(!q){
-    return [];
+    return 0;
   }
 
+  const title =
+    novaSearchText(
+      item?.title || ''
+    ).toLowerCase();
+
+  const hay =
+    novaSearchText(
+      item?.searchable || ''
+    ).toLowerCase();
+
+  let score = 0;
+
+  if(title === q){
+    score += 200;
+  }else if(title.startsWith(q)){
+    score += 100;
+  }else if(title.includes(q)){
+    score += 60;
+  }
+
+  if(hay.includes(q)){
+    score += 30;
+  }
+
+  const queryTokens =
+    novaSearchTokens(q);
+
+  const titleTokens =
+    novaSearchTokens(title);
+
+  const hayTokens =
+    novaSearchTokens(hay);
+
+  for(const token of queryTokens){
+
+    if(titleTokens.includes(token)){
+      score += 45;
+      continue;
+    }
+
+    if(
+      titleTokens.some(
+        value =>
+          value.startsWith(token)
+      )
+    ){
+      score += 28;
+      continue;
+    }
+
+    if(hayTokens.includes(token)){
+      score += 18;
+      continue;
+    }
+
+    if(
+      hayTokens.some(
+        value =>
+          value.includes(token)
+      )
+    ){
+      score += 8;
+    }
+  }
+
+  return score;
+}
+
+
+function novaSearchResults(query=''){
+
+  const filter =
+    novaSearchFilter();
+
   return novaSearchItems()
-    .map(item=>{
-
-      const title=
-        String(item.title||'')
-          .toLowerCase();
-
-      const hay=
-        String(item.searchable||'')
-          .toLowerCase();
-
-      let score=0;
-
-      if(title===q){
-        score+=100;
-      }else if(title.startsWith(q)){
-        score+=40;
-      }else if(title.includes(q)){
-        score+=18;
-      }
-
-      if(hay.includes(q)){
-        score+=8;
-      }
-
-      return {
+    .filter(
+      item =>
+        filter === 'all' ||
+        item.type === filter
+    )
+    .map(
+      item => ({
         ...item,
-        score
-      };
-    })
-    .filter(item=>item.score>0)
-    .sort((a,b)=>b.score-a.score)
+        score:novaSearchScore(
+          item,
+          query
+        )
+      })
+    )
+    .filter(
+      item =>
+        item.score > 0
+    )
+    .sort(
+      (a,b) =>
+        b.score-a.score
+    )
     .slice(0,8);
 }
 
@@ -5482,48 +5663,57 @@ function updateNovaSearchPopover(){
 
 
 
+
 function novaSearchResultsFull(query=''){
 
-  const q=
-    novaSearchText(query)
-      .toLowerCase();
+  const q =
+    novaSearchText(
+      query
+    );
 
   if(!q){
     return [];
   }
 
+  const filter =
+    novaSearchFilter();
+
   return novaSearchItems()
-    .map(item=>{
-
-      const title=
-        String(item.title||'')
-          .toLowerCase();
-
-      const hay=
-        String(item.searchable||'')
-          .toLowerCase();
-
-      let score=0;
-
-      if(title===q){
-        score+=100;
-      }else if(title.startsWith(q)){
-        score+=45;
-      }else if(title.includes(q)){
-        score+=25;
-      }
-
-      if(hay.includes(q)){
-        score+=10;
-      }
-
-      return {
+    .filter(
+      item =>
+        filter === 'all' ||
+        item.type === filter
+    )
+    .map(
+      item => ({
         ...item,
-        score
-      };
-    })
-    .filter(item=>item.score>0)
-    .sort((a,b)=>b.score-a.score);
+        score:novaSearchScore(
+          item,
+          q
+        )
+      })
+    )
+    .filter(
+      item =>
+        item.score > 0
+    )
+    .sort(
+      (a,b)=>{
+
+        if(
+          b.score !== a.score
+        ){
+          return b.score-a.score;
+        }
+
+        return String(
+          a.title || ''
+        ).localeCompare(
+          String(b.title || ''),
+          'ru'
+        );
+      }
+    );
 }
 
 function novaSearchTypeLabel(type=''){
@@ -5537,6 +5727,82 @@ function novaSearchTypeLabel(type=''){
     message:'Сообщения',
     grade:'Оценки'
   }[type] || 'Результаты';
+}
+
+
+function novaSearchReset(){
+
+  state.search =
+    '';
+
+  state.searchFilter =
+    'all';
+
+  localStorage.setItem(
+    'nova-search-filter',
+    'all'
+  );
+
+  /*
+   * Search reset is a UI-state reset only.
+   * Recent queries remain available to the user.
+   */
+  window.__novaSearchResetAt =
+    Date.now();
+
+  const input =
+    $('#global-search');
+
+  if(input){
+
+    input.value =
+      '';
+
+  }
+
+  const popover =
+    document.querySelector(
+      '#nova-search-popover'
+    );
+
+  if(popover){
+
+    popover.classList.remove(
+      'open'
+    );
+
+    popover.innerHTML =
+      '';
+
+  }
+
+  /*
+   * The search route is already mounted:
+   * reset locally and rerender immediately.
+   *
+   * This avoids an unnecessary Campus request.
+   */
+  if(
+    state.route ===
+    'search'
+  ){
+
+    state.status.search =
+      'success';
+
+    render(true);
+
+    return;
+  }
+
+  /*
+   * Preserve the existing navigation
+   * behavior when reset is triggered
+   * from another route.
+   */
+  navigate(
+    'search'
+  );
 }
 
 function searchPage(){
@@ -5603,6 +5869,56 @@ function searchPage(){
 
         </div>
 
+        ${
+          novaSearchRecent().length
+            ? `
+              <section class="nova-search-recent">
+
+                <div class="nova-search-section-head">
+
+                  <div>
+                    <span>НЕДАВНИЕ</span>
+                    <b>Последние запросы</b>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="nova-search-text-btn"
+                    id="nova-search-clear-recent"
+                  >
+                    Очистить
+                  </button>
+
+                </div>
+
+                <div class="nova-search-recent-list">
+
+                  ${
+                    novaSearchRecent()
+                      .map(
+                        query => `
+                          <button
+                            type="button"
+                            class="nova-search-recent-item"
+                            data-search-recent="${esc(query)}"
+                          >
+                            ${icon('search',14)}
+                            <span>
+                              ${esc(query)}
+                            </span>
+                          </button>
+                        `
+                      )
+                      .join('')
+                  }
+
+                </div>
+
+              </section>
+            `
+            : ''
+        }
+
       </section>
     `;
   }
@@ -5663,15 +5979,47 @@ function searchPage(){
         </div>
 
         <button
-          class="secondary nova-search-clear"
+          class="secondary nova-search-clear nova-search-reset-filter"
           type="button"
           id="nova-search-clear"
+          data-search-reset-filter="true"
+          aria-label="Сбросить поиск и фильтр"
         >
           ${icon('close',14)}
           Очистить
         </button>
 
       </div>
+
+      <div class="nova-search-filterbar">
+
+        ${[
+          ['all','Все'],
+          ['course','Курсы'],
+          ['teacher','Преподаватели'],
+          ['task','Задания'],
+          ['test','Тесты'],
+          ['material','Материалы'],
+          ['file','Файлы'],
+          ['message','Сообщения'],
+          ['grade','Оценки']
+        ].map(
+          ([value,label])=>`
+            <button
+              type="button"
+              class="
+                nova-search-filter
+                ${novaSearchFilter()===value?'active':''}
+              "
+              data-search-filter="${value}"
+            >
+              ${label}
+            </button>
+          `
+        ).join('')}
+
+      </div>
+
 
       ${
         results.length
@@ -17903,6 +18251,10 @@ function bind(){
           state.search=
             s.value.trim();
 
+          novaSearchRemember(
+            state.search
+          );
+
           navigate(
             'search'
           );
@@ -17984,6 +18336,53 @@ function bind(){
 
   }
 
+
+
+  $$('[data-search-recent]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          const query =
+            el.dataset.searchRecent || '';
+
+          if(!query){
+            return;
+          }
+
+          state.search = query;
+
+          const input =
+            $('#global-search');
+
+          if(input){
+            input.value = query;
+          }
+
+          navigate('search');
+        }
+      );
+    }
+  );
+
+$$('[data-search-filter]').forEach(
+    el=>{
+      el.addEventListener(
+        'click',
+        ()=>{
+          novaSearchSetFilter(
+            el.dataset.searchFilter || 'all'
+          );
+        }
+      );
+    }
+  );
+
+  $('#nova-search-clear-recent')?.addEventListener(
+    'click',
+    novaSearchClearRecent
+  );
+
   $('#global-search-submit')?.addEventListener(
     'click',
     ()=>{
@@ -18001,6 +18400,10 @@ function bind(){
 
       state.search=query;
 
+      novaSearchRemember(
+        query
+      );
+
       navigate(
         'search'
       );
@@ -18009,19 +18412,45 @@ function bind(){
 
   $('#nova-search-clear')?.addEventListener(
     'click',
-    ()=>{
-      state.search='';
+    novaSearchReset
+  );
 
-      const input=
-        $('#global-search');
+  /*
+   * Nova 24 canonical reset binding.
+   *
+   * The selector is intentionally optional so older
+   * layouts using #nova-search-clear remain valid.
+   */
+  $('#nova-search-reset')?.addEventListener(
+    'click',
+    novaSearchReset
+  );
 
-      if(input){
-        input.value='';
+  $$('[data-search-reset-filter]').forEach(
+    el=>{
+
+      if(
+        el.id ===
+        'nova-search-clear'
+      ){
+        return;
       }
 
-      navigate(
-        'search'
+      if(
+        el.dataset.novaSearchResetBound ===
+        '1'
+      ){
+        return;
+      }
+
+      el.dataset.novaSearchResetBound =
+        '1';
+
+      el.addEventListener(
+        'click',
+        novaSearchReset
       );
+
     }
   );
 

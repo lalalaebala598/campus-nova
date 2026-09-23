@@ -168,7 +168,7 @@ pass(
 pass(
   'notification cache',
   index.includes(
-    'nova-23-20260923-1'
+    'nova-24-20260923-1'
   )
 );
 
