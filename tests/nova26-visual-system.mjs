@@ -1,16 +1,6 @@
 import fs from 'node:fs';
 
-const css =
-  fs.readFileSync(
-    'frontend/dashboard-final.css',
-    'utf8'
-  );
-
-const index =
-  fs.readFileSync(
-    'frontend/index.html',
-    'utf8'
-  );
+const INDEX = fs.readFileSync('frontend/index.html', 'utf8');
 
 const pkg =
   JSON.parse(
@@ -18,6 +8,18 @@ const pkg =
       'package.json',
       'utf8'
     )
+  );
+
+const APP =
+  fs.readFileSync(
+    'frontend/app.js',
+    'utf8'
+  );
+
+const CSS =
+  fs.readFileSync(
+    'frontend/dashboard-final.css',
+    'utf8'
   );
 
 function pass(label, ok){
@@ -34,178 +36,178 @@ function pass(label, ok){
 
 pass(
   'visual system marker',
-  css.includes(
+  CSS.includes(
     'NOVA 26.0 · VISUAL SYSTEM'
   )
 );
 
 pass(
   'dark semantic tokens',
-  css.includes('--bg:#060b12') &&
-  css.includes('--surface:#0c131d') &&
-  css.includes('--text:#f5f8fc') &&
-  css.includes('--accent:#21b9ff')
+  CSS.includes('--bg:#060b12') &&
+  CSS.includes('--surface:#0c131d') &&
+  CSS.includes('--text:#f5f8fc') &&
+  CSS.includes('--accent:#21b9ff')
 );
 
 pass(
   'light semantic tokens',
-  css.includes('html[data-theme="light"]') &&
-  css.includes('--bg:#eef3f7') &&
-  css.includes('--surface:#ffffff') &&
-  css.includes('--text:#18324c') &&
-  css.includes('--accent:#087ff0')
+  CSS.includes('html[data-theme="light"]') &&
+  CSS.includes('--bg:#eef3f7') &&
+  CSS.includes('--surface:#ffffff') &&
+  CSS.includes('--text:#18324c') &&
+  CSS.includes('--accent:#087ff0')
 );
 
 pass(
   'theme bootstrap',
-  index.includes(
+  INDEX.includes(
     "localStorage.getItem('nova-theme')"
   ) &&
-  index.includes(
+  INDEX.includes(
     'document.documentElement.dataset.theme'
   )
 );
 
 pass(
   'dashboard css cache',
-  index.includes(
-    'nova-26-1-20260923-1'
+  INDEX.includes(
+    'nova-26-final-20260923-1'
   )
 );
 
 pass(
   'hero duplicate stats hidden',
-  css.includes(
+  CSS.includes(
     '.nova-ambient-hero > .hero-stats'
   ) &&
-  css.includes(
+  CSS.includes(
     'display:none!important'
   )
 );
 
 pass(
   'hero overflow buffer',
-  css.includes(
+  CSS.includes(
     'inset:-26%!important'
   )
 );
 
 pass(
   'old hero edge removed',
-  css.includes(
+  CSS.includes(
     '.nova-ambient-hero::after'
   ) &&
-  css.includes(
+  CSS.includes(
     'display:none!important'
   )
 );
 
 pass(
   'old light rays removed',
-  css.includes(
+  CSS.includes(
     '.nova-light-line'
   ) &&
-  css.includes(
+  CSS.includes(
     'display:none!important'
   )
 );
 
 pass(
   'hero animation system',
-  css.includes(
+  CSS.includes(
     '@keyframes nova26AuroraA'
   ) &&
-  css.includes(
+  CSS.includes(
     '@keyframes nova26AuroraB'
   ) &&
-  css.includes(
+  CSS.includes(
     '@keyframes nova26Core'
   )
 );
 
 pass(
   'material cards use grid contract',
-  css.includes(
+  CSS.includes(
     'grid-template-columns:\n    42px\n    minmax(0,1fr)\n    34px!important'
   )
 );
 
 pass(
   'material kind no longer overlaps icon',
-  css.includes(
+  CSS.includes(
     '.material-card-kind'
   ) &&
-  css.includes(
+  CSS.includes(
     'display:none!important'
   )
 );
 
 pass(
   'material icon core aligned',
-  css.includes(
+  CSS.includes(
     '.material-card-icon-core'
   ) &&
-  css.includes(
+  CSS.includes(
     'place-items:center!important'
   )
 );
 
 pass(
   'file rows use fixed icon slot',
-  css.includes(
+  CSS.includes(
     '.nova-file-icon'
   ) &&
-  css.includes(
+  CSS.includes(
     'width:42px!important'
   ) &&
-  css.includes(
+  CSS.includes(
     'min-width:42px!important'
   )
 );
 
 pass(
   'file action aligned',
-  css.includes(
+  CSS.includes(
     '.nova-file-open'
   ) &&
-  css.includes(
+  CSS.includes(
     'width:34px!important'
   ) &&
-  css.includes(
+  CSS.includes(
     'height:34px!important'
   )
 );
 
 pass(
   'light body has no global wash',
-  css.includes(
+  CSS.includes(
     'background-image:none!important'
   )
 );
 
 pass(
   'light hero has dedicated paint',
-  css.includes(
+  CSS.includes(
     'html[data-theme="light"] .nova-ambient-hero'
   ) &&
-  css.includes(
+  CSS.includes(
     'body[data-theme="light"] .nova-ambient-hero'
   )
 );
 
 pass(
   'light focus card is opaque and calm',
-  css.includes(
+  CSS.includes(
     'background:\n    rgba(255,255,255,.79)!important'
   ) &&
-  css.includes(
+  CSS.includes(
     'box-shadow:\n    0 19px 42px'
   )
 );
 
 pass(
   'reduced motion support',
-  css.includes(
+  CSS.includes(
     '@media(prefers-reduced-motion:reduce)'
   )
 );
@@ -216,6 +218,102 @@ pass(
     'tests/nova26-visual-system.mjs'
   )
 );
+
+
+pass(
+  'final cache',
+  INDEX.includes(
+    'nova-26-final-20260923-1'
+  )
+);
+
+pass(
+  'hero stats removed from DOM',
+  !APP.includes(
+    '<div class="hero-stats">'
+  )
+);
+
+pass(
+  'legacy hero lines removed from DOM',
+  !APP.includes(
+    'nova-light-line-a'
+  ) &&
+  !APP.includes(
+    'nova-light-line-b'
+  )
+);
+
+pass(
+  'legacy hero grid removed from DOM',
+  !APP.includes(
+    'nova-ambient-grid'
+  )
+);
+
+pass(
+  'study action wrapper',
+  APP.includes(
+    'nova20-action-label-text'
+  ) &&
+  APP.includes(
+    'Учиться сейчас'
+  )
+);
+
+pass(
+  'open action wrapper',
+  APP.includes(
+    'Открыть'
+  ) &&
+  APP.includes(
+    'nova20-action-label-text'
+  )
+);
+
+pass(
+  'final icon line box reset',
+  CSS.includes(
+    '.icon{'
+  ) &&
+  CSS.includes(
+    'line-height:0!important'
+  ) &&
+  CSS.includes(
+    'vertical-align:middle!important'
+  )
+);
+
+pass(
+  'final file download square',
+  CSS.includes(
+    'width:42px!important'
+  ) &&
+  CSS.includes(
+    'height:42px!important'
+  ) &&
+  CSS.includes(
+    'justify-self:center!important'
+  )
+);
+
+pass(
+  'final command action geometry',
+  CSS.includes(
+    'grid-template-columns:\n    52px\n    minmax(0,1fr)\n    126px!important'
+  ) &&
+  CSS.includes(
+    '.nova20-action-label-text'
+  )
+);
+
+pass(
+  'final visual lock marker',
+  CSS.includes(
+    'NOVA 26.2 · FINAL VISUAL LOCK'
+  )
+);
+
 
 console.log('');
 console.log('==============================================');

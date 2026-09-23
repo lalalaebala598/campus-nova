@@ -13611,3 +13611,679 @@ body[data-theme="light"] .nova-file-download:hover{
 }
 
 /* NOVA 26.1 · ICON & FILE GEOMETRY */
+
+/* =========================================================
+   NOVA 26.2 · FINAL VISUAL LOCK
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   SVG RESET
+   --------------------------------------------------------- */
+
+.icon{
+  display:block!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  vertical-align:middle!important;
+
+  line-height:0!important;
+
+  flex:none!important;
+
+  transform:none!important;
+
+  overflow:visible!important;
+}
+
+/* ---------------------------------------------------------
+   UNIVERSAL ICON SLOT
+   --------------------------------------------------------- */
+
+.course-group-icon,
+.material-card-icon,
+.material-card-icon-core,
+.test-icon,
+.task-kind,
+.activity-icon,
+.nova-file-icon,
+.material-card-arrow,
+.test-card-arrow,
+.task-card-arrow,
+.nova-file-open,
+.nova-file-download,
+.nova-command-action-icon,
+.nova-hero-focus-orb{
+  display:flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  box-sizing:border-box!important;
+
+  line-height:0!important;
+}
+
+/* ---------------------------------------------------------
+   LEARNING ICONS
+   --------------------------------------------------------- */
+
+.course-group-icon{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+}
+
+.material-card-icon,
+.test-icon,
+.task-kind,
+.activity-icon{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+}
+
+.material-card-icon-core{
+  width:22px!important;
+  height:22px!important;
+
+  min-width:22px!important;
+  min-height:22px!important;
+
+  padding:0!important;
+}
+
+.course-group-icon > .icon,
+.material-card-icon > .icon,
+.test-icon > .icon,
+.task-kind > .icon,
+.activity-icon > .icon,
+.material-card-icon-core > .icon{
+  width:19px!important;
+  height:19px!important;
+
+  min-width:19px!important;
+  min-height:19px!important;
+}
+
+.material-card-kind{
+  display:none!important;
+}
+
+.material-card-arrow,
+.test-card-arrow,
+.task-card-arrow{
+  width:34px!important;
+  height:34px!important;
+
+  min-width:34px!important;
+  min-height:34px!important;
+
+  padding:0!important;
+}
+
+.material-card-arrow > .icon,
+.test-card-arrow > .icon,
+.task-card-arrow > .icon{
+  width:15px!important;
+  height:15px!important;
+
+  min-width:15px!important;
+  min-height:15px!important;
+}
+
+/* ---------------------------------------------------------
+   FILE ICON
+   --------------------------------------------------------- */
+
+.nova-file-icon{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+
+  padding:0!important;
+
+  overflow:hidden!important;
+}
+
+.nova-file-icon > .icon{
+  width:20px!important;
+  height:20px!important;
+
+  min-width:20px!important;
+  min-height:20px!important;
+}
+
+.nova-file-open{
+  width:34px!important;
+  height:34px!important;
+
+  min-width:34px!important;
+  min-height:34px!important;
+
+  padding:0!important;
+}
+
+.nova-file-open > .icon{
+  width:15px!important;
+  height:15px!important;
+
+  min-width:15px!important;
+  min-height:15px!important;
+}
+
+/* ---------------------------------------------------------
+   FILE ROW
+   --------------------------------------------------------- */
+
+.nova-file-row{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    42px!important;
+
+  gap:8px!important;
+
+  align-items:center!important;
+
+  overflow:visible!important;
+}
+
+.nova-file-main{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    34px!important;
+
+  gap:12px!important;
+
+  align-items:center!important;
+
+  box-sizing:border-box!important;
+
+  min-height:68px!important;
+
+  padding:
+    11px
+    12px!important;
+
+  overflow:hidden!important;
+}
+
+.nova-file-copy{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  align-content:center!important;
+
+  gap:4px!important;
+
+  overflow:hidden!important;
+}
+
+.nova-file-copy b,
+.nova-file-copy small{
+  display:block!important;
+
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+
+  margin:0!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.nova-file-copy b{
+  line-height:1.2!important;
+}
+
+.nova-file-copy small{
+  line-height:1.15!important;
+}
+
+.nova-file-download{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+
+  align-self:center!important;
+
+  justify-self:center!important;
+
+  padding:0!important;
+
+  margin:0!important;
+
+  border-radius:13px!important;
+}
+
+.nova-file-download > .icon{
+  width:17px!important;
+  height:17px!important;
+
+  min-width:17px!important;
+  min-height:17px!important;
+}
+
+/* ---------------------------------------------------------
+   COURSE GROUP
+   --------------------------------------------------------- */
+
+.course-group-head{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    32px!important;
+
+  gap:12px!important;
+
+  align-items:center!important;
+
+  box-sizing:border-box!important;
+
+  overflow:hidden!important;
+}
+
+.course-group-title{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  overflow:hidden!important;
+}
+
+.course-group-title b,
+.course-group-title small{
+  display:block!important;
+
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.course-group-chevron{
+  width:32px!important;
+  height:32px!important;
+
+  min-width:32px!important;
+  min-height:32px!important;
+
+  padding:0!important;
+
+  display:flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  line-height:0!important;
+}
+
+/* ---------------------------------------------------------
+   DASHBOARD COMMAND ACTION
+   --------------------------------------------------------- */
+
+.nova-command-action{
+  display:grid!important;
+
+  grid-template-columns:
+    52px
+    minmax(0,1fr)
+    126px!important;
+
+  gap:12px!important;
+
+  align-items:center!important;
+
+  min-width:0!important;
+}
+
+.nova-command-action-icon{
+  width:52px!important;
+  height:52px!important;
+
+  min-width:52px!important;
+  min-height:52px!important;
+
+  padding:0!important;
+}
+
+.nova-command-action-icon > .icon{
+  width:20px!important;
+  height:20px!important;
+
+  min-width:20px!important;
+  min-height:20px!important;
+}
+
+.nova-command-action-main{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  align-content:center!important;
+
+  gap:4px!important;
+
+  overflow:hidden!important;
+}
+
+.nova-command-action-main b,
+.nova-command-action-main small{
+  min-width:0!important;
+  max-width:100%!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.nova20-smart-action
+.nova-command-action-side{
+  width:126px!important;
+
+  min-width:126px!important;
+
+  display:flex!important;
+
+  flex-direction:column!important;
+
+  align-items:flex-end!important;
+  justify-content:center!important;
+
+  gap:6px!important;
+}
+
+.nova20-smart-action
+.nova-command-action-side strong{
+  display:block!important;
+
+  line-height:1!important;
+
+  min-height:10px!important;
+
+  white-space:nowrap!important;
+
+  font-variant-numeric:tabular-nums!important;
+}
+
+.nova20-action-label{
+  display:inline-flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  width:max-content!important;
+
+  min-width:0!important;
+
+  min-height:28px!important;
+  height:28px!important;
+
+  gap:6px!important;
+
+  padding:
+    0
+    9px!important;
+
+  box-sizing:border-box!important;
+
+  line-height:1!important;
+
+  white-space:nowrap!important;
+
+  vertical-align:middle!important;
+}
+
+.nova20-action-label-text{
+  display:block!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  line-height:1!important;
+
+  white-space:nowrap!important;
+}
+
+.nova20-action-label > .icon{
+  display:block!important;
+
+  width:14px!important;
+  height:14px!important;
+
+  min-width:14px!important;
+  min-height:14px!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  flex:0 0 14px!important;
+
+  line-height:0!important;
+}
+
+/* ---------------------------------------------------------
+   HERO
+   --------------------------------------------------------- */
+
+.nova-ambient-hero{
+  overflow:hidden!important;
+
+  isolation:isolate!important;
+}
+
+.nova-ambient-field{
+  position:absolute!important;
+
+  inset:-32%!important;
+
+  z-index:0!important;
+
+  overflow:visible!important;
+
+  pointer-events:none!important;
+}
+
+.nova-ambient-field > span{
+  pointer-events:none!important;
+}
+
+.nova-ambient-hero .hero-stats{
+  display:none!important;
+
+  visibility:hidden!important;
+
+  pointer-events:none!important;
+}
+
+.nova-ambient-hero .hero-brand,
+.nova-ambient-hero .nova-hero-content,
+.nova-ambient-hero .nova-hero-focus{
+  z-index:5!important;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media(max-width:760px){
+
+  .course-group-head{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      30px!important;
+
+    gap:10px!important;
+  }
+
+  .course-group-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .material-card,
+  .task-card,
+  .test-card{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+
+    gap:10px!important;
+  }
+
+  .material-card-icon,
+  .test-icon,
+  .task-kind{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-file-row{
+    grid-template-columns:
+      minmax(0,1fr)
+      38px!important;
+
+    gap:7px!important;
+  }
+
+  .nova-file-main{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+
+    min-height:64px!important;
+
+    gap:10px!important;
+
+    padding:10px!important;
+  }
+
+  .nova-file-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-file-open{
+    width:32px!important;
+    height:32px!important;
+
+    min-width:32px!important;
+    min-height:32px!important;
+  }
+
+  .nova-file-download{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-command-action{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)!important;
+  }
+
+  .nova-command-action-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova20-smart-action
+  .nova-command-action-side{
+    width:auto!important;
+
+    min-width:0!important;
+
+    grid-column:2!important;
+
+    flex-direction:row!important;
+
+    align-items:center!important;
+
+    justify-content:space-between!important;
+  }
+
+}
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media(prefers-reduced-motion:reduce){
+
+  .nova-aurora,
+  .nova-orbit,
+  .nova-orbit-dot,
+  .nova-glow-core,
+  .nova-hero-focus-top i,
+  .nova-hero-focus-orb{
+    animation:none!important;
+  }
+
+}
+
+/* NOVA 26.2 · FINAL VISUAL LOCK */

@@ -1756,19 +1756,15 @@ function hero(){
         <span class="nova-aurora nova-aurora-b"></span>
         <span class="nova-aurora nova-aurora-c"></span>
 
-        <span class="nova-light-line nova-light-line-a"></span>
-        <span class="nova-light-line nova-light-line-b"></span>
 
         <span class="nova-orbit nova-orbit-a"></span>
         <span class="nova-orbit nova-orbit-b"></span>
-        <span class="nova-orbit nova-orbit-c"></span>
 
         <span class="nova-orbit-dot nova-orbit-dot-a"></span>
         <span class="nova-orbit-dot nova-orbit-dot-b"></span>
         <span class="nova-orbit-dot nova-orbit-dot-c"></span>
 
         <span class="nova-glow-core"></span>
-        <span class="nova-ambient-grid"></span>
 
       </div>
 
@@ -1933,59 +1929,7 @@ function hero(){
 
       </div>
 
-      <div class="hero-stats">
 
-        <div class="hero-stat">
-          <strong>
-            ${taskCount}
-          </strong>
-
-          <span>
-            ${
-              taskCount===1
-                ? 'активное задание'
-                : 'активных заданий'
-            }
-          </span>
-        </div>
-
-        <div
-          class="hero-stat-divider"
-        ></div>
-
-        <div class="hero-stat">
-          <strong>
-            ${courseCount}
-          </strong>
-
-          <span>
-            ${
-              courseCount===1
-                ? 'курс'
-                : 'курсов'
-            }
-          </span>
-        </div>
-
-        <div
-          class="hero-stat-divider"
-        ></div>
-
-        <div class="hero-stat">
-          <strong>
-            ${unreadCount}
-          </strong>
-
-          <span>
-            ${
-              unreadCount===1
-                ? 'сообщение'
-                : 'сообщений'
-            }
-          </span>
-        </div>
-
-      </div>
 
     </section>
   `;
@@ -5395,7 +5339,7 @@ function dashboard(){
                   <span
                     class="nova20-action-label"
                   >
-                    Учиться сейчас
+                    <span class="nova20-action-label-text">Учиться сейчас</span>
                     ${icon('arrow',15)}
                   </span>
 
@@ -5471,7 +5415,7 @@ function dashboard(){
                   <span
                     class="nova20-action-label"
                   >
-                    Открыть
+                    <span class="nova20-action-label-text">Открыть</span>
                     ${icon('arrow',15)}
                   </span>
 
