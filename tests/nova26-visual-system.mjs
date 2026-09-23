@@ -69,7 +69,7 @@ pass(
 pass(
   'dashboard css cache',
   index.includes(
-    'nova-26-20260923-1'
+    'nova-26-1-20260923-1'
   )
 );
 

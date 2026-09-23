@@ -13041,3 +13041,573 @@ body[data-theme="light"] .nova-search-popover{
 }
 
 /* NOVA 26.0 · VISUAL SYSTEM */
+
+/* =========================================================
+   NOVA 26.1 · ICON & FILE GEOMETRY
+   ========================================================= */
+
+/*
+ * Every Nova icon slot uses exactly the same centering rules.
+ * This avoids SVG baseline / line-box drift.
+ */
+
+.course-group-icon,
+.material-card-icon,
+.test-icon,
+.task-kind,
+.activity-icon,
+.nova-file-icon,
+.material-card-arrow,
+.test-card-arrow,
+.task-card-arrow,
+.nova-file-open,
+.nova-file-download{
+  box-sizing:border-box!important;
+
+  line-height:0!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  vertical-align:middle!important;
+}
+
+.course-group-icon .icon,
+.material-card-icon .icon,
+.test-icon .icon,
+.task-kind .icon,
+.activity-icon .icon,
+.nova-file-icon .icon,
+.material-card-arrow .icon,
+.test-card-arrow .icon,
+.task-card-arrow .icon,
+.nova-file-open .icon,
+.nova-file-download .icon{
+  display:block!important;
+
+  width:20px!important;
+  height:20px!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  flex:0 0 20px!important;
+
+  position:static!important;
+
+  transform:none!important;
+}
+
+/* Smaller actions use a slightly smaller glyph. */
+
+.material-card-arrow .icon,
+.test-card-arrow .icon,
+.task-card-arrow .icon,
+.nova-file-open .icon,
+.nova-file-download .icon{
+  width:16px!important;
+  height:16px!important;
+
+  flex-basis:16px!important;
+}
+
+/* =========================================================
+   COURSE GROUP HEADER
+   ========================================================= */
+
+.course-group-head{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  box-sizing:border-box!important;
+
+  overflow:hidden!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    32px!important;
+
+  align-items:center!important;
+}
+
+.course-group-title{
+  min-width:0!important;
+  width:100%!important;
+  overflow:hidden!important;
+}
+
+.course-group-title b{
+  min-width:0!important;
+  max-width:100%!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.course-group-title small{
+  min-width:0!important;
+  max-width:100%!important;
+
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+.course-group-chevron{
+  width:32px!important;
+  height:32px!important;
+
+  min-width:32px!important;
+  min-height:32px!important;
+
+  padding:0!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  line-height:0!important;
+}
+
+/* =========================================================
+   MATERIAL / TEST CARD ICONS
+   ========================================================= */
+
+.material-card-icon,
+.test-icon,
+.task-kind,
+.activity-icon{
+  position:relative!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  overflow:hidden!important;
+}
+
+.material-card-icon-core{
+  width:20px!important;
+  height:20px!important;
+
+  min-width:20px!important;
+  min-height:20px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  line-height:0!important;
+
+  overflow:visible!important;
+}
+
+.material-card-icon-core .icon{
+  position:static!important;
+
+  width:20px!important;
+  height:20px!important;
+
+  margin:0!important;
+}
+
+/*
+ * The old type label lived inside the icon slot and visually
+ * fought with the SVG. The type remains in the text metadata.
+ */
+.material-card-kind{
+  display:none!important;
+}
+
+/* =========================================================
+   FILES · CLEAN ROW GEOMETRY
+   ========================================================= */
+
+.nova-file-row{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    42px!important;
+
+  gap:8px!important;
+
+  align-items:center!important;
+
+  box-sizing:border-box!important;
+}
+
+.nova-file-main{
+  width:100%!important;
+  max-width:100%!important;
+
+  min-width:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    42px
+    minmax(0,1fr)
+    34px!important;
+
+  align-items:center!important;
+
+  gap:12px!important;
+
+  min-height:68px!important;
+
+  padding:
+    11px
+    12px!important;
+
+  box-sizing:border-box!important;
+}
+
+.nova-file-icon{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+
+  display:flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  line-height:0!important;
+}
+
+.nova-file-icon .icon{
+  width:20px!important;
+  height:20px!important;
+
+  flex:0 0 20px!important;
+}
+
+.nova-file-copy{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+
+  display:grid!important;
+
+  align-content:center!important;
+
+  gap:4px!important;
+
+  overflow:hidden!important;
+}
+
+.nova-file-copy b{
+  display:block!important;
+
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+
+  line-height:1.22!important;
+}
+
+.nova-file-copy small{
+  display:block!important;
+
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+
+  overflow:hidden!important;
+
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+
+  line-height:1.2!important;
+}
+
+.nova-file-open{
+  width:34px!important;
+  height:34px!important;
+
+  min-width:34px!important;
+  min-height:34px!important;
+
+  display:flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  padding:0!important;
+
+  line-height:0!important;
+}
+
+.nova-file-download{
+  width:42px!important;
+  height:42px!important;
+
+  min-width:42px!important;
+  min-height:42px!important;
+
+  align-self:center!important;
+
+  display:flex!important;
+
+  align-items:center!important;
+  justify-content:center!important;
+
+  padding:0!important;
+
+  border-radius:13px!important;
+
+  line-height:0!important;
+
+  box-sizing:border-box!important;
+}
+
+.nova-file-download .icon{
+  width:17px!important;
+  height:17px!important;
+
+  flex:0 0 17px!important;
+}
+
+/*
+ * The old full-height download rail is explicitly disabled.
+ */
+.nova-file-download{
+  height:42px!important;
+  min-height:42px!important;
+  align-self:center!important;
+}
+
+/* =========================================================
+   FILE GROUP SPACING
+   ========================================================= */
+
+.files-groups{
+  width:100%!important;
+  max-width:100%!important;
+
+  gap:14px!important;
+
+  overflow:hidden!important;
+}
+
+.file-group-body{
+  width:100%!important;
+  max-width:100%!important;
+
+  padding:
+    0
+    12px
+    12px!important;
+
+  box-sizing:border-box!important;
+
+  overflow:hidden!important;
+}
+
+.file-group-body .nova-file-row + .nova-file-row{
+  margin-top:6px!important;
+}
+
+/* =========================================================
+   DARK MODE · FILE DEPTH
+   ========================================================= */
+
+body[data-theme="dark"] .nova-file-main{
+  background:
+    #0e1824!important;
+
+  border-color:
+    #1d2a39!important;
+
+  box-shadow:
+    0 8px 22px
+    rgba(0,0,0,.10)!important;
+}
+
+body[data-theme="dark"] .nova-file-download{
+  background:
+    #101b28!important;
+
+  border-color:
+    #1d2a39!important;
+
+  box-shadow:none!important;
+
+  color:
+    #8194a8!important;
+}
+
+body[data-theme="dark"] .nova-file-download:hover{
+  background:
+    #142335!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 24%,
+      var(--line)
+    )!important;
+
+  color:
+    var(--accent)!important;
+}
+
+/* =========================================================
+   LIGHT MODE · FILE DEPTH
+   ========================================================= */
+
+html[data-theme="light"] .nova-file-main,
+body[data-theme="light"] .nova-file-main{
+  background:#f8fafc!important;
+
+  border-color:#d8e2ea!important;
+
+  box-shadow:
+    0 7px 20px
+    rgba(39,70,97,.042)!important;
+}
+
+html[data-theme="light"] .nova-file-download,
+body[data-theme="light"] .nova-file-download{
+  background:#f1f5f8!important;
+
+  border-color:#d7e1e8!important;
+
+  color:#738798!important;
+
+  box-shadow:none!important;
+}
+
+html[data-theme="light"] .nova-file-download:hover,
+body[data-theme="light"] .nova-file-download:hover{
+  background:#ffffff!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 25%,
+      #d7e1e8
+    )!important;
+
+  color:var(--accent)!important;
+}
+
+/* =========================================================
+   RESPONSIVE FILE GEOMETRY
+   ========================================================= */
+
+@media(max-width:760px){
+
+  .course-group-head{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      30px!important;
+  }
+
+  .course-group-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .material-card,
+  .test-card{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+  }
+
+  .material-card-icon,
+  .test-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-file-row{
+    grid-template-columns:
+      minmax(0,1fr)
+      38px!important;
+
+    gap:7px!important;
+  }
+
+  .nova-file-main{
+    grid-template-columns:
+      38px
+      minmax(0,1fr)
+      32px!important;
+
+    min-height:64px!important;
+
+    padding:10px!important;
+
+    gap:10px!important;
+  }
+
+  .nova-file-icon{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+  .nova-file-open{
+    width:32px!important;
+    height:32px!important;
+
+    min-width:32px!important;
+    min-height:32px!important;
+  }
+
+  .nova-file-download{
+    width:38px!important;
+    height:38px!important;
+
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media(prefers-reduced-motion:reduce){
+
+  .material-card-arrow,
+  .test-card-arrow,
+  .task-card-arrow,
+  .nova-file-open,
+  .nova-file-download{
+    transition:none!important;
+  }
+
+}
+
+/* NOVA 26.1 · ICON & FILE GEOMETRY */
