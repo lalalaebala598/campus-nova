@@ -245,3 +245,573 @@ select:focus{
     transition-duration:.001ms !important;
   }
 }
+
+/* ============================================================
+   NOVA 30 · SIDEBAR ICON MOTION
+   Every menu item has its own motion language.
+   ============================================================ */
+
+.nav-item > .icon{
+  transform-box:fill-box;
+  transform-origin:center center;
+}
+
+/* -------------------------
+   Главная
+   Soft wake / lift
+   ------------------------- */
+
+.nav-item[data-go="dashboard"]:hover > .icon{
+  animation:nova30Home .46s cubic-bezier(.2,.82,.25,1) both;
+}
+
+@keyframes nova30Home{
+  0%{
+    transform:translateY(0) scale(1);
+  }
+  38%{
+    transform:translateY(-2px) scale(1.08);
+  }
+  72%{
+    transform:translateY(.5px) scale(1.02);
+  }
+  100%{
+    transform:translateY(0) scale(1.04);
+  }
+}
+
+/* -------------------------
+   Учебный режим
+   Book pages separate
+   ------------------------- */
+
+.nav-item[data-go="study"]:hover > .icon{
+  animation:nova30Study .52s cubic-bezier(.2,.78,.25,1) both;
+}
+
+.nav-item[data-go="study"]:hover > .icon path:first-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30StudyPage .52s cubic-bezier(.2,.78,.25,1) both;
+}
+
+@keyframes nova30Study{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+  45%{
+    transform:rotate(-3deg) scale(1.06);
+  }
+  100%{
+    transform:rotate(0) scale(1.03);
+  }
+}
+
+@keyframes nova30StudyPage{
+  0%{
+    transform:translateX(0);
+  }
+  50%{
+    transform:translateX(-1.3px);
+  }
+  100%{
+    transform:translateX(0);
+  }
+}
+
+/* -------------------------
+   Курсы
+   Four blocks wake up
+   ------------------------- */
+
+.nav-item[data-go="courses"]:hover > .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(1){
+  animation:nova30GridTile .44s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(2){
+  animation:nova30GridTile .44s .045s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(3){
+  animation:nova30GridTile .44s .09s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(4){
+  animation:nova30GridTile .44s .135s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova30GridTile{
+  0%{
+    transform:scale(.84);
+    opacity:.58;
+  }
+  55%{
+    transform:scale(1.13);
+    opacity:1;
+  }
+  100%{
+    transform:scale(1);
+  }
+}
+
+/* -------------------------
+   Расписание
+   Clock sweep
+   ------------------------- */
+
+.nav-item[data-go="schedule"]:hover > .icon{
+  animation:nova30Clock .56s cubic-bezier(.2,.78,.2,1) both;
+}
+
+.nav-item[data-go="schedule"]:hover > .icon path:nth-of-type(2){
+  transform-box:fill-box;
+  transform-origin:left bottom;
+  animation:nova30ClockHand .56s cubic-bezier(.2,.78,.2,1) both;
+}
+
+@keyframes nova30Clock{
+  0%{
+    transform:scale(1);
+  }
+  35%{
+    transform:scale(1.06) rotate(-4deg);
+  }
+  100%{
+    transform:scale(1.03) rotate(0);
+  }
+}
+
+@keyframes nova30ClockHand{
+  0%{
+    transform:rotate(0deg);
+  }
+  58%{
+    transform:rotate(105deg);
+  }
+  100%{
+    transform:rotate(0deg);
+  }
+}
+
+/* -------------------------
+   Дедлайны
+   Alert pulse
+   ------------------------- */
+
+.nav-item[data-go="deadlines"]:hover > .icon{
+  animation:nova30Deadline .54s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="deadlines"]:hover > .icon path:last-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30DeadlineBar .5s ease both;
+}
+
+@keyframes nova30Deadline{
+  0%{
+    transform:translateY(0) scale(1);
+  }
+  28%{
+    transform:translateY(-2px) scale(1.06);
+  }
+  55%{
+    transform:translateY(1px) scale(.99);
+  }
+  100%{
+    transform:translateY(0) scale(1.03);
+  }
+}
+
+@keyframes nova30DeadlineBar{
+  0%{
+    opacity:.45;
+    transform:scaleX(.72);
+  }
+  55%{
+    opacity:1;
+    transform:scaleX(1.05);
+  }
+  100%{
+    opacity:1;
+    transform:scaleX(1);
+  }
+}
+
+/* -------------------------
+   Оценки
+   Chart draws itself
+   ------------------------- */
+
+.nav-item[data-go="grades"]:hover > .icon{
+  animation:nova30Chart .48s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="grades"]:hover > .icon path:last-of-type{
+  stroke-dasharray:32;
+  stroke-dashoffset:32;
+  animation:nova30ChartLine .5s cubic-bezier(.2,.78,.2,1) .04s both;
+}
+
+@keyframes nova30Chart{
+  0%{
+    transform:scale(.97);
+  }
+  50%{
+    transform:scale(1.06);
+  }
+  100%{
+    transform:scale(1.02);
+  }
+}
+
+@keyframes nova30ChartLine{
+  0%{
+    stroke-dashoffset:32;
+    opacity:.45;
+  }
+  65%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+  }
+}
+
+/* -------------------------
+   Задания
+   Check gets completed
+   ------------------------- */
+
+.nav-item[data-go="tasks"]:hover > .icon{
+  animation:nova30TaskFrame .48s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="tasks"]:hover > .icon path:last-of-type{
+  stroke-dasharray:20;
+  stroke-dashoffset:20;
+  animation:nova30Check .42s cubic-bezier(.3,.8,.2,1) .06s both;
+}
+
+@keyframes nova30TaskFrame{
+  0%{
+    transform:scale(1);
+  }
+  42%{
+    transform:scale(1.075) rotate(-2deg);
+  }
+  100%{
+    transform:scale(1.02) rotate(0);
+  }
+}
+
+@keyframes nova30Check{
+  0%{
+    stroke-dashoffset:20;
+    opacity:.2;
+  }
+  70%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+  }
+}
+
+/* -------------------------
+   Календарь
+   Tiny page flip
+   ------------------------- */
+
+.nav-item[data-go="calendar"]:hover > .icon{
+  animation:nova30Calendar .56s cubic-bezier(.2,.78,.2,1) both;
+}
+
+@keyframes nova30Calendar{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+  32%{
+    transform:rotate(3.5deg) scale(1.05);
+  }
+  66%{
+    transform:rotate(-2deg) scale(1.015);
+  }
+  100%{
+    transform:rotate(0) scale(1.03);
+  }
+}
+
+/* -------------------------
+   Сообщения
+   Bubble + signal
+   ------------------------- */
+
+.nav-item[data-go="messages"]:hover > .icon{
+  animation:nova30Message .48s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="messages"]:hover > .icon path:first-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30Bubble .48s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="messages"]:hover > .icon path:last-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30MessageDots .44s .04s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova30Message{
+  0%{
+    transform:scale(1);
+  }
+  35%{
+    transform:translateX(1px) scale(1.06);
+  }
+  70%{
+    transform:translateX(-.5px) scale(1.025);
+  }
+  100%{
+    transform:translateX(0) scale(1.03);
+  }
+}
+
+@keyframes nova30Bubble{
+  0%{
+    transform:scale(.97);
+  }
+  45%{
+    transform:scale(1.035);
+  }
+  100%{
+    transform:scale(1);
+  }
+}
+
+@keyframes nova30MessageDots{
+  0%{
+    opacity:.3;
+    transform:scale(.65);
+  }
+  60%{
+    opacity:1;
+    transform:scale(1.12);
+  }
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+/* -------------------------
+   Файлы
+   Folder opens
+   ------------------------- */
+
+.nav-item[data-go="files"]:hover > .icon{
+  animation:nova30Files .48s cubic-bezier(.2,.82,.22,1) both;
+}
+
+.nav-item[data-go="files"]:hover > .icon path:first-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30FolderBody .48s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="files"]:hover > .icon path:last-of-type{
+  animation:nova30FolderLip .42s .04s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova30Files{
+  0%{
+    transform:translateY(0) scale(1);
+  }
+  42%{
+    transform:translateY(-1.5px) scale(1.055);
+  }
+  100%{
+    transform:translateY(0) scale(1.025);
+  }
+}
+
+@keyframes nova30FolderBody{
+  0%{
+    transform:translateY(0);
+  }
+  45%{
+    transform:translateY(-1px);
+  }
+  100%{
+    transform:translateY(0);
+  }
+}
+
+@keyframes nova30FolderLip{
+  0%{
+    opacity:.55;
+    transform:translateY(1px);
+  }
+  60%{
+    opacity:1;
+    transform:translateY(-.5px);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* -------------------------
+   Материалы
+   Folder/card shuffle
+   ------------------------- */
+
+.nav-item[data-go="materials"]:hover > .icon{
+  animation:nova30Materials .48s cubic-bezier(.2,.8,.22,1) both;
+}
+
+.nav-item[data-go="materials"]:hover > .icon path:first-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30MaterialShell .48s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova30Materials{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+  38%{
+    transform:rotate(-2.5deg) translateY(-1px) scale(1.045);
+  }
+  72%{
+    transform:rotate(1deg) translateY(.5px) scale(1.02);
+  }
+  100%{
+    transform:rotate(0) scale(1.025);
+  }
+}
+
+@keyframes nova30MaterialShell{
+  0%{
+    transform:translateX(0);
+  }
+  50%{
+    transform:translateX(-1.2px);
+  }
+  100%{
+    transform:translateX(0);
+  }
+}
+
+/* -------------------------
+   Тесты
+   Answer sheet scan
+   ------------------------- */
+
+.nav-item[data-go="tests"]:hover > .icon{
+  animation:nova30Quiz .5s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(2){
+  animation:nova30QuizRow .38s ease both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(3){
+  animation:nova30QuizRow .38s .05s ease both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(4){
+  animation:nova30QuizRow .38s .10s ease both;
+}
+
+@keyframes nova30Quiz{
+  0%{
+    transform:translateY(0) scale(1);
+  }
+  40%{
+    transform:translateY(-1px) scale(1.055);
+  }
+  100%{
+    transform:translateY(0) scale(1.025);
+  }
+}
+
+@keyframes nova30QuizRow{
+  0%{
+    opacity:.3;
+    transform:translateX(-2px);
+  }
+  65%{
+    opacity:1;
+    transform:translateX(.6px);
+  }
+  100%{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/* -------------------------
+   Профиль
+   User breath
+   ------------------------- */
+
+.sidebar-bottom > .nav-item[data-go="profile"]:hover > .icon{
+  animation:nova30Profile .5s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.sidebar-bottom > .nav-item[data-go="profile"]:hover > .icon circle{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova30ProfileHead .45s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova30Profile{
+  0%{
+    transform:scale(1);
+  }
+  42%{
+    transform:scale(1.07) translateY(-1px);
+  }
+  100%{
+    transform:scale(1.025);
+  }
+}
+
+@keyframes nova30ProfileHead{
+  0%{
+    transform:scale(1);
+  }
+  55%{
+    transform:scale(1.11);
+  }
+  100%{
+    transform:scale(1);
+  }
+}
+
+/* Active icon keeps a quiet identity */
+.nav-item.active > .icon{
+  filter:drop-shadow(0 2px 5px currentColor);
+}
+
+/* Reduced motion stays fully respected */
+@media (prefers-reduced-motion:reduce){
+  .nav-item:hover > .icon,
+  .nav-item:hover > .icon *,
+  .sidebar-bottom > .nav-item[data-go="profile"]:hover > .icon,
+  .sidebar-bottom > .nav-item[data-go="profile"]:hover > .icon *{
+    animation:none !important;
+    transform:none !important;
+    filter:none !important;
+  }
+}
