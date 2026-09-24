@@ -1,0 +1,1085 @@
+
+/* =========================================================
+   NOVA 35 · QUIZ WORKSPACE
+   Purpose:
+   - turn the existing real Campus quiz attempt into a calm,
+     focused workspace
+   - preserve all existing form/action behavior
+   - improve hierarchy, question readability and mobile use
+   ========================================================= */
+
+.nova-quiz-workspace{
+  position:relative;
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
+  padding:4px 0 28px;
+}
+
+.nova-quiz-head{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:18px;
+  padding:28px 30px 24px;
+  margin:0 0 14px;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 86% 4%,
+      color-mix(in srgb,var(--accent) 10%,transparent),
+      transparent 28%),
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--accent) 6%,var(--surface)),
+      var(--surface-2));
+  box-shadow:0 18px 50px rgba(0,0,0,.08);
+}
+
+.nova-quiz-head::after{
+  content:"";
+  position:absolute;
+  width:230px;
+  height:230px;
+  right:-100px;
+  top:-120px;
+  border-radius:50%;
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
+  filter:blur(8px);
+  pointer-events:none;
+}
+
+.nova-quiz-head-copy{
+  position:relative;
+  z-index:1;
+  min-width:0;
+}
+
+.nova-quiz-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--accent);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.16em;
+}
+
+.nova-quiz-head-copy h2{
+  margin:8px 0 0;
+  max-width:760px;
+  color:var(--text);
+  font-size:28px;
+  line-height:1.1;
+  letter-spacing:-.045em;
+}
+
+.nova-quiz-head-copy p{
+  max-width:700px;
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+}
+
+.nova-quiz-head-state{
+  position:relative;
+  z-index:1;
+  min-width:118px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:color-mix(in srgb,var(--surface) 84%,transparent);
+}
+
+.nova-quiz-head-state span{
+  color:var(--muted);
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.05em;
+}
+
+.nova-quiz-head-state strong{
+  color:var(--text);
+  font-size:21px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.04em;
+}
+
+.nova-quiz-progress{
+  position:absolute;
+  left:30px;
+  right:30px;
+  bottom:0;
+  height:3px;
+  overflow:hidden;
+  border-radius:99px 99px 0 0;
+  background:color-mix(in srgb,var(--accent) 10%,var(--surface-3));
+}
+
+.nova-quiz-progress i{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:var(--accent);
+  box-shadow:0 0 14px color-mix(in srgb,var(--accent) 34%,transparent);
+  transition:width .3s ease;
+}
+
+.nova-quiz-layout{
+  display:grid;
+  grid-template-columns:220px minmax(0,1fr);
+  align-items:start;
+  gap:14px;
+}
+
+.nova-quiz-nav{
+  position:sticky;
+  top:16px;
+  min-width:0;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface);
+  box-shadow:0 12px 34px rgba(0,0,0,.06);
+}
+
+.nova-quiz-nav-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 1px 12px;
+  border-bottom:1px solid var(--line);
+}
+
+.nova-quiz-nav-head div{
+  min-width:0;
+}
+
+.nova-quiz-nav-head span:first-child{
+  display:block;
+  color:var(--muted-2);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.15em;
+}
+
+.nova-quiz-nav-head b{
+  display:block;
+  margin-top:3px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:900;
+}
+
+.nova-quiz-total{
+  display:grid;
+  place-items:center;
+  min-width:28px;
+  height:28px;
+  padding:0 7px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  color:var(--text);
+  background:var(--surface-3);
+  font-size:9px;
+  font-weight:900;
+}
+
+.nova-quiz-nav-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  padding-top:12px;
+}
+
+.nova-quiz-nav-button{
+  min-width:0;
+  min-height:38px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--muted);
+  background:var(--surface-2);
+  font:inherit;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease,
+    box-shadow .18s ease;
+}
+
+.nova-quiz-nav-button:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+  color:var(--text);
+}
+
+.nova-quiz-nav-button.current{
+  color:var(--text);
+  background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+  border-color:color-mix(in srgb,var(--accent) 46%,var(--line));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 13%,transparent);
+}
+
+.nova-quiz-nav-button:disabled{
+  cursor:default;
+  opacity:.75;
+}
+
+.nova-quiz-nav-note{
+  display:flex;
+  align-items:flex-start;
+  gap:7px;
+  margin-top:13px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.45;
+}
+
+.nova-quiz-nav-note .icon{
+  flex:0 0 auto;
+  margin-top:1px;
+  color:var(--accent);
+}
+
+.nova-quiz-content{
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 14px 42px rgba(0,0,0,.07);
+}
+
+.nova-quiz-html{
+  min-width:0;
+}
+
+.nova-quiz-html > form,
+.nova-quiz-html > #region-main,
+.nova-quiz-html > main,
+.nova-quiz-html > .quizattempt{
+  min-width:0;
+}
+
+.nova-quiz-html .que{
+  position:relative;
+  min-width:0;
+  margin:0 0 14px;
+  padding:20px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:var(--surface-2);
+}
+
+.nova-quiz-html .que:last-child{
+  margin-bottom:0;
+}
+
+.nova-quiz-html .que::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:3px;
+  background:color-mix(in srgb,var(--accent) 28%,transparent);
+}
+
+.nova-quiz-html .info{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+}
+
+.nova-quiz-html .info h3{
+  margin:0;
+  color:var(--text);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+
+.nova-quiz-html .info .state{
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-quiz-html .qtext{
+  color:var(--text);
+  font-size:14px;
+  line-height:1.6;
+  letter-spacing:-.01em;
+}
+
+.nova-quiz-html .qtext p{
+  margin:0 0 9px;
+}
+
+.nova-quiz-html .qtext p:last-child{
+  margin-bottom:0;
+}
+
+.nova-quiz-html .qtext img{
+  display:block;
+  max-width:100%;
+  height:auto;
+  margin:12px auto;
+  border-radius:12px;
+  border:1px solid var(--line);
+}
+
+.nova-quiz-html .prompt,
+.nova-quiz-html .answer,
+.nova-quiz-html .content{
+  color:var(--text);
+  font-size:11px;
+  line-height:1.55;
+}
+
+.nova-quiz-html .answer{
+  margin-top:15px;
+  padding-top:15px;
+  border-top:1px dashed var(--line);
+}
+
+.nova-quiz-html .answer > div,
+.nova-quiz-html .answer > p{
+  margin-top:0;
+}
+
+.nova-quiz-html label{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-height:40px;
+  margin:6px 0;
+  padding:10px 11px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--text);
+  background:var(--surface);
+  cursor:pointer;
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    transform .18s ease;
+}
+
+.nova-quiz-html label:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--accent) 32%,var(--line));
+  background:color-mix(in srgb,var(--accent) 4%,var(--surface));
+}
+
+.nova-quiz-html input[type="radio"],
+.nova-quiz-html input[type="checkbox"]{
+  flex:0 0 auto;
+  width:17px;
+  height:17px;
+  margin:1px 0 0;
+  accent-color:var(--accent);
+}
+
+.nova-quiz-html input[type="text"],
+.nova-quiz-html input[type="number"],
+.nova-quiz-html input[type="email"],
+.nova-quiz-html input[type="url"],
+.nova-quiz-html input[type="search"],
+.nova-quiz-html select,
+.nova-quiz-html textarea{
+  width:100%;
+  min-height:44px;
+  box-sizing:border-box;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  outline:none;
+  color:var(--text);
+  background:var(--surface);
+  font:inherit;
+  font-size:11px;
+  line-height:1.45;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.nova-quiz-html textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.nova-quiz-html input:focus,
+.nova-quiz-html select:focus,
+.nova-quiz-html textarea:focus{
+  border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 2%,var(--surface));
+  box-shadow:
+    0 0 0 3px
+    color-mix(in srgb,var(--accent) 9%,transparent);
+}
+
+.nova-quiz-html table{
+  width:100%;
+  max-width:100%;
+  border-collapse:collapse;
+  margin:12px 0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:12px;
+  font-size:10px;
+}
+
+.nova-quiz-html th,
+.nova-quiz-html td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  vertical-align:top;
+}
+
+.nova-quiz-html th{
+  color:var(--text);
+  background:var(--surface-3);
+  font-weight:900;
+}
+
+.nova-quiz-html td{
+  color:var(--muted);
+  background:var(--surface);
+}
+
+.nova-quiz-html tr:last-child td{
+  border-bottom:0;
+}
+
+.nova-quiz-html pre,
+.nova-quiz-html code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+
+.nova-quiz-html pre{
+  max-width:100%;
+  overflow:auto;
+  margin:12px 0;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface-3);
+  font-size:9px;
+  line-height:1.55;
+}
+
+.nova-quiz-html blockquote{
+  margin:12px 0;
+  padding:10px 12px;
+  border-left:3px solid var(--accent);
+  color:var(--muted);
+  background:color-mix(in srgb,var(--accent) 4%,var(--surface));
+}
+
+.nova-quiz-html ul,
+.nova-quiz-html ol{
+  margin:9px 0 9px 19px;
+}
+
+.nova-quiz-html li{
+  margin:4px 0;
+}
+
+.nova-quiz-html a{
+  color:var(--accent);
+  text-decoration:none;
+}
+
+.nova-quiz-html a:hover{
+  text-decoration:underline;
+}
+
+.nova-quiz-html .answer input[type="file"]{
+  width:100%;
+  padding:10px;
+  border:1px dashed var(--line);
+  border-radius:12px;
+  color:var(--muted);
+  background:var(--surface);
+}
+
+.nova-quiz-loading{
+  opacity:.62;
+  pointer-events:none;
+  transition:opacity .18s ease;
+}
+
+.nova-quiz-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+
+.nova-quiz-control{
+  min-height:44px;
+  white-space:nowrap;
+}
+
+.nova-quiz-control:disabled{
+  cursor:not-allowed;
+  opacity:.42;
+}
+
+.nova-quiz-control.is-loading{
+  min-width:116px;
+}
+
+.nova-quiz-control-spacer{
+  flex:1 1 auto;
+}
+
+.nova-quiz-controls .primary{
+  box-shadow:
+    0 10px 24px
+    color-mix(in srgb,var(--accent) 14%,transparent);
+}
+
+.nova-quiz-html .feedback,
+.nova-quiz-html .rightanswer,
+.nova-quiz-html .incorrect,
+.nova-quiz-html .correct{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  font-size:9px;
+  line-height:1.5;
+}
+
+.nova-quiz-html .correct{
+  border-color:color-mix(in srgb,var(--accent) 28%,var(--line));
+  background:color-mix(in srgb,var(--accent) 6%,var(--surface));
+}
+
+.nova-quiz-html .incorrect{
+  background:color-mix(in srgb,var(--text) 3%,var(--surface));
+}
+
+.nova-quiz-html .grading,
+.nova-quiz-html .grade{
+  color:var(--muted);
+  font-size:9px;
+}
+
+.nova-quiz-html .que .qtype{
+  color:var(--muted);
+  font-size:8px;
+}
+
+.nova-quiz-html .que .content{
+  min-width:0;
+}
+
+.nova-quiz-html .formulation{
+  border:0;
+  background:transparent;
+}
+
+.nova-quiz-html .outcome{
+  margin-top:10px;
+}
+
+.nova-quiz-html .specificfeedback{
+  margin-top:10px;
+}
+
+/* Keep very old Moodle utility bits quiet without touching the form logic. */
+
+.nova-quiz-html .accesshide,
+.nova-quiz-html .sr-only{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
+
+.nova-quiz-html .clearer{
+  clear:both;
+}
+
+/* =========================================================
+   LAUNCH CARD
+   The entry state should feel like the same product as the
+   active attempt, not a legacy Moodle panel.
+   ========================================================= */
+
+.nova-quiz-launch-card{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:18px;
+  width:100%;
+  box-sizing:border-box;
+  padding:24px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 92% 0%,
+      color-mix(in srgb,var(--accent) 9%,transparent),
+      transparent 30%),
+    var(--surface);
+  box-shadow:0 16px 44px rgba(0,0,0,.07);
+}
+
+.nova-quiz-launch-icon{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  border-radius:17px;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 10%,var(--surface-2));
+  border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));
+}
+
+.nova-quiz-launch-copy{
+  min-width:0;
+}
+
+.nova-quiz-launch-copy h2{
+  margin:6px 0 0;
+  color:var(--text);
+  font-size:23px;
+  line-height:1.15;
+  letter-spacing:-.04em;
+}
+
+.nova-quiz-launch-copy p{
+  max-width:720px;
+  margin:7px 0 0;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.55;
+}
+
+.nova-quiz-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:13px;
+}
+
+.nova-quiz-meta span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:29px;
+  padding:0 9px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  color:var(--muted);
+  background:var(--surface-2);
+  font-size:8px;
+  font-weight:700;
+}
+
+.nova-quiz-meta span b{
+  color:var(--text);
+  font-weight:900;
+}
+
+.nova-quiz-meta span.available .icon{
+  color:var(--accent);
+}
+
+.nova-quiz-meta span.unavailable .icon{
+  opacity:.55;
+}
+
+.nova-quiz-start{
+  min-height:46px;
+  white-space:nowrap;
+}
+
+.nova-quiz-unavailable{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:190px;
+  padding:10px 12px;
+  border:1px dashed var(--line);
+  border-radius:12px;
+  color:var(--muted);
+  background:var(--surface-2);
+}
+
+.nova-quiz-unavailable-icon{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:var(--surface-3);
+}
+
+.nova-quiz-unavailable b{
+  display:block;
+  color:var(--text);
+  font-size:9px;
+  font-weight:900;
+}
+
+.nova-quiz-unavailable small{
+  display:block;
+  margin-top:3px;
+  font-size:8px;
+  line-height:1.35;
+}
+
+/* =========================================================
+   Tablet
+   ========================================================= */
+
+@media(max-width:980px){
+
+  .nova-quiz-workspace{
+    padding-bottom:18px;
+  }
+
+  .nova-quiz-head{
+    padding:22px 22px 20px;
+  }
+
+  .nova-quiz-progress{
+    left:22px;
+    right:22px;
+  }
+
+  .nova-quiz-layout{
+    grid-template-columns:188px minmax(0,1fr);
+  }
+
+  .nova-quiz-content{
+    padding:14px;
+  }
+
+  .nova-quiz-html .que{
+    padding:17px;
+  }
+
+  .nova-quiz-launch-card{
+    grid-template-columns:auto minmax(0,1fr);
+  }
+
+  .nova-quiz-start,
+  .nova-quiz-unavailable{
+    grid-column:2;
+    justify-self:start;
+  }
+}
+
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+@media(max-width:900px){
+
+  .nova-quiz-workspace{
+    max-width:none;
+    padding:0 0 calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .nova-quiz-head{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:11px;
+    padding:18px 16px 17px;
+    border-radius:18px;
+  }
+
+  .nova-quiz-head-copy h2{
+    font-size:21px;
+  }
+
+  .nova-quiz-head-copy p{
+    font-size:9px;
+    line-height:1.45;
+  }
+
+  .nova-quiz-head-state{
+    min-width:76px;
+    padding:9px 10px;
+    border-radius:11px;
+  }
+
+  .nova-quiz-head-state strong{
+    font-size:18px;
+  }
+
+  .nova-quiz-progress{
+    left:16px;
+    right:16px;
+  }
+
+  .nova-quiz-layout{
+    display:block;
+  }
+
+  .nova-quiz-nav{
+    position:relative;
+    top:auto;
+    margin-bottom:10px;
+    padding:11px;
+    border-radius:15px;
+  }
+
+  .nova-quiz-nav-head{
+    padding-bottom:9px;
+  }
+
+  .nova-quiz-nav-grid{
+    display:flex;
+    overflow-x:auto;
+    gap:6px;
+    padding-top:9px;
+    padding-bottom:1px;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .nova-quiz-nav-grid::-webkit-scrollbar{
+    display:none;
+  }
+
+  .nova-quiz-nav-button{
+    flex:0 0 40px;
+    min-width:40px;
+    min-height:40px;
+  }
+
+  .nova-quiz-nav-note{
+    display:none;
+  }
+
+  .nova-quiz-content{
+    padding:11px;
+    border-radius:17px;
+  }
+
+  .nova-quiz-html .que{
+    margin-bottom:10px;
+    padding:14px 13px;
+    border-radius:14px;
+  }
+
+  .nova-quiz-html .info{
+    margin-bottom:9px;
+    padding-bottom:8px;
+  }
+
+  .nova-quiz-html .qtext{
+    font-size:12px;
+    line-height:1.55;
+  }
+
+  .nova-quiz-html .answer{
+    margin-top:12px;
+    padding-top:12px;
+  }
+
+  .nova-quiz-html label{
+    min-height:44px;
+    padding:10px;
+    margin:5px 0;
+  }
+
+  .nova-quiz-html input[type="text"],
+  .nova-quiz-html input[type="number"],
+  .nova-quiz-html input[type="email"],
+  .nova-quiz-html input[type="url"],
+  .nova-quiz-html input[type="search"],
+  .nova-quiz-html select,
+  .nova-quiz-html textarea{
+    min-height:46px;
+    font-size:16px;
+  }
+
+  .nova-quiz-html textarea{
+    min-height:130px;
+  }
+
+  .nova-quiz-html table{
+    display:block;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+
+  .nova-quiz-html th,
+  .nova-quiz-html td{
+    min-width:110px;
+  }
+
+  .nova-quiz-controls{
+    position:sticky;
+    bottom:
+      env(safe-area-inset-bottom);
+    z-index:4;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin:12px -11px -11px;
+    padding:9px 11px calc(9px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);
+    background:
+      color-mix(
+        in srgb,
+        var(--surface) 94%,
+        transparent
+      );
+    backdrop-filter:blur(15px);
+    -webkit-backdrop-filter:blur(15px);
+  }
+
+  .nova-quiz-control{
+    width:100%;
+    min-height:45px;
+  }
+
+  .nova-quiz-control-spacer{
+    display:none;
+  }
+
+  .nova-quiz-controls [data-quiz-control="finish"]{
+    grid-column:1 / -1;
+  }
+
+  .nova-quiz-launch-card{
+    grid-template-columns:1fr;
+    gap:12px;
+    padding:17px;
+    border-radius:17px;
+  }
+
+  .nova-quiz-launch-icon{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+  }
+
+  .nova-quiz-launch-copy h2{
+    font-size:19px;
+  }
+
+  .nova-quiz-launch-copy p{
+    font-size:9px;
+  }
+
+  .nova-quiz-meta{
+    gap:6px;
+    margin-top:10px;
+  }
+
+  .nova-quiz-meta span{
+    min-height:28px;
+    font-size:8px;
+  }
+
+  .nova-quiz-start,
+  .nova-quiz-unavailable{
+    grid-column:auto;
+    width:100%;
+  }
+
+  .nova-quiz-unavailable{
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+}
+
+/* =========================================================
+   Small phones
+   ========================================================= */
+
+@media(max-width:560px){
+
+  .nova-quiz-head{
+    display:block;
+  }
+
+  .nova-quiz-head-state{
+    width:max-content;
+    margin-top:10px;
+    align-items:flex-start;
+  }
+
+  .nova-quiz-nav{
+    border-radius:14px;
+  }
+
+  .nova-quiz-content{
+    border-radius:15px;
+  }
+
+  .nova-quiz-html .que{
+    padding:13px 12px;
+  }
+
+  .nova-quiz-html .qtext{
+    font-size:11px;
+  }
+
+  .nova-quiz-html .answer,
+  .nova-quiz-html .prompt,
+  .nova-quiz-html .content{
+    font-size:10px;
+  }
+
+  .nova-quiz-controls{
+    grid-template-columns:1fr;
+  }
+
+  .nova-quiz-controls [data-quiz-control="finish"]{
+    grid-column:auto;
+  }
+}
+
+/* Respect the app-level motion preference. */
+
+@media(prefers-reduced-motion:reduce){
+  .nova-quiz-nav-button,
+  .nova-quiz-html label,
+  .nova-quiz-progress i,
+  .nova-quiz-loading{
+    transition:none !important;
+  }
+}
