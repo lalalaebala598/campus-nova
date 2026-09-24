@@ -15046,11 +15046,37 @@ function quizAttemptMeta(result = {}) {
     result.redirectedPath ||
     '';
 
+  const key =
+    quizNavigationKey(result);
+
+  const cached =
+    state.quizNavigationCache?.get?.(key) || [];
+
   const nav =
     mergeQuizNavigation(
-      result.quizNavigation || [],
+      [
+        ...cached,
+        ...(Array.isArray(result.quizNavigation)
+          ? result.quizNavigation
+          : [])
+      ],
       result.html || '',
       path
+    );
+
+  if (nav.length && state.quizNavigationCache?.set) {
+    state.quizNavigationCache.set(key, nav);
+  }
+
+  const currentPage =
+    Number(
+      String(path)
+        .match(/[?&]page=(\d+)/i)?.[1] || 0
+    );
+
+  const selected =
+    nav.find(
+      item => item.page === currentPage
     );
 
   const numbers =
@@ -15065,64 +15091,26 @@ function quizAttemptMeta(result = {}) {
       1
     );
 
-  let start =
-    numbers.length
-      ? numbers[0]
-      : Number(
-          String(path)
-            .match(/[?&]page=(\d+)/i)?.[1] || 0
-        ) + 1;
-
-  let end =
-    numbers.length
-      ? numbers[numbers.length - 1]
-      : start;
-
-  const currentPage =
-    Number(
-      String(path)
-        .match(/[?&]page=(\d+)/i)?.[1] || 0
+  let currentLabel =
+    Number(selected?.label) ||
+    (
+      Number.isInteger(currentPage)
+        ? currentPage + 1
+        : Number(numbers[0] || 1)
     );
 
-  const selected =
-    nav.find(
-      item=>item.page===currentPage
-    );
-
-  if (
-    !numbers.length &&
-    selected?.label
-  ) {
-    start = selected.label;
-    end = selected.label;
-  }
-
-  start =
+  currentLabel =
     Math.max(
       1,
       Math.min(
         total,
-        Number(start) || 1
+        currentLabel
       )
     );
-
-  end =
-    Math.max(
-      start,
-      Math.min(
-        total,
-        Number(end) || start
-      )
-    );
-
-  const label =
-    start === end
-      ? `Вопрос ${start} из ${total}`
-      : `Вопросы ${start}–${end} из ${total}`;
 
   const progress =
     Math.round(
-      (end / total) * 100
+      (currentLabel / total) * 100
     );
 
   const nativePrevious =
@@ -15137,23 +15125,40 @@ function quizAttemptMeta(result = {}) {
       'next'
     );
 
+  const previousItem =
+    nav.find(
+      item => item.page === currentPage - 1
+    );
+
+  const nextItem =
+    nav.find(
+      item => item.page === currentPage + 1
+    );
+
   const canPrevious =
     nativePrevious ||
-    start > 1;
+    Boolean(previousItem) ||
+    currentLabel > 1;
 
   const canNext =
     nativeNext ||
-    end < total;
+    Boolean(nextItem) ||
+    currentLabel < total;
 
   return {
     nav,
     total,
-    start,
-    end,
-    label,
+    start: currentLabel,
+    end: currentLabel,
+    label:
+      `Вопрос ${currentLabel} из ${total}`,
     progress,
     canPrevious,
-    canNext
+    canNext,
+    previousPath:
+      previousItem?.path || '',
+    nextPath:
+      nextItem?.path || ''
   };
 }
 
@@ -15499,6 +15504,13 @@ async function submitNovaQuizControl(action) {
       action
     );
 
+  /*
+   * NOVA 35.2:
+   * Keep the real Moodle form as the primary transport.
+   * If Campus exposes no native previous/next submitter,
+   * the outer navigation layer can use cached question paths.
+   */
+
   let body;
 
   try{
@@ -15609,6 +15621,9 @@ async function submitNovaQuizControl(action) {
 
     render();
     bindCampusContent();
+    nova352SyncAnswerCards(
+      document
+    );
 
     toast(
       action === 'next'
@@ -20963,6 +20978,9 @@ async function loadActivity(
 
     render();
     bindCampusContent();
+    nova352SyncAnswerCards(
+      document
+    );
 
   }catch(e){
     if(
@@ -24234,10 +24252,102 @@ async function nova351LoadNovaQuizPage(
   }
 }
 
+
+function nova352QuizNeighbourPath(action = '') {
+  const result =
+    state.data.activity?.result || {};
+
+  const key =
+    quizNavigationKey(result);
+
+  const cached =
+    state.quizNavigationCache?.get?.(key) || [];
+
+  const currentPath =
+    normalizePath(
+      result.attemptPath ||
+      result.redirectedPath ||
+      ''
+    );
+
+  const currentPage =
+    Number(
+      String(currentPath)
+        .match(/[?&]page=(\d+)/i)?.[1] || 0
+    );
+
+  if (!Number.isInteger(currentPage)) {
+    return '';
+  }
+
+  const targetPage =
+    action === 'previous'
+      ? currentPage - 1
+      : action === 'next'
+        ? currentPage + 1
+        : null;
+
+  if (!Number.isInteger(targetPage) || targetPage < 0) {
+    return '';
+  }
+
+  const target =
+    cached.find(
+      item => Number(item?.page) === targetPage
+    );
+
+  return normalizePath(
+    target?.path || ''
+  );
+}
+
 async function nova351SubmitQuizControl(
   action,
   trigger = null
 ) {
+  if (
+    ['previous', 'next'].includes(action)
+  ) {
+    const current =
+      state.data.activity?.result || {};
+
+    const root =
+      document.querySelector(
+        '.nova-quiz-workspace'
+      );
+
+    const form =
+      document.querySelector(
+        'form#responseform, form[action*="processattempt.php"], .nova-quiz-html form'
+      );
+
+    const submitter =
+      form
+        ? quizSubmitter(form, action)
+        : null;
+
+    /*
+     * When Moodle exposes the real submit control,
+     * keep using submitNovaQuizControl() so selected
+     * answers are POSTed normally.
+     *
+     * Only when no native control exists do we fall back
+     * to the persistent question path.
+     */
+    if (!submitter) {
+      const fallbackPath =
+        nova352QuizNeighbourPath(action);
+
+      if (fallbackPath) {
+        return nova351LoadNovaQuizPage(
+          fallbackPath,
+          trigger
+        );
+      }
+    }
+  }
+
+
   if (
     !['previous','next','finish'].includes(action) ||
     nova351QuizBusy
@@ -24347,6 +24457,126 @@ async function nova351SubmitQuizControl(
   }
 }
 
+
+function nova352SyncAnswerCards(root = document) {
+  root?.querySelectorAll?.(
+    '.nova-quiz-html .answer, ' +
+    '.nova-quiz-html .r0, ' +
+    '.nova-quiz-html .r1, ' +
+    '.nova-quiz-html .option, ' +
+    '.nova-quiz-html label'
+  ).forEach(card => {
+    const input =
+      card.matches?.('input')
+        ? card
+        : card.querySelector?.(
+            'input[type="radio"], input[type="checkbox"]'
+          );
+
+    card.classList.toggle(
+      'nova352-answer-selected',
+      Boolean(input?.checked)
+    );
+  });
+}
+
+function nova352BindAnswerCards() {
+  if (
+    typeof document === 'undefined' ||
+    window.__nova352AnswerCardsBound
+  ) {
+    return;
+  }
+
+  window.__nova352AnswerCardsBound = true;
+
+  document.addEventListener(
+    'click',
+    event => {
+      const workspace =
+        event.target?.closest?.(
+          '.nova-quiz-workspace'
+        );
+
+      if (!workspace) {
+        return;
+      }
+
+      const row =
+        event.target?.closest?.(
+          '.nova-quiz-html .answer, ' +
+          '.nova-quiz-html .r0, ' +
+          '.nova-quiz-html .r1, ' +
+          '.nova-quiz-html .option, ' +
+          '.nova-quiz-html label'
+        );
+
+      if (!row) {
+        return;
+      }
+
+      if (
+        event.target?.closest?.(
+          'input, button, a, select, textarea'
+        )
+      ) {
+        queueMicrotask(() => {
+          nova352SyncAnswerCards(workspace);
+        });
+        return;
+      }
+
+      const input =
+        row.querySelector?.(
+          'input[type="radio"], input[type="checkbox"]'
+        );
+
+      if (
+        !input ||
+        input.disabled
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      input.click();
+
+      queueMicrotask(() => {
+        nova352SyncAnswerCards(workspace);
+      });
+    },
+    true
+  );
+
+  document.addEventListener(
+    'change',
+    event => {
+      const input =
+        event.target;
+
+      if (
+        !input?.matches?.(
+          '.nova-quiz-html input[type="radio"], ' +
+          '.nova-quiz-html input[type="checkbox"]'
+        )
+      ) {
+        return;
+      }
+
+      nova352SyncAnswerCards(
+        input.closest?.(
+          '.nova-quiz-workspace'
+        ) || document
+      );
+    },
+    true
+  );
+
+  nova352SyncAnswerCards(
+    document
+  );
+}
+
 function bindNova351QuizDelegation() {
   if (
     typeof document === 'undefined' ||
@@ -24357,6 +24587,8 @@ function bindNova351QuizDelegation() {
 
   window.__nova351QuizDelegationBound =
     true;
+
+  nova352BindAnswerCards();
 
   document.addEventListener(
     'click',

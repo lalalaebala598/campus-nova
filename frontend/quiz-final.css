@@ -1148,3 +1148,67 @@
 }
 
 /* NOVA 35.1 · QUIZ LOADING STATES END */
+
+
+/* NOVA 35.2 · QUIZ INTERACTION FIX */
+
+.nova-quiz-html
+.answer,
+.nova-quiz-html
+.r0,
+.nova-quiz-html
+.r1,
+.nova-quiz-html
+.option,
+.nova-quiz-html
+label {
+  cursor: pointer;
+  border-radius: 12px;
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+.nova-quiz-html
+.answer:hover,
+.nova-quiz-html
+.r0:hover,
+.nova-quiz-html
+.r1:hover,
+.nova-quiz-html
+.option:hover,
+.nova-quiz-html
+label:hover {
+  background: var(--surface-2);
+}
+
+.nova-quiz-html
+.nova352-answer-selected {
+  background: rgba(24,183,255,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(24,183,255,.22);
+}
+
+.nova-quiz-nav-grid {
+  position: relative;
+}
+
+.nova-quiz-nav-button {
+  min-width: 38px;
+  min-height: 38px;
+  touch-action: manipulation;
+}
+
+@media (max-width: 760px) {
+  .nova-quiz-nav-grid {
+    grid-template-columns:
+      repeat(auto-fill, minmax(38px, 1fr));
+  }
+
+  .nova-quiz-nav-button {
+    min-width: 42px;
+    min-height: 42px;
+  }
+}
