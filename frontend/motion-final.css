@@ -1882,3 +1882,192 @@ select:focus{
     filter:none !important;
   }
 }
+
+/* ============================================================
+   NOVA 31.1 · PROBLEM ICONS FINAL OVERRIDE
+   Wrapper-driven animation to avoid SVG path conflicts.
+   ============================================================ */
+
+.nav-item[data-go="dashboard"]:hover .nav-icon-slot,
+.nav-item[data-go="schedule"]:hover .nav-icon-slot,
+.nav-item[data-go="deadlines"]:hover .nav-icon-slot,
+.nav-item[data-go="grades"]:hover .nav-icon-slot,
+.nav-item[data-go="tasks"]:hover .nav-icon-slot,
+.nav-item[data-go="calendar"]:hover .nav-icon-slot{
+  position:relative;
+  z-index:2;
+  transform-origin:center center;
+  will-change:transform,filter;
+}
+
+/* Remove conflicting inner SVG motion */
+.nav-item[data-go="dashboard"]:hover .nav-icon-slot > .icon *,
+.nav-item[data-go="schedule"]:hover .nav-icon-slot > .icon *,
+.nav-item[data-go="deadlines"]:hover .nav-icon-slot > .icon *,
+.nav-item[data-go="calendar"]:hover .nav-icon-slot > .icon{
+  animation:none !important;
+}
+
+/* -------------------------
+   ГЛАВНАЯ
+   ------------------------- */
+
+.nav-item[data-go="dashboard"]:hover .nav-icon-slot{
+  animation:nova311Home 1.15s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+@keyframes nova311Home{
+  0%{transform:translateY(2px) scale(.9)}
+  24%{transform:translateY(-5px) scale(1.18)}
+  43%{transform:translateY(2px) scale(1.01)}
+  62%{transform:translateY(-2px) scale(1.1)}
+  80%{transform:translateY(.5px) scale(1.04)}
+  100%{transform:translateY(0) scale(1.08)}
+}
+
+/* -------------------------
+   РАСПИСАНИЕ
+   ------------------------- */
+
+.nav-item[data-go="schedule"]:hover .nav-icon-slot{
+  animation:nova311Schedule 1.35s cubic-bezier(.16,.8,.2,1) both !important;
+}
+
+@keyframes nova311Schedule{
+  0%{transform:rotate(0) scale(1)}
+  22%{transform:rotate(-11deg) scale(1.06)}
+  43%{transform:rotate(9deg) scale(1.1)}
+  61%{transform:rotate(-6deg) scale(1.05)}
+  78%{transform:rotate(4deg) scale(1.08)}
+  100%{transform:rotate(0) scale(1.06)}
+}
+
+/* -------------------------
+   ДЕДЛАЙНЫ
+   ------------------------- */
+
+.nav-item[data-go="deadlines"]:hover .nav-icon-slot{
+  animation:nova311Deadlines 1.2s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes nova311Deadlines{
+  0%{transform:scale(1)}
+  20%{transform:translateY(-3px) scale(1.16)}
+  34%{transform:translateY(1px) scale(1)}
+  48%{transform:translateY(-2px) scale(1.13)}
+  66%{transform:translateY(1px) scale(1.02)}
+  100%{transform:translateY(0) scale(1.08)}
+}
+
+/* -------------------------
+   ОЦЕНКИ
+   ------------------------- */
+
+.nav-item[data-go="grades"]:hover .nav-icon-slot{
+  animation:nova311Grades 1.25s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="grades"]:hover .nav-icon-slot > .icon path:last-of-type{
+  stroke-dasharray:42 !important;
+  stroke-dashoffset:42 !important;
+  animation:nova311GradesLine 1.15s cubic-bezier(.2,.78,.2,1) .12s both !important;
+}
+
+@keyframes nova311Grades{
+  0%{transform:translateY(1px) scale(.92)}
+  25%{transform:translateY(-3px) scale(1.15)}
+  46%{transform:translateY(1px) scale(1.02)}
+  66%{transform:translateY(-1px) scale(1.1)}
+  100%{transform:translateY(0) scale(1.07)}
+}
+
+@keyframes nova311GradesLine{
+  0%{
+    stroke-dashoffset:42;
+    opacity:.15;
+  }
+  72%{
+    stroke-dashoffset:10;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+}
+
+/* -------------------------
+   ЗАДАНИЯ
+   ------------------------- */
+
+.nav-item[data-go="tasks"]:hover .nav-icon-slot{
+  animation:nova311Tasks 1.2s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="tasks"]:hover .nav-icon-slot > .icon path:last-of-type{
+  stroke-dasharray:23 !important;
+  stroke-dashoffset:23 !important;
+  animation:nova311TaskCheck 1s cubic-bezier(.22,.84,.2,1) .16s both !important;
+}
+
+@keyframes nova311Tasks{
+  0%{transform:scale(.95)}
+  23%{transform:translateY(-3px) scale(1.14) rotate(-4deg)}
+  43%{transform:translateY(1px) scale(1.02) rotate(3deg)}
+  63%{transform:translateY(-1px) scale(1.1) rotate(-1deg)}
+  100%{transform:translateY(0) scale(1.07) rotate(0)}
+}
+
+@keyframes nova311TaskCheck{
+  0%{
+    stroke-dashoffset:23;
+    opacity:.15;
+  }
+  76%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+}
+
+/* -------------------------
+   КАЛЕНДАРЬ
+   ------------------------- */
+
+.nav-item[data-go="calendar"]:hover .nav-icon-slot{
+  animation:nova311Calendar 1.25s cubic-bezier(.16,.82,.2,1) both !important;
+}
+
+@keyframes nova311Calendar{
+  0%{
+    transform:perspective(120px) rotateX(0) rotateZ(0) scale(1);
+  }
+  24%{
+    transform:perspective(120px) rotateX(-16deg) rotateZ(7deg) scale(1.1);
+  }
+  48%{
+    transform:perspective(120px) rotateX(10deg) rotateZ(-5deg) scale(1.03);
+  }
+  68%{
+    transform:perspective(120px) rotateX(-6deg) rotateZ(3deg) scale(1.09);
+  }
+  100%{
+    transform:perspective(120px) rotateX(0) rotateZ(0) scale(1.07);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion:reduce){
+  .nav-item[data-go="dashboard"]:hover .nav-icon-slot,
+  .nav-item[data-go="schedule"]:hover .nav-icon-slot,
+  .nav-item[data-go="deadlines"]:hover .nav-icon-slot,
+  .nav-item[data-go="grades"]:hover .nav-icon-slot,
+  .nav-item[data-go="tasks"]:hover .nav-icon-slot,
+  .nav-item[data-go="calendar"]:hover .nav-icon-slot{
+    animation:none !important;
+    transform:none !important;
+  }
+}
