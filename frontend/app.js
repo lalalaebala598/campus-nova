@@ -350,13 +350,20 @@ function brand(){
 
   return `
     <div class="brand">
-      <span class="brand-mark">
-        ${icon('university',22)}
+      <span class="brand-mark nova-brand-mark">
+        <img
+          class="nova-brand-logo"
+          src="/nova-logo.svg?v=nova32-brand-20260924-1"
+          alt="Nova"
+          width="42"
+          height="42"
+          decoding="async"
+        >
       </span>
 
       <span class="brand-copy">
         <span class="brand-topline">
-          <b>Campus <em>FA</em></b>
+          <b>Campus <em>Nova</em></b>
         </span>
 
         <small class="brand-hostline">
@@ -1040,6 +1047,18 @@ function novaNotificationItems(){
     });
   };
 
+  /* SERVER PUSH EVENTS */
+
+  for(const serverEvent of Array.isArray(state.data.notifications)
+    ? state.data.notifications
+    : []
+  ){
+    add({
+      ...serverEvent,
+      server:true
+    });
+  }
+
   /* WHAT'S NEW */
 
   if(
@@ -1337,6 +1356,31 @@ function notificationItems(){
   return novaNotificationItems();
 }
 
+function novaNotificationTypeLabel(item){
+  const type=String(item?.type||'').toLowerCase();
+  const refType=String(item?.ref?.type||'').toLowerCase();
+
+  if(
+    type==='material' &&
+    ['lesson','book'].includes(refType)
+  ){
+    return 'ЛЕКЦИЯ';
+  }
+
+  return ({
+    task:'ЗАДАНИЕ',
+    test:'ТЕСТ',
+    message:'СООБЩЕНИЕ',
+    event:'КАЛЕНДАРЬ',
+    update:'ОБНОВЛЕНИЕ',
+    material:'МАТЕРИАЛ',
+    file:'ФАЙЛ',
+    course:'КУРС',
+    grade:'ОЦЕНКА',
+    push:'NOVA'
+  })[type] || 'CAMPUS';
+}
+
 function notificationsBadge(){
   return novaNotificationItems()
     .some(item => !item.read)
@@ -1456,6 +1500,51 @@ function notificationsPage(){
           </div>
         `
       })}
+
+
+      ${(()=>{
+        const push=novaPushState();
+        const action =
+          push.kind==='granted'
+            ? `
+                <button
+                  class="secondary"
+                  id="push-test"
+                  type="button"
+                >
+                  ${icon('send',15)}
+                  Проверить push
+                </button>
+              `
+            : push.kind==='unsupported' || push.kind==='denied'
+              ? ''
+              : `
+                <button
+                  class="primary"
+                  id="enable-push"
+                  type="button"
+                >
+                  ${icon('bell',15)}
+                  Включить push
+                </button>
+              `;
+
+        return `
+          <section class="nova-push-card nova-push-${push.kind}">
+            <span class="nova-push-icon">
+              ${icon('bell',19)}
+            </span>
+            <div class="nova-push-copy">
+              <span class="eyebrow">PUSH · NOVA</span>
+              <b>Уведомления на устройстве</b>
+              <small>${esc(push.label)}</small>
+            </div>
+            <div class="nova-push-actions">
+              ${action}
+            </div>
+          </section>
+        `;
+      })()}
 
       <div class="nova-notification-stats">
 
@@ -1673,15 +1762,16 @@ async function loadNotificationsData(
     'files'
   ];
 
-  await Promise.allSettled(
-    services.map(service =>
+  await Promise.allSettled([
+    ...services.map(service =>
       loadData(
         service,
         force,
         epoch
       )
-    )
-  );
+    ),
+    loadNovaServerNotifications(epoch)
+  ]);
 
   if(
     epoch !== state.routeEpoch ||
@@ -18867,8 +18957,15 @@ function login(){
         <div class="auth-inner">
 
           <div class="auth-wordmark">
-            <span class="auth-wordmark-mark">
-              ${icon('university',22)}
+            <span class="auth-wordmark-mark nova-auth-mark">
+              <img
+                class="nova-auth-logo"
+                src="/nova-logo.svg?v=nova32-brand-20260924-1"
+                alt="Nova"
+                width="44"
+                height="44"
+                decoding="async"
+              >
             </span>
 
             <span class="auth-wordmark-copy">
@@ -19376,6 +19473,239 @@ function novaBindAnchorNavigation(){
 }
 
 
+
+/* NOVA 32 · WEB PUSH */
+
+const NOVA_PUSH_STORAGE_KEY='nova-push-enabled-v1';
+const NOVA_PUSH_SW='/sw.js?v=nova32-push-20260924-1';
+
+function novaPushSupported(){
+  return typeof navigator!=='undefined' &&
+    typeof window!=='undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window;
+}
+
+function novaPushIsIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent||'') ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+function novaPushIsStandalone(){
+  return Boolean(
+    window.navigator?.standalone===true ||
+    window.matchMedia?.('(display-mode: standalone)')?.matches
+  );
+}
+
+function novaPushState(){
+  if(!novaPushSupported()){
+    return {kind:'unsupported',label:'Этот браузер не поддерживает push-уведомления.'};
+  }
+
+  if(
+    novaPushIsIOS() &&
+    !novaPushIsStandalone()
+  ){
+    return {kind:'install',label:'На iPhone сначала добавь Nova на экран Домой.'};
+  }
+
+  if(Notification.permission==='granted'){
+    return {kind:'granted',label:'Push-уведомления включены на этом устройстве.'};
+  }
+
+  if(Notification.permission==='denied'){
+    return {kind:'denied',label:'Уведомления заблокированы в настройках браузера.'};
+  }
+
+  return {kind:'default',label:'Nova сможет присылать новые лекции, задания и важные изменения.'};
+}
+
+function novaPushBase64ToUint8Array(value){
+  const padding='='.repeat((4-value.length%4)%4);
+  const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
+}
+
+async function novaPushGetSubscription(){
+  if(!novaPushSupported()) return null;
+  const registration=await navigator.serviceWorker.register(
+    NOVA_PUSH_SW,
+    {scope:'/'}
+  );
+  const ready=await navigator.serviceWorker.ready;
+  return ready.pushManager.getSubscription();
+}
+
+async function novaPushBootstrap(){
+  if(!novaPushSupported() || !state.connected) return;
+
+  if(Notification.permission!=='granted') return;
+
+  try{
+    const subscription=await novaPushGetSubscription();
+    if(!subscription) return;
+
+    await api('/api/push/subscribe',{
+      method:'POST',
+      body:JSON.stringify({
+        subscription:subscription.toJSON()
+      })
+    });
+
+    localStorage.setItem(
+      NOVA_PUSH_STORAGE_KEY,
+      '1'
+    );
+  }catch(error){
+    console.debug(
+      '[Nova][PushBootstrap]',
+      error?.message||error
+    );
+  }
+}
+
+async function novaPushEnable(){
+  if(!novaPushSupported()){
+    toast(
+      'Push-уведомления не поддерживаются этим браузером.',
+      'error'
+    );
+    return;
+  }
+
+  if(
+    novaPushIsIOS() &&
+    !novaPushIsStandalone()
+  ){
+    toast(
+      'На iPhone сначала добавь Nova на экран Домой, затем включи уведомления.',
+      'info'
+    );
+    return;
+  }
+
+  const permission=await Notification.requestPermission();
+
+  if(permission!=='granted'){
+    toast(
+      permission==='denied'
+        ? 'Уведомления заблокированы. Разреши их в настройках браузера.'
+        : 'Разрешение на уведомления не получено.',
+      'error'
+    );
+    render();
+    return;
+  }
+
+  try{
+    const config=await api('/api/push/config');
+
+    if(!config.enabled || !config.publicKey){
+      throw new Error(
+        'Push-сервер Nova ещё не настроен.'
+      );
+    }
+
+    const registration=await navigator.serviceWorker.register(
+      NOVA_PUSH_SW,
+      {scope:'/'}
+    );
+
+    const ready=await navigator.serviceWorker.ready;
+
+    let subscription=
+      await ready.pushManager.getSubscription();
+
+    if(!subscription){
+      subscription=
+        await ready.pushManager.subscribe({
+          userVisibleOnly:true,
+          applicationServerKey:
+            novaPushBase64ToUint8Array(
+              config.publicKey
+            )
+        });
+    }
+
+    await api('/api/push/subscribe',{
+      method:'POST',
+      body:JSON.stringify({
+        subscription:subscription.toJSON()
+      })
+    });
+
+    localStorage.setItem(
+      NOVA_PUSH_STORAGE_KEY,
+      '1'
+    );
+
+    toast(
+      'Push-уведомления включены.',
+      'success'
+    );
+    render();
+  }catch(error){
+    console.error(
+      '[Nova][PushEnable]',
+      error
+    );
+
+    toast(
+      error?.message||'Не удалось включить push-уведомления.',
+      'error'
+    );
+  }
+}
+
+async function novaPushSendTest(){
+  try{
+    await api('/api/push/test',{
+      method:'POST'
+    });
+
+    toast(
+      'Тестовое push-уведомление отправлено.',
+      'success'
+    );
+  }catch(error){
+    toast(
+      error?.message||'Не удалось отправить тестовый push.',
+      'error'
+    );
+  }
+}
+
+async function loadNovaServerNotifications(epoch=state.routeEpoch){
+  if(!state.connected || state.demo) return;
+
+  try{
+    const d=await api('/api/notifications');
+
+    if(
+      epoch!==state.routeEpoch &&
+      state.route!=='dashboard' &&
+      state.route!=='notifications'
+    ){
+      return;
+    }
+
+    state.data.notifications=
+      Array.isArray(d?.events)
+        ? d.events
+        : [];
+
+    state.dataUpdatedAt.notifications=Date.now();
+  }catch(error){
+    console.debug(
+      '[Nova][NotificationsRefresh]',
+      error?.message||error
+    );
+  }
+}
+
 function bind(){
   novaBindAnchorNavigation();
   $$('[data-go]:not(a)').forEach(el=>el.addEventListener('click',(event)=>{
@@ -19480,6 +19810,17 @@ function bind(){
   $('#notifications-mark-all')?.addEventListener(
     'click',
     novaNotificationMarkAllRead
+  );
+
+
+  $('#enable-push')?.addEventListener(
+    'click',
+    novaPushEnable
+  );
+
+  $('#push-test')?.addEventListener(
+    'click',
+    novaPushSendTest
   );
 
   $$('[data-activity]').forEach(el=>el.addEventListener('click',e=>{ if(e.target.closest('[data-download]')) return; const raw=el.dataset.activity; if(raw) { try { openActivity(JSON.parse(decodeURIComponent(raw))); } catch {} } }));
@@ -20044,7 +20385,7 @@ $$('[data-search-filter]').forEach(
   $('#login-form')?.addEventListener('submit',doLogin);$('#toggle-pass')?.addEventListener('click',()=>{const p=$('#login-password');if(p)p.type=p.type==='password'?'text':'password'});$('#demo-mode')?.addEventListener('click',loadDemo);
   $('#content-refresh')?.addEventListener('click',()=>loadView(true));
 }
-async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;state.dataUpdatedAt={};state.courseCache.clear();state.pageCache.clear();state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null};
+async function doLogin(e){e.preventDefault();const form=e.currentTarget;const btn=form.querySelector('button[type=submit]');const err=$('#login-error');btn.disabled=true;btn.innerHTML=`<span class="spinner small"></span> Подключаем…`;err.innerHTML='';try{const b=Object.fromEntries(new FormData(form).entries());const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(b)});state.connected=true;state.user=d.user;state.campusUrl=d.campusUrl||b.campusUrl;localStorage.setItem('nova-campus-url',state.campusUrl);state.demo=false;void novaPushBootstrap();state.dataUpdatedAt={};state.courseCache.clear();state.pageCache.clear();state.data={dashboard:null,courses:null,tasks:null,grades:null,schedule:null,calendar:null,messages:null,files:null,tests:null,materials:null,profile:null,view:null,activity:null,study:null,notifications:null,deadlines:null};
 state.activityCache?.clear();state.activityCache=new Map();toast(`Campus подключён · ${campusHost()}`,'success');navigate('dashboard','',true)}catch(ex){err.innerHTML=`<div class="login-error">${esc(ex.message)}</div>`}finally{btn.disabled=false;btn.innerHTML=`Подключить Campus ${icon('arrow',17)}`}}
 function confirmNovaLogout(){
   if(document.querySelector('#nova-logout-modal')) return;
@@ -20323,7 +20664,8 @@ async function loadDashboard(epoch=state.routeEpoch){
     loadData('messages',false,epoch),
     loadData('files',false,epoch),
     loadData('tests',false,epoch),
-    loadData('materials',false,epoch)
+    loadData('materials',false,epoch),
+    loadNovaServerNotifications(epoch)
   ]);
 
   if(
@@ -23397,4 +23739,4 @@ function injectNovaCalendarInlineStyles(){
 
 /* NOVA_CALENDAR_INLINE_FINAL_20260919 */
 
-(async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();injectNovaCalendarInlineStyles();injectNovaQuizInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected)loadRouteData(state.route==='course')})();
+(async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();injectNovaCalendarInlineStyles();injectNovaQuizInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected){void novaPushBootstrap();loadRouteData(state.route==='course')}})();

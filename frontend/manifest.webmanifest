@@ -1,7 +1,7 @@
 {
   "name": "Campus Nova",
   "short_name": "Nova",
-  "description": "Campus FA в интерфейсе Nova.",
+  "description": "Университетский Campus в интерфейсе Nova.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,7 +9,18 @@
   "theme_color": "#08101f",
   "orientation": "portrait-primary",
   "icons": [
-    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}
-  ]
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/"
 }

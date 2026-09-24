@@ -6,6 +6,8 @@ import fs from 'node:fs';
 import { createGzip } from 'node:zlib';
 import path from 'node:path';
 import url from 'node:url';
+import { createHash } from 'node:crypto';
+import webpush from 'web-push';
 import { fileURLToPath } from 'node:url';
 import { CampusSession, CAMPUS_ORIGIN, makeSessionId, sanitizeCampusHtml } from './campus.js';
 import { parseScheduleMessage } from './schedule-parser.js';
@@ -21,6 +23,20 @@ const HOST = process.env.HOST || '0.0.0.0';
 const TTL = 1000 * 60 * 60 * 8;
 const APP_VERSION = '13.0.0-final';
 const DEBUG_CAMPUS = process.env.DEBUG_CAMPUS === 'true';
+
+const VAPID_PUBLIC_KEY = String(process.env.VAPID_PUBLIC_KEY || '').trim();
+const VAPID_PRIVATE_KEY = String(process.env.VAPID_PRIVATE_KEY || '').trim();
+const VAPID_SUBJECT = String(process.env.VAPID_SUBJECT || '').trim();
+const PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY && VAPID_SUBJECT);
+const PUSH_POLL_MS = 3 * 60 * 1000;
+
+if (PUSH_ENABLED) {
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
 
 function normalizeCampusUrl(value) {
   const raw = String(value || '').trim();
@@ -600,6 +616,531 @@ async function dashboardData(s) {
   };
 }
 
+
+
+/* NOVA 32 · SERVER PUSH */
+
+function pushHash(value){
+  return createHash('sha256')
+    .update(String(value ?? ''))
+    .digest('hex')
+    .slice(0,16);
+}
+
+function pushCourseName(item){
+  return (
+    item?.relations?.course?.name ||
+    item?.course?.fullname ||
+    item?.course?.name ||
+    item?.course ||
+    'Campus'
+  );
+}
+
+function pushRef(item){
+  const ref=item?.ref||item?.activity?.ref||null;
+  if(!ref?.courseId) return null;
+
+  return {
+    courseId:Number(ref.courseId)||null,
+    cmid:Number(ref.cmid)||null,
+    instance:Number(ref.instance)||null,
+    contextId:Number(ref.contextId)||null,
+    type:String(ref.type||'').toLowerCase()||null
+  };
+}
+
+function pushActivityUrl(ref){
+  if(!ref?.courseId) return '/notifications';
+
+  const q=new URLSearchParams({
+    courseId:String(ref.courseId)
+  });
+
+  for(const key of ['cmid','instance','contextId','type']){
+    if(ref[key]) q.set(key,String(ref[key]));
+  }
+
+  return `/activity?${q.toString()}`;
+}
+
+function pushMaterialLabel(item){
+  const type=String(item?.ref?.type||'').toLowerCase();
+  return ['lesson','book'].includes(type)
+    ? 'Лекция'
+    : 'Материал';
+}
+
+async function pushCollectSnapshot(s){
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth()+1;
+  const day=now.getDate();
+
+  const results=await Promise.allSettled([
+    sessionFlight(
+      s,
+      'courses',
+      () => s.campus.getAdapter().listCourses()
+    ),
+    globalActivities(
+      s,
+      {type:'assign'}
+    ),
+    globalActivities(
+      s,
+      {type:'quiz'}
+    ),
+    globalActivities(
+      s,
+      {materials:true}
+    ),
+    sessionFlight(
+      s,
+      'messages',
+      () => s.campus.getAdapter().listMessages()
+    ),
+    sessionFlight(
+      s,
+      `calendar:${year}:${month}:${day}`,
+      () => s.campus.getAdapter().loadCalendar({year,month,day})
+    ),
+    sessionFlight(
+      s,
+      'grades-overview',
+      () => s.campus.getAdapter().loadGrades()
+    )
+  ]);
+
+  const valueAt=index=>
+    results[index]?.status==='fulfilled'
+      ? results[index].value
+      : null;
+
+  const courses=valueAt(0)||[];
+  const tasks=valueAt(1)||[];
+  const tests=valueAt(2)||[];
+  const materials=valueAt(3)||[];
+  const messages=valueAt(4)||{};
+  const calendar=valueAt(5)||{};
+  const grades=valueAt(6)||[];
+
+  const snapshot={};
+  const add=(entry)=>{
+    if(!entry?.id) return;
+    snapshot[entry.id]=entry;
+  };
+
+  for(const course of Array.isArray(courses)?courses:[]){
+    const id=Number(course?.id||0);
+    if(!id) continue;
+
+    const title=String(
+      course?.fullnamedisplay||
+      course?.fullname||
+      course?.shortname||
+      'Курс'
+    );
+
+    add({
+      id:`course:${id}`,
+      type:'course',
+      icon:'grid',
+      title,
+      meta:'Новый курс',
+      go:'course',
+      param:String(id),
+      fingerprint:JSON.stringify({
+        title,
+        summary:course?.summary||course?.description||''
+      })
+    });
+  }
+
+  for(const task of Array.isArray(tasks)?tasks:[]){
+    const ref=pushRef(task);
+    if(!ref) continue;
+
+    const identity=[
+      ref.courseId,
+      ref.cmid||0,
+      ref.instance||0,
+      ref.type||'assign'
+    ].join(':');
+
+    const title=String(
+      task?.identity?.name||
+      task?.name||
+      'Задание'
+    );
+
+    add({
+      id:`task:${identity}`,
+      type:'task',
+      icon:'check-square',
+      title,
+      meta:`Задание · ${pushCourseName(task)}`,
+      ref,
+      fingerprint:JSON.stringify({
+        title,
+        due:task?.due||task?.content?.due||0,
+        description:task?.description||task?.content?.description||'',
+        state:task?.state||task?.completion||null
+      })
+    });
+  }
+
+  for(const test of Array.isArray(tests)?tests:[]){
+    const ref=pushRef(test);
+    if(!ref) continue;
+
+    const identity=[
+      ref.courseId,
+      ref.cmid||0,
+      ref.instance||0,
+      ref.type||'quiz'
+    ].join(':');
+
+    const title=String(
+      test?.identity?.name||
+      test?.name||
+      'Тест'
+    );
+
+    add({
+      id:`test:${identity}`,
+      type:'test',
+      icon:'quiz',
+      title,
+      meta:`Тест · ${pushCourseName(test)}`,
+      ref,
+      fingerprint:JSON.stringify({
+        title,
+        dates:test?.content?.dates||test?.dates||[],
+        description:test?.description||test?.content?.description||'',
+        state:test?.state||null
+      })
+    });
+  }
+
+  for(const material of Array.isArray(materials)?materials:[]){
+    const ref=pushRef(material);
+    if(!ref) continue;
+
+    const identity=[
+      ref.courseId,
+      ref.cmid||0,
+      ref.instance||0,
+      ref.type||'material'
+    ].join(':');
+
+    const title=String(
+      material?.identity?.name||
+      material?.name||
+      'Материал'
+    );
+
+    const files=Array.isArray(material?.content?.files)
+      ? material.content.files.map(file=>({
+          filename:file?.filename||'',
+          filesize:Number(file?.filesize||0),
+          filepath:file?.filepath||''
+        }))
+      : [];
+
+    add({
+      id:`material:${identity}`,
+      type:'material',
+      icon:'book',
+      title,
+      meta:`${pushMaterialLabel({ref})} · ${pushCourseName(material)}`,
+      ref,
+      fingerprint:JSON.stringify({
+        title,
+        description:material?.description||material?.content?.description||'',
+        files
+      })
+    });
+  }
+
+  for(const conversation of messages?.conversations||[]){
+    const latest=Array.isArray(conversation?.messages)
+      ? conversation.messages[0]||{}
+      : {};
+
+    const id=String(
+      conversation?.id||
+      conversation?.userid||
+      conversation?.name||
+      ''
+    );
+
+    if(!id) continue;
+
+    const unread=Number(
+      conversation?.unreadcount||
+      conversation?.unreadCount||
+      0
+    );
+
+    const latestTimestamp=Number(
+      latest?.timecreated||
+      conversation?.timemodified||
+      conversation?.timecreated||
+      0
+    );
+
+    add({
+      id:`message:${id}`,
+      type:'message',
+      icon:'message',
+      title:String(conversation?.name||'Новое сообщение'),
+      meta:unread>0
+        ? `Сообщения · ${unread} новых`
+        : 'Сообщения',
+      go:'messages',
+      fingerprint:JSON.stringify({
+        unread,
+        latestTimestamp,
+        latest:String(latest?.text||latest?.message||'')
+      }),
+      unread,
+      latestTimestamp
+    });
+  }
+
+  for(const event of flattenCalendar(calendar||{})){
+    const timestamp=Number(event?.timestart||0);
+    if(
+      !timestamp ||
+      timestamp < Math.floor(Date.now()/1000) ||
+      timestamp > Math.floor(Date.now()/1000)+7*86400
+    ) continue;
+
+    const id=String(
+      event?.id ||
+      `${event?.name||'event'}:${timestamp}`
+    );
+
+    add({
+      id:`calendar:${id}`,
+      type:'event',
+      icon:'calendar',
+      title:String(event?.name||'Событие'),
+      meta:String(
+        event?.course?.fullname||
+        event?.modulename||
+        'Календарь'
+      ),
+      go:'calendar',
+      fingerprint:JSON.stringify({
+        name:event?.name||'',
+        timestart:timestamp,
+        modname:event?.modulename||'',
+        course:event?.course?.fullname||''
+      }),
+      timestamp
+    });
+  }
+
+  for(const grade of Array.isArray(grades)?grades:[]){
+    const title=String(
+      grade?.course||
+      grade?.name||
+      'Оценка'
+    );
+
+    const id=String(
+      grade?.id||
+      grade?.courseid||
+      title
+    );
+
+    add({
+      id:`grade:${id}`,
+      type:'grade',
+      icon:'chart',
+      title,
+      meta:`Оценка · ${grade?.grade??'—'}`,
+      go:'grades',
+      fingerprint:JSON.stringify({
+        title,
+        grade:grade?.grade||'',
+        percentage:grade?.percentage||grade?.contribution||'',
+        range:grade?.range||'',
+        modified:grade?.timemodified||grade?.timecreated||0
+      })
+    });
+  }
+
+  return snapshot;
+}
+
+function pushEventFromRow(row,label){
+  const id=`${row.id}:${pushHash(row.fingerprint)}:${label}`;
+  const ref=row.ref||null;
+  const url=
+    row.go==='course'
+      ? `/course/${encodeURIComponent(row.param||'')}`
+      : ref
+        ? pushActivityUrl(ref)
+        : row.go
+          ? `/${row.go}`
+          : '/notifications';
+
+  let description='';
+  if(row.type==='material') description='В Campus появился новый учебный материал.';
+  else if(row.type==='task') description='Появилось новое или изменённое задание.';
+  else if(row.type==='test') description='Появился новый или изменённый тест.';
+  else if(row.type==='message') description='Есть непрочитанное сообщение.';
+  else if(row.type==='grade') description='Обновились оценки.';
+  else if(row.type==='event') description='Обновилось событие календаря.';
+  else if(row.type==='course') description='Добавлен новый курс.';
+
+  return {
+    id,
+    type:row.type,
+    icon:row.icon||'sparkle',
+    title:row.title||'Обновление Campus',
+    meta:row.meta||'Campus',
+    description,
+    timestamp:Math.floor(Date.now()/1000),
+    priority:['message','test','task'].includes(row.type) ? 100 : 80,
+    important:['message','test','task'].includes(row.type),
+    ref,
+    go:row.go||null,
+    param:row.param||'',
+    url,
+    label
+  };
+}
+
+function pushShouldNotify(previous,row){
+  if(!previous) return true;
+
+  if(row.type==='message'){
+    const previousUnread=Number(previous.unread||0);
+    const unread=Number(row.unread||0);
+    const previousLatest=Number(previous.latestTimestamp||0);
+    const latest=Number(row.latestTimestamp||0);
+    return unread>previousUnread || latest>previousLatest;
+  }
+
+  return previous.fingerprint!==row.fingerprint;
+}
+
+function pushDetectChanges(previous,next){
+  const events=[];
+
+  for(const row of Object.values(next||{})){
+    const previousRow=previous?.[row.id]||null;
+    if(!pushShouldNotify(previousRow,row)) continue;
+
+    const label=previousRow ? 'Обновлено' : 'Новое';
+    events.push(pushEventFromRow(row,label));
+  }
+
+  return events
+    .sort((a,b)=>Number(b.timestamp||0)-Number(a.timestamp||0));
+}
+
+async function pushSendToSession(s,event){
+  if(!PUSH_ENABLED || !s?.pushSubscriptions?.size) return;
+
+  const badgeCount=Math.max(
+    1,
+    Number(s.pushEvents?.length||1)
+  );
+
+  const payload=JSON.stringify({
+    title:event.title||'Campus Nova',
+    body:[event.meta,event.description]
+      .filter(Boolean)
+      .join(' · '),
+    icon:'/icon-192.png',
+    badge:'/icon-192.png',
+    tag:event.id,
+    renotify:true,
+    badgeCount,
+    url:event.url||'/notifications'
+  });
+
+  await Promise.all(
+    [...s.pushSubscriptions.entries()].map(
+      async([endpoint,subscription])=>{
+        try{
+          await webpush.sendNotification(
+            subscription,
+            payload,
+            {TTL:86400}
+          );
+        }catch(error){
+          const status=Number(error?.statusCode||0);
+          if(status===404 || status===410){
+            s.pushSubscriptions.delete(endpoint);
+          }
+        }
+      }
+    )
+  );
+}
+
+async function pushCheckSession(s){
+  if(
+    !PUSH_ENABLED ||
+    !s?.pushSubscriptions?.size ||
+    s.pushWatcherBusy
+  ) return;
+
+  s.pushWatcherBusy=true;
+
+  try{
+    const next=await pushCollectSnapshot(s);
+    const previous=s.pushSnapshot;
+    s.pushSnapshot=next;
+    s.pushLastSyncAt=Date.now();
+
+    if(!previous) return;
+
+    const events=pushDetectChanges(
+      previous,
+      next
+    ).slice(0,5);
+
+    for(const event of events){
+      s.pushEvents=[
+        event,
+        ...(s.pushEvents||[])
+      ].slice(0,40);
+      await pushSendToSession(
+        s,
+        event
+      );
+    }
+  }catch(error){
+    console.debug(
+      '[Nova][PushWatcher]',
+      String(error?.message||error)
+    );
+  }finally{
+    s.pushWatcherBusy=false;
+  }
+}
+
+async function pushPrimeSession(s){
+  if(!PUSH_ENABLED || !s) return;
+
+  try{
+    s.pushSnapshot=await pushCollectSnapshot(s);
+    s.pushLastSyncAt=Date.now();
+  }catch(error){
+    console.debug(
+      '[Nova][PushPrime]',
+      String(error?.message||error)
+    );
+  }
+}
+
 async function api(req, res, route, q) {
   let activeSession = null;
   try {
@@ -648,10 +1189,11 @@ async function api(req, res, route, q) {
       let campusUrl; try { campusUrl = normalizeCampusUrl(b.campusUrl); } catch (e) { return json(res, e.statusCode || 400, { ok: false, error: e.message }); }
       if (!username || !password) return json(res, 400, { ok: false, error: 'Введите логин и пароль Campus.' });
       const campus = new CampusSession({ baseUrl: campusUrl, debug: DEBUG_CAMPUS }); const result = await campus.login(username, password);
-      const sid = makeSessionId(); campus.setSessionScope(sid); sessions.set(sid, { campus, cache: {}, inflight: new Map(), createdAt: Date.now(), lastSeen: Date.now() }); setSid(res, sid);
+      const sid = makeSessionId(); campus.setSessionScope(sid); sessions.set(sid, { campus, cache: {}, inflight: new Map(), createdAt: Date.now(), lastSeen: Date.now(), pushSubscriptions: new Map(), pushSnapshot: null, pushEvents: [], pushWatcherBusy: false, pushLastSyncAt: 0 }); setSid(res, sid);
       return json(res, 200, { ok: true, user: result.user, campusUrl, mode: result.mode || (result.token ? 'token' : 'session'), warning: campus.cache.get('authWarning') || campus.cache.get('tokenCapabilityWarning') || null });
     }
     if (route === '/api/auth/logout' && req.method === 'POST') { const sid = parseCookies(req).nova_sid; if (sid) sessions.delete(sid); clearSid(res); return json(res, 200, { ok: true }); }
+    if (route === '/api/push/config' && req.method === 'GET') return json(res, 200, { ok: true, enabled: PUSH_ENABLED, publicKey: PUSH_ENABLED ? VAPID_PUBLIC_KEY : null });
 
     if (route === '/api/debug/contracts' && req.method === 'GET') {
       if (!DEBUG_CAMPUS) return json(res, 404, { ok: false, error: 'Debug mode disabled.' });
@@ -672,6 +1214,83 @@ async function api(req, res, route, q) {
 
     const s = requireSession(req, res); if (!s) return;
     activeSession = s;
+
+    if (route === '/api/push/subscribe' && req.method === 'POST') {
+      if (!PUSH_ENABLED) return json(res, 503, { ok:false, error:'Push-сервис Nova ещё не настроен.' });
+      const b=await bodyJson(req);
+      const subscription=b?.subscription;
+
+      if(
+        !subscription ||
+        typeof subscription.endpoint !== 'string' ||
+        !/^https:\/\//i.test(subscription.endpoint) ||
+        !subscription.keys?.p256dh ||
+        !subscription.keys?.auth
+      ){
+        return json(res,400,{ok:false,error:'Некорректная push-подписка.'});
+      }
+
+      s.pushSubscriptions ||= new Map();
+      s.pushSubscriptions.set(
+        subscription.endpoint,
+        {
+          endpoint:subscription.endpoint,
+          expirationTime:subscription.expirationTime ?? null,
+          keys:{
+            p256dh:String(subscription.keys.p256dh),
+            auth:String(subscription.keys.auth)
+          }
+        }
+      );
+
+      s.lastSeen=Date.now();
+      s.pushSnapshot=null;
+      void pushPrimeSession(s);
+
+      return json(res,200,{
+        ok:true,
+        subscribed:true
+      });
+    }
+
+    if (route === '/api/notifications' && req.method === 'GET') {
+      return json(res,200,{
+        ok:true,
+        enabled:PUSH_ENABLED,
+        events:Array.isArray(s.pushEvents)
+          ? s.pushEvents.slice(0,40)
+          : [],
+        lastSyncAt:Number(s.pushLastSyncAt||0)
+      });
+    }
+
+    if (route === '/api/push/test' && req.method === 'POST') {
+      if (!PUSH_ENABLED) return json(res,503,{ok:false,error:'Push-сервис Nova ещё не настроен.'});
+      if (!s.pushSubscriptions?.size) return json(res,409,{ok:false,error:'Сначала включите push-уведомления на этом устройстве.'});
+
+      const event={
+        id:`push:test:${Date.now()}`,
+        type:'push',
+        icon:'bell',
+        title:'Nova работает',
+        meta:'Push-уведомления',
+        description:'Тестовое уведомление с сервера Nova.',
+        timestamp:Math.floor(Date.now()/1000),
+        important:false,
+        url:'/notifications',
+        label:'Тест'
+      };
+
+      s.pushEvents=[
+        event,
+        ...(s.pushEvents||[])
+      ].slice(0,40);
+
+      await pushSendToSession(s,event);
+
+      return json(res,200,{ok:true,sent:true});
+    }
+
     if (route === '/api/dashboard' && req.method === 'GET') { const cached=s.cache.dashboard; if(cached && Date.now()-cached.t<12000) return json(res,200,{ok:true,...cached.v}); const data=await sessionFlight(s,'dashboard',()=>dashboardData(s.campus)); s.cache.dashboard={t:Date.now(),v:{data}}; return json(res,200,{ok:true,data}); }
     if (route === '/api/courses' && req.method === 'GET') {
       const courses = await sessionFlight(
@@ -1120,4 +1739,16 @@ setInterval(()=>{const cut=Date.now()-TTL; for(const[id,s]of sessions) if(s.last
 server.keepAliveTimeout=65_000;
 server.headersTimeout=70_000;
 
+
+
+if(PUSH_ENABLED){
+  setInterval(()=>{
+    for(const s of sessions.values()){
+      if(s?.pushSubscriptions?.size){
+        s.lastSeen=Date.now();
+        void pushCheckSession(s);
+      }
+    }
+  },PUSH_POLL_MS).unref();
+}
 server.listen(PORT,HOST,()=>console.log(`Campus Nova ${APP_VERSION} running on http://${HOST}:${PORT}`));

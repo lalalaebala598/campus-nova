@@ -18711,3 +18711,119 @@ body[data-theme="light"] .nova-schedule-info-v4{
   }
 
 }
+
+/* NOVA 32 · BRAND + PUSH */
+
+.brand .nova-brand-mark{
+  padding:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  box-shadow:0 10px 28px rgba(24,183,255,.12)!important;
+}
+
+.nova-brand-logo,
+.nova-auth-logo{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  border-radius:inherit!important;
+}
+
+.auth-wordmark .nova-auth-mark{
+  padding:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  box-shadow:0 12px 28px rgba(24,183,255,.16)!important;
+}
+
+.nova-push-card{
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) auto;
+  align-items:center;
+  gap:13px;
+  margin:0 0 18px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),var(--surface));
+  box-shadow:0 12px 34px rgba(0,0,0,.06);
+}
+
+.nova-push-icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 10%,var(--surface-2));
+  border:1px solid color-mix(in srgb,var(--accent) 16%,var(--line));
+}
+
+.nova-push-copy{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.nova-push-copy .eyebrow{
+  margin:0;
+}
+
+.nova-push-copy b{
+  font-size:12px;
+  font-weight:850;
+  color:var(--text);
+}
+
+.nova-push-copy small{
+  color:var(--muted);
+  font-size:8.5px;
+  line-height:1.45;
+}
+
+.nova-push-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+}
+
+.nova-push-denied .nova-push-icon{
+  color:var(--danger);
+  background:color-mix(in srgb,var(--danger) 8%,var(--surface-2));
+}
+
+.nova-push-install .nova-push-icon{
+  color:var(--purple);
+  background:color-mix(in srgb,var(--purple) 8%,var(--surface-2));
+}
+
+@media(max-width:760px){
+  .nova-push-card{
+    grid-template-columns:42px minmax(0,1fr);
+  }
+
+  .nova-push-icon{
+    width:42px;
+    height:42px;
+  }
+
+  .nova-push-actions{
+    grid-column:1/-1;
+    justify-content:stretch;
+  }
+
+  .nova-push-actions .primary,
+  .nova-push-actions .secondary{
+    width:100%;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nova-brand-logo,
+  .nova-auth-logo{
+    transition:none!important;
+  }
+}
