@@ -1,0 +1,247 @@
+/* NOVA 29.1 · FINAL MOTION LAYER */
+
+:root{
+  --nova-motion-fast:180ms;
+  --nova-motion-base:260ms;
+  --nova-motion-slow:380ms;
+  --nova-motion-ease:cubic-bezier(.2,.75,.2,1);
+}
+
+/* Page enter */
+#page{
+  will-change:opacity,transform;
+}
+
+#page.page-entered{
+  transition:
+    opacity var(--nova-motion-base) ease,
+    transform var(--nova-motion-slow) var(--nova-motion-ease);
+}
+
+/* Smooth interaction primitives */
+button,
+a,
+[role="button"],
+input,
+textarea,
+select{
+  -webkit-tap-highlight-color:transparent;
+}
+
+button,
+[role="button"]{
+  transition:
+    transform var(--nova-motion-fast) var(--nova-motion-ease),
+    opacity var(--nova-motion-fast) ease,
+    box-shadow var(--nova-motion-base) ease,
+    background-color var(--nova-motion-base) ease,
+    border-color var(--nova-motion-base) ease;
+}
+
+button:hover,
+[role="button"]:hover{
+  transform:translateY(-1px);
+}
+
+button:active,
+[role="button"]:active{
+  transform:translateY(0) scale(.985);
+}
+
+/* Sidebar / navigation */
+.sidebar a,
+.sidebar button,
+.nav-item,
+.side-nav-item{
+  transition:
+    transform var(--nova-motion-fast) var(--nova-motion-ease),
+    background-color var(--nova-motion-base) ease,
+    color var(--nova-motion-base) ease,
+    opacity var(--nova-motion-fast) ease;
+}
+
+.sidebar a:hover,
+.sidebar button:hover,
+.nav-item:hover,
+.side-nav-item:hover{
+  transform:translateX(3px);
+}
+
+/* Cards */
+.card,
+.course-card,
+.dashboard-card,
+.stat-card,
+.activity-card,
+.schedule-card,
+.notification-item,
+.message-row,
+.deadline-card,
+.update-card{
+  transition:
+    transform var(--nova-motion-base) var(--nova-motion-ease),
+    box-shadow var(--nova-motion-base) ease,
+    border-color var(--nova-motion-base) ease;
+}
+
+.card:hover,
+.course-card:hover,
+.dashboard-card:hover,
+.stat-card:hover,
+.activity-card:hover,
+.schedule-card:hover,
+.notification-item:hover,
+.message-row:hover,
+.deadline-card:hover,
+.update-card:hover{
+  transform:translateY(-2px);
+}
+
+/* Inputs */
+input,
+textarea,
+select{
+  transition:
+    border-color var(--nova-motion-base) ease,
+    box-shadow var(--nova-motion-base) ease,
+    background-color var(--nova-motion-base) ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+  transform:translateY(-1px);
+}
+
+/* Modal */
+.modal-backdrop{
+  animation:nova29Backdrop var(--nova-motion-base) ease both;
+}
+
+.modal{
+  animation:nova29Modal var(--nova-motion-slow) var(--nova-motion-ease) both;
+  transform-origin:center;
+}
+
+@keyframes nova29Backdrop{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+@keyframes nova29Modal{
+  from{
+    opacity:0;
+    transform:translateY(10px) scale(.985);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+/* Toasts */
+.toast{
+  transition:
+    transform var(--nova-motion-base) var(--nova-motion-ease),
+    opacity var(--nova-motion-base) ease;
+}
+
+/* Popovers / floating panels */
+.popover,
+.dropdown,
+.context-menu,
+.search-popover,
+.profile-popover{
+  animation:nova29Popover var(--nova-motion-base) var(--nova-motion-ease) both;
+  transform-origin:top center;
+}
+
+@keyframes nova29Popover{
+  from{
+    opacity:0;
+    transform:translateY(5px) scale(.99);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+/* Calendar / schedule hover */
+.calendar-day,
+.calendar-cell,
+.schedule-day,
+.schedule-event{
+  transition:
+    transform var(--nova-motion-fast) var(--nova-motion-ease),
+    background-color var(--nova-motion-base) ease,
+    box-shadow var(--nova-motion-base) ease;
+}
+
+.calendar-day:hover,
+.calendar-cell:hover,
+.schedule-day:hover,
+.schedule-event:hover{
+  transform:translateY(-1px);
+}
+
+/* Message bubbles */
+.nova27-message-row{
+  transition:
+    transform var(--nova-motion-base) var(--nova-motion-ease),
+    opacity var(--nova-motion-base) ease;
+}
+
+.nova27-message-row:hover{
+  transform:translateX(2px);
+}
+
+/* Activity / learning controls */
+.activity-item,
+.lesson-item,
+.assignment-item,
+.quiz-item,
+.file-item,
+.resource-item{
+  transition:
+    transform var(--nova-motion-fast) var(--nova-motion-ease),
+    background-color var(--nova-motion-base) ease,
+    border-color var(--nova-motion-base) ease;
+}
+
+.activity-item:hover,
+.lesson-item:hover,
+.assignment-item:hover,
+.quiz-item:hover,
+.file-item:hover,
+.resource-item:hover{
+  transform:translateX(3px);
+}
+
+/* Loading states remain calm */
+.skeleton,
+.loading,
+.spinner{
+  will-change:opacity;
+}
+
+/* Mobile drawer */
+@media (max-width:900px){
+  .sidebar{
+    transition:
+      transform var(--nova-motion-slow) var(--nova-motion-ease),
+      box-shadow var(--nova-motion-slow) ease !important;
+  }
+}
+
+/* Don't animate while browser asks for reduced motion */
+@media (prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+    transition-duration:.001ms !important;
+  }
+}
