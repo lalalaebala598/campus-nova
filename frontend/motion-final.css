@@ -815,3 +815,320 @@ select:focus{
     filter:none !important;
   }
 }
+
+/* ============================================================
+   NOVA 30.1 · ICON MOTION UPGRADE
+   More visible, richer, still premium.
+   ============================================================ */
+
+.nav-item > .icon{
+  transform-box:fill-box;
+  transform-origin:center center;
+  transition:
+    transform .28s cubic-bezier(.2,.8,.2,1),
+    filter .28s ease;
+}
+
+/* Общий hover */
+.nav-item:hover > .icon{
+  filter:
+    drop-shadow(0 0 5px currentColor)
+    drop-shadow(0 3px 6px rgba(0,0,0,.18));
+}
+
+/* Главная */
+.nav-item[data-go="dashboard"]:hover > .icon{
+  animation:nova301Home .62s cubic-bezier(.2,.82,.25,1) both;
+}
+
+@keyframes nova301Home{
+  0%{transform:scale(1) translateY(0)}
+  28%{transform:scale(1.18) translateY(-4px)}
+  52%{transform:scale(1.08) translateY(1px) rotate(-3deg)}
+  76%{transform:scale(1.12) translateY(-1px) rotate(2deg)}
+  100%{transform:scale(1.08) translateY(0) rotate(0)}
+}
+
+/* Учебный режим */
+.nav-item[data-go="study"]:hover > .icon{
+  animation:nova301Study .62s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova301Study{
+  0%{transform:perspective(80px) rotateY(0) scale(1)}
+  35%{transform:perspective(80px) rotateY(-12deg) rotateZ(-3deg) scale(1.1)}
+  65%{transform:perspective(80px) rotateY(8deg) rotateZ(2deg) scale(1.07)}
+  100%{transform:perspective(80px) rotateY(0) rotateZ(0) scale(1.06)}
+}
+
+/* Курсы */
+.nav-item[data-go="courses"]:hover > .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(1){
+  animation:nova301Tile .58s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(2){
+  animation:nova301Tile .58s .07s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(3){
+  animation:nova301Tile .58s .14s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover > .icon rect:nth-of-type(4){
+  animation:nova301Tile .58s .21s cubic-bezier(.2,.82,.2,1) both;
+}
+
+@keyframes nova301Tile{
+  0%{transform:scale(.72) rotate(-4deg);opacity:.45}
+  48%{transform:scale(1.28) rotate(3deg);opacity:1}
+  75%{transform:scale(.94) rotate(-1deg)}
+  100%{transform:scale(1) rotate(0)}
+}
+
+/* Расписание */
+.nav-item[data-go="schedule"]:hover > .icon{
+  animation:nova301Schedule .72s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="schedule"]:hover > .icon path:nth-of-type(2){
+  transform-box:fill-box;
+  transform-origin:left bottom;
+  animation:nova301Hand .72s cubic-bezier(.2,.78,.2,1) both;
+}
+
+@keyframes nova301Schedule{
+  0%{transform:scale(1) rotate(0)}
+  35%{transform:scale(1.12) rotate(-7deg)}
+  58%{transform:scale(1.08) rotate(5deg)}
+  100%{transform:scale(1.07) rotate(0)}
+}
+
+@keyframes nova301Hand{
+  0%{transform:rotate(0)}
+  55%{transform:rotate(145deg)}
+  100%{transform:rotate(0)}
+}
+
+/* Дедлайны */
+.nav-item[data-go="deadlines"]:hover > .icon{
+  animation:nova301Deadline .58s cubic-bezier(.2,.82,.2,1) both;
+  filter:
+    drop-shadow(0 0 8px currentColor)
+    drop-shadow(0 0 2px currentColor);
+}
+
+@keyframes nova301Deadline{
+  0%{transform:scale(1) translateY(0)}
+  24%{transform:scale(1.14) translateY(-3px) rotate(-5deg)}
+  42%{transform:scale(1.08) translateY(2px) rotate(5deg)}
+  60%{transform:scale(1.12) translateY(-1px) rotate(-3deg)}
+  100%{transform:scale(1.08) translateY(0) rotate(0)}
+}
+
+/* Оценки */
+.nav-item[data-go="grades"]:hover > .icon{
+  animation:nova301Grades .55s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="grades"]:hover > .icon path:last-of-type{
+  stroke-dasharray:40;
+  stroke-dashoffset:40;
+  animation:nova301ChartDraw .62s cubic-bezier(.2,.78,.2,1) .02s both;
+}
+
+@keyframes nova301Grades{
+  0%{transform:scale(.95)}
+  40%{transform:scale(1.17) translateY(-2px)}
+  70%{transform:scale(1.05)}
+  100%{transform:scale(1.1)}
+}
+
+@keyframes nova301ChartDraw{
+  0%{stroke-dashoffset:40;opacity:.25}
+  75%{stroke-dashoffset:0;opacity:1}
+  100%{stroke-dashoffset:0}
+}
+
+/* Задания */
+.nav-item[data-go="tasks"]:hover > .icon{
+  animation:nova301Tasks .55s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="tasks"]:hover > .icon path:last-of-type{
+  stroke-dasharray:22;
+  stroke-dashoffset:22;
+  animation:nova301CheckDraw .48s cubic-bezier(.25,.82,.2,1) .06s both;
+}
+
+@keyframes nova301Tasks{
+  0%{transform:scale(1) rotate(0)}
+  32%{transform:scale(1.15) rotate(-5deg)}
+  58%{transform:scale(1.08) rotate(3deg)}
+  100%{transform:scale(1.08) rotate(0)}
+}
+
+@keyframes nova301CheckDraw{
+  0%{stroke-dashoffset:22;opacity:.2}
+  68%{stroke-dashoffset:0;opacity:1}
+  100%{stroke-dashoffset:0}
+}
+
+/* Календарь */
+.nav-item[data-go="calendar"]:hover > .icon{
+  animation:nova301Calendar .68s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova301Calendar{
+  0%{transform:perspective(80px) rotateX(0) rotateZ(0) scale(1)}
+  35%{transform:perspective(80px) rotateX(-12deg) rotateZ(5deg) scale(1.12)}
+  65%{transform:perspective(80px) rotateX(7deg) rotateZ(-3deg) scale(1.07)}
+  100%{transform:perspective(80px) rotateX(0) rotateZ(0) scale(1.08)}
+}
+
+/* Сообщения */
+.nav-item[data-go="messages"]:hover > .icon{
+  animation:nova301Messages .6s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="messages"]:hover > .icon path:first-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova301Bubble .6s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="messages"]:hover > .icon path:last-of-type{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova301Signal .42s .08s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova301Messages{
+  0%{transform:translateX(0) scale(1)}
+  22%{transform:translateX(-4px) scale(1.08)}
+  44%{transform:translateX(4px) scale(1.13)}
+  66%{transform:translateX(-2px) scale(1.08)}
+  100%{transform:translateX(0) scale(1.08)}
+}
+
+@keyframes nova301Bubble{
+  0%{transform:scale(.96)}
+  50%{transform:scale(1.08)}
+  100%{transform:scale(1)}
+}
+
+@keyframes nova301Signal{
+  0%{opacity:.2;transform:scale(.5)}
+  55%{opacity:1;transform:scale(1.3)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+/* Файлы */
+.nav-item[data-go="files"]:hover > .icon{
+  animation:nova301Files .62s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="files"]:hover > .icon path:first-of-type{
+  animation:nova301FolderBody .6s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.nav-item[data-go="files"]:hover > .icon path:last-of-type{
+  animation:nova301FolderLip .54s .05s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova301Files{
+  0%{transform:scale(1)}
+  35%{transform:translateY(-3px) scale(1.14)}
+  70%{transform:translateY(1px) scale(1.09)}
+  100%{transform:translateY(0) scale(1.08)}
+}
+
+@keyframes nova301FolderBody{
+  0%{transform:translateY(1px)}
+  45%{transform:translateY(-3px)}
+  100%{transform:translateY(0)}
+}
+
+@keyframes nova301FolderLip{
+  0%{transform:translateY(2px);opacity:.45}
+  55%{transform:translateY(-2px);opacity:1}
+  100%{transform:translateY(0);opacity:1}
+}
+
+/* Материалы */
+.nav-item[data-go="materials"]:hover > .icon{
+  animation:nova301Materials .62s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes nova301Materials{
+  0%{transform:rotate(0) scale(1)}
+  30%{transform:rotate(-8deg) translateY(-2px) scale(1.1)}
+  58%{transform:rotate(6deg) translateY(1px) scale(1.08)}
+  100%{transform:rotate(0) translateY(0) scale(1.08)}
+}
+
+/* Тесты */
+.nav-item[data-go="tests"]:hover > .icon{
+  animation:nova301Tests .62s cubic-bezier(.2,.82,.2,1) both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(2){
+  animation:nova301Scan .42s ease both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(3){
+  animation:nova301Scan .42s .08s ease both;
+}
+
+.nav-item[data-go="tests"]:hover > .icon path:nth-of-type(4){
+  animation:nova301Scan .42s .16s ease both;
+}
+
+@keyframes nova301Tests{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.14) translateY(-2px) rotate(-2deg)}
+  65%{transform:scale(1.08) rotate(2deg)}
+  100%{transform:scale(1.08) rotate(0)}
+}
+
+@keyframes nova301Scan{
+  0%{transform:translateX(-3px);opacity:.3}
+  65%{transform:translateX(2px);opacity:1}
+  100%{transform:translateX(0);opacity:1}
+}
+
+/* Профиль */
+.sidebar-bottom > .nav-item[data-go="profile"]:hover > .icon{
+  animation:nova301Profile .62s cubic-bezier(.2,.82,.2,1) both;
+  filter:
+    drop-shadow(0 0 7px currentColor)
+    drop-shadow(0 3px 6px rgba(0,0,0,.18));
+}
+
+@keyframes nova301Profile{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.18) translateY(-3px)}
+  55%{transform:scale(1.08) translateY(1px)}
+  100%{transform:scale(1.1) translateY(0)}
+}
+
+/* Active icon */
+.nav-item.active > .icon{
+  filter:
+    drop-shadow(0 0 5px currentColor)
+    drop-shadow(0 2px 5px rgba(0,0,0,.14));
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion:reduce){
+  .nav-item > .icon,
+  .nav-item > .icon *{
+    animation:none !important;
+    transform:none !important;
+    filter:none !important;
+  }
+}
