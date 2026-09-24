@@ -1,0 +1,566 @@
+/*
+ * NOVA 34 · ACTIVITY WORKSPACE
+ * Focused presentation layer for practice/assignment activities.
+ * Campus data, downloads, uploads and action bindings remain untouched.
+ */
+
+.activity-page .content-card{
+  width:min(1180px,100%);
+  margin:0 auto;
+  padding:0;
+  overflow:visible;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+}
+
+.activity-page .content-toolbar{
+  margin:0 0 16px;
+  padding:0;
+}
+
+.activity-page .back-button{
+  margin:0;
+  min-height:38px;
+  padding:0 10px;
+  border:1px solid transparent;
+  border-radius:11px;
+  color:var(--muted);
+  background:transparent;
+  transition:.2s ease;
+}
+
+.activity-page .back-button:hover{
+  color:var(--text);
+  border-color:var(--line);
+  background:var(--surface);
+  transform:none;
+}
+
+.nova34-activity-head{
+  margin-bottom:18px;
+}
+
+.nova34-head-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px;
+  min-width:0;
+}
+
+.nova34-kicker{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  max-width:100%;
+  padding:0 9px;
+  border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));
+  border-radius:8px;
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));
+  color:var(--accent);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.activity-page .nova34-activity-head h1{
+  max-width:950px;
+  margin:10px 0 0;
+  color:var(--text);
+  font-size:clamp(30px,3.5vw,48px);
+  line-height:1.02;
+  letter-spacing:-.055em;
+}
+
+.activity-page #campus-content{
+  margin-top:0;
+  line-height:normal;
+  font-size:initial;
+}
+
+.nova34-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 308px;
+  align-items:start;
+  gap:16px;
+}
+
+.nova34-main,
+.nova34-side{
+  min-width:0;
+}
+
+.nova34-main{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.nova34-side{
+  position:sticky;
+  top:94px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.nova34-card,
+.nova34-section{
+  min-width:0;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface);
+  box-shadow:0 12px 40px rgba(0,0,0,.08);
+}
+
+.nova34-section{
+  padding:18px;
+}
+
+.nova34-condition{
+  min-width:0;
+}
+
+.nova34-condition .nova34-description{
+  max-width:820px;
+}
+
+
+.nova34-section-head{
+  margin-bottom:13px;
+}
+
+.nova34-section-label{
+  display:block;
+  margin-bottom:7px;
+  color:var(--accent);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.17em;
+  text-transform:uppercase;
+}
+
+.nova34-section-title{
+  margin:0;
+  color:var(--text);
+  font-size:17px;
+  line-height:1.2;
+  letter-spacing:-.03em;
+}
+
+.nova34-section-subtitle{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.45;
+}
+
+.nova34-description{
+  color:var(--text);
+  font-size:13px;
+  line-height:1.72;
+  overflow-wrap:anywhere;
+}
+
+.nova34-description p{
+  margin:0 0 12px;
+}
+
+.nova34-description p:last-child{
+  margin-bottom:0;
+}
+
+.nova34-description ul,
+.nova34-description ol{
+  margin:9px 0 13px;
+  padding-left:20px;
+}
+
+.nova34-description li{
+  margin:5px 0;
+}
+
+.nova34-description img,
+.nova34-description video{
+  max-width:100%;
+  height:auto;
+  border-radius:12px;
+}
+
+.nova34-description table{
+  max-width:100%;
+  display:block;
+  overflow:auto;
+}
+
+.nova34-overview{
+  padding:15px;
+}
+
+.nova34-overview-head{
+  margin-bottom:10px;
+}
+
+.nova34-overview-head h2{
+  margin:0;
+  color:var(--text);
+  font-size:15px;
+  letter-spacing:-.02em;
+}
+
+.nova34-overview .nova-practice-status-grid{
+  margin:0;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+
+.nova34-overview .nova-practice-status-card{
+  min-height:66px;
+  padding:11px;
+  border-radius:14px;
+  background:var(--surface-2);
+}
+
+.nova34-overview .nova-practice-status-card b{
+  font-size:11px;
+}
+
+.nova34-overview .nova-practice-status-card small{
+  font-size:9px;
+}
+
+.nova34-submit{
+  position:relative;
+  overflow:hidden;
+  padding:17px;
+  border-color:color-mix(in srgb,var(--accent) 22%,var(--line)) !important;
+  background:
+    radial-gradient(circle at 100% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 42%),
+    var(--surface) !important;
+}
+
+.nova34-submit:before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:3px;
+  background:linear-gradient(180deg,var(--accent),#667aff);
+}
+
+.nova34-submit .eyebrow{
+  margin-bottom:7px;
+}
+
+.nova34-submit h2{
+  margin:0;
+  color:var(--text);
+  font-size:17px;
+  line-height:1.15;
+  letter-spacing:-.03em;
+}
+
+.nova34-submit p{
+  margin:7px 0 14px;
+  color:var(--muted);
+  font-size:10.5px;
+  line-height:1.55;
+}
+
+.nova34-submit .primary{
+  width:100%;
+  min-height:44px;
+}
+
+.nova34-source-files,
+.nova34-my-answer{
+  padding:0;
+  overflow:hidden;
+}
+
+.nova34-source-files .nova-practice-files-head,
+.nova34-my-answer .nova-practice-files-head{
+  padding:16px 18px 12px;
+}
+
+.nova34-source-files .nova-practice-file-list,
+.nova34-my-answer .nova-practice-file-list{
+  padding:0 12px 12px;
+}
+
+.nova34-source-files .nova-practice-file,
+.nova34-my-answer .nova-practice-file{
+  min-width:0;
+  padding:11px;
+  border-radius:13px;
+  background:var(--surface-2);
+}
+
+.nova34-source-files .nova-practice-file + .nova-practice-file,
+.nova34-my-answer .nova-practice-file + .nova-practice-file{
+  margin-top:7px;
+}
+
+.nova34-source-files .nova-practice-file-icon,
+.nova34-my-answer .nova-practice-file-icon{
+  width:38px;
+  height:38px;
+  min-width:38px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+  background:var(--surface-3);
+  color:var(--accent);
+}
+
+.nova34-source-files .nova-practice-file-copy,
+.nova34-my-answer .nova-practice-file-copy{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.nova34-source-files .nova-practice-file-copy b,
+.nova34-my-answer .nova-practice-file-copy b{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--text);
+  font-size:11px;
+  line-height:1.35;
+}
+
+.nova34-source-files .nova-practice-file-copy small,
+.nova34-my-answer .nova-practice-file-copy small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.35;
+  white-space:normal;
+}
+
+.nova34-source-files .nova-practice-download,
+.nova34-my-answer .nova-practice-download{
+  flex:0 0 auto;
+  min-width:94px !important;
+  min-height:38px !important;
+  height:38px !important;
+  padding:0 11px !important;
+  border:1px solid var(--line) !important;
+  border-radius:11px !important;
+  background:var(--control) !important;
+  color:var(--text) !important;
+  font-size:9px !important;
+}
+
+.nova34-source-files .nova-practice-download:hover,
+.nova34-my-answer .nova-practice-download:hover{
+  border-color:color-mix(in srgb,var(--accent) 30%,var(--line)) !important;
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface)) !important;
+  transform:none;
+}
+
+.nova34-my-answer{
+  margin:0;
+  border:1px solid var(--line);
+}
+
+.nova34-my-answer .nova-practice-files-head{
+  border-bottom:1px solid var(--line);
+}
+
+.nova34-my-answer .nova-practice-count{
+  min-width:28px;
+  height:28px;
+}
+
+.nova34-my-answer .nova-practice-submission-text{
+  margin:12px;
+}
+
+.nova34-my-answer .nova-practice-file{
+  border-color:color-mix(in srgb,var(--good) 12%,var(--line)) !important;
+}
+
+.nova34-my-answer .nova-practice-file-icon{
+  color:var(--good);
+}
+
+.nova-assignment-form{
+  width:min(860px,100%);
+  margin:0 auto;
+}
+
+.nova-assignment-form .nova-answer-panel{
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface);
+  box-shadow:0 12px 40px rgba(0,0,0,.08);
+  padding:18px;
+}
+
+.nova-assignment-form .nova-answer-panel-head{
+  padding-bottom:15px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:15px;
+}
+
+.nova-assignment-form .nova-answer-panel-head h2{
+  margin:0;
+  color:var(--text);
+  font-size:20px;
+  letter-spacing:-.03em;
+}
+
+.nova-assignment-form .nova-answer-panel-head p{
+  max-width:620px;
+  margin:7px 0 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+}
+
+.nova-assignment-form .nova-upload-zone{
+  display:grid;
+  place-items:center;
+  gap:7px;
+  min-height:190px;
+  padding:24px;
+  border:1px dashed color-mix(in srgb,var(--accent) 28%,var(--line));
+  border-radius:17px;
+  background:color-mix(in srgb,var(--accent) 3.5%,var(--surface-2));
+  text-align:center;
+}
+
+.nova-assignment-form .nova-upload-zone > b{
+  color:var(--text);
+  font-size:14px;
+}
+
+.nova-assignment-form .nova-upload-zone > span{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.nova-assignment-form .nova-upload-icon{
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  background:color-mix(in srgb,var(--accent) 10%,var(--surface-3));
+  color:var(--accent);
+}
+
+.nova-assignment-form .nova-upload-item{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 28px;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface-2);
+}
+
+.nova-assignment-form .nova-answer-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:13px;
+}
+
+.nova-assignment-form .nova-answer-actions .primary{
+  min-width:220px;
+}
+
+@media(max-width:900px){
+  .activity-page .content-card{width:100%;}
+  .nova34-grid{grid-template-columns:1fr;}
+  .nova34-side{position:static;}
+}
+
+@media(max-width:680px){
+  .activity-page .content-toolbar{margin-bottom:11px;}
+  .activity-page .nova34-activity-head h1{
+    font-size:clamp(29px,8vw,38px);
+  }
+  .nova34-grid{
+    display:flex;
+    flex-direction:column;
+    gap:11px;
+  }
+  .nova34-side{display:contents;}
+  .nova34-overview{order:1;}
+  .nova34-main{order:2;gap:11px;}
+  .nova34-submit{order:3;}
+  .nova34-section,
+  .nova34-card,
+  .nova-assignment-form .nova-answer-panel{
+    border-radius:17px;
+  }
+  .nova34-section{padding:14px;}
+  .nova34-description{
+    font-size:12.5px;
+    line-height:1.68;
+  }
+  .nova34-source-files .nova-practice-files-head,
+  .nova34-my-answer .nova-practice-files-head{
+    padding:14px;
+  }
+  .nova34-source-files .nova-practice-file-list,
+  .nova34-my-answer .nova-practice-file-list{
+    padding:0 10px 10px;
+  }
+  .nova34-source-files .nova-practice-file,
+  .nova34-my-answer .nova-practice-file{
+    display:grid !important;
+    grid-template-columns:38px minmax(0,1fr);
+    gap:9px;
+    align-items:center !important;
+  }
+  .nova34-source-files .nova-practice-download,
+  .nova34-my-answer .nova-practice-download{
+    grid-column:1 / -1;
+    width:100%;
+    min-width:0 !important;
+  }
+  .nova34-submit{padding:15px;}
+  .nova34-submit h2{font-size:16px;}
+  .nova-assignment-form .nova-answer-panel{padding:14px;}
+  .nova-assignment-form .nova-answer-panel-head{display:block;}
+  .nova-assignment-form .nova-upload-zone{
+    min-height:175px;
+    padding:20px 14px;
+  }
+  .nova-assignment-form .nova-answer-actions{flex-direction:column;}
+  .nova-assignment-form .nova-answer-actions button{
+    width:100%;
+    min-width:0 !important;
+  }
+}
+
+@media(max-width:420px){
+  .activity-page .content-toolbar{margin-bottom:9px;}
+  .nova34-kicker{
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .activity-page .nova34-activity-head h1{font-size:30px;}
+  .nova34-section{padding:13px;}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .activity-page .back-button,
+  .nova34-source-files .nova-practice-download,
+  .nova34-my-answer .nova-practice-download{
+    transition:none !important;
+  }
+}
