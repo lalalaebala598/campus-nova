@@ -23755,3 +23755,666 @@ function injectNovaCalendarInlineStyles(){
 /* NOVA_CALENDAR_INLINE_FINAL_20260919 */
 
 (async function boot(){injectDashboardHomeOverrides();injectNovaAccountInlineStyles();injectNovaCalendarInlineStyles();injectNovaQuizInlineStyles();setTheme();parseRoute();try{const st=await api('/api/auth/status');state.connected=Boolean(st.connected);state.user=st.user||null;state.campusUrl=st.campusUrl||state.campusUrl;if(state.campusUrl)localStorage.setItem('nova-campus-url',state.campusUrl)}catch(e){console.warn(e)}const params=new URLSearchParams(location.search);if(!state.connected&&params.get('demo')==='1'){return loadDemo()}render();if(state.connected){void novaPushBootstrap();loadRouteData(state.route==='course')}})();
+
+/* NOVA 35.1 · QUIZ FUNCTIONALITY OVERRIDE 20260924 */
+
+let nova351QuizBusy = false;
+let nova351QuizSeq = 0;
+
+function nova351QuizIdentity(path = '') {
+  const normalized = normalizePath(path);
+  if (!normalized) return null;
+
+  try {
+    const u = new URL(
+      normalized,
+      campusOrigin() || window.location.origin
+    );
+
+    if (!/\/mod\/quiz\/attempt\.php$/i.test(u.pathname)) {
+      return null;
+    }
+
+    const attempt = Number(
+      u.searchParams.get('attempt') || 0
+    );
+
+    const pageRaw = u.searchParams.get('page');
+    const page =
+      pageRaw === null || pageRaw === ''
+        ? 0
+        : Number(pageRaw);
+
+    if (
+      !Number.isInteger(attempt) ||
+      attempt <= 0 ||
+      !Number.isInteger(page) ||
+      page < 0
+    ) {
+      return null;
+    }
+
+    return {
+      normalized:
+        u.pathname +
+        (u.search ? u.search : '') +
+        (u.hash ? u.hash : ''),
+      attempt,
+      page
+    };
+  } catch {
+    return null;
+  }
+}
+
+function nova351QuizSameAttempt(left = '', right = '') {
+  const a = nova351QuizIdentity(left);
+  const b = nova351QuizIdentity(right);
+
+  if (!a || !b) return true;
+
+  return a.attempt === b.attempt;
+}
+
+function nova351QuizPageFromRaw(
+  raw,
+  path,
+  fallbackTitle = 'Тест'
+) {
+  const html = String(raw || '').trim();
+
+  if (!html) {
+    throw new Error(
+      'Campus вернул пустую страницу.'
+    );
+  }
+
+  const doc =
+    new DOMParser().parseFromString(
+      html,
+      'text/html'
+    );
+
+  const title =
+    text(
+      doc.querySelector('title')?.textContent ||
+      doc.querySelector('h1')?.textContent ||
+      fallbackTitle
+    ) || fallbackTitle;
+
+  return {
+    title,
+    path,
+    kind:'html',
+    html
+  };
+}
+
+async function nova351FetchQuizPage(path) {
+  const normalized =
+    normalizePath(path);
+
+  if (!nova351QuizIdentity(normalized)) {
+    throw new Error(
+      'Некорректная ссылка на вопрос.'
+    );
+  }
+
+  let firstError = null;
+
+  try {
+    const response =
+      await api(
+        `/api/page?path=${encodeURIComponent(
+          normalized
+        )}`,
+        {
+          timeoutMs:15000
+        }
+      );
+
+    if (
+      response?.page?.html &&
+      nova351QuizIdentity(
+        response.page.path ||
+        normalized
+      )
+    ) {
+      return response.page;
+    }
+
+    firstError =
+      new Error(
+        'Campus не вернул корректную страницу вопроса.'
+      );
+  } catch(error) {
+    firstError = error;
+  }
+
+  /*
+   * Second path: direct authenticated Campus proxy.
+   * It follows upstream redirects and bypasses parsePage.
+   */
+  try {
+    const controller =
+      typeof AbortController === 'function'
+        ? new AbortController()
+        : null;
+
+    const timer =
+      controller
+        ? setTimeout(
+            () => controller.abort(),
+            12000
+          )
+        : null;
+
+    let response;
+
+    try {
+      response =
+        await fetch(
+          `/api/campus/raw?path=${encodeURIComponent(
+            normalized
+          )}`,
+          {
+            method:'GET',
+            credentials:'same-origin',
+            ...(controller
+              ? { signal:controller.signal }
+              : {})
+          }
+        );
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    }
+
+    const raw =
+      await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `Campus вернул ${response.status}.`
+      );
+    }
+
+    if (
+      /name=["']password["']/i.test(raw) &&
+      /вход|login/i.test(
+        text(raw.slice(0,12000))
+      )
+    ) {
+      throw new Error(
+        'Сессия Campus закончилась. Подключите Campus заново.'
+      );
+    }
+
+    const page =
+      nova351QuizPageFromRaw(
+        raw,
+        normalized
+      );
+
+    if (
+      !nova351QuizIdentity(page.path) ||
+      !/\/mod\/quiz\/attempt\.php/i.test(raw)
+    ) {
+      throw new Error(
+        'Campus вернул не страницу текущей попытки.'
+      );
+    }
+
+    return page;
+  } catch(error) {
+    throw (
+      error ||
+      firstError ||
+      new Error(
+        'Не удалось открыть вопрос.'
+      )
+    );
+  }
+}
+
+/*
+ * Last declaration wins, replacing the older loader while
+ * preserving the rest of the existing quiz system.
+ */
+async function nova351LoadNovaQuizPage(
+  path,
+  trigger = null
+) {
+  const normalized =
+    normalizePath(path);
+
+  const target =
+    nova351QuizIdentity(normalized);
+
+  if (!target) {
+    toast(
+      'Некорректная ссылка на вопрос теста.',
+      'error'
+    );
+    return false;
+  }
+
+  if (
+    state.route !== 'activity' ||
+    state.data.activity?.result?.kind !== 'quiz-action'
+  ) {
+    return false;
+  }
+
+  if (nova351QuizBusy) {
+    return false;
+  }
+
+  const previousResult =
+    state.data.activity.result || {};
+
+  const currentPath =
+    normalizePath(
+      previousResult.attemptPath ||
+      previousResult.redirectedPath ||
+      ''
+    ) || '';
+
+  if (currentPath === normalized) {
+    return false;
+  }
+
+  if (
+    currentPath &&
+    !nova351QuizSameAttempt(
+      currentPath,
+      normalized
+    )
+  ) {
+    toast(
+      'Этот вопрос относится к другой попытке.',
+      'error'
+    );
+    return false;
+  }
+
+  nova351QuizBusy = true;
+  const seq =
+    ++nova351QuizSeq;
+
+  const workspace =
+    document.querySelector(
+      '.nova-quiz-workspace'
+    );
+
+  const triggers =
+    [
+      trigger,
+      ...document.querySelectorAll(
+        '.nova-quiz-workspace [data-quiz-path]'
+      )
+    ]
+      .filter(Boolean);
+
+  const originals =
+    new Map();
+
+  triggers.forEach(el=>{
+    originals.set(
+      el,
+      el.innerHTML
+    );
+
+    el.disabled = true;
+  });
+
+  if (trigger) {
+    trigger.classList.add(
+      'is-loading'
+    );
+
+    trigger.innerHTML =
+      `${icon('spinner',15)} Открываем…`;
+  }
+
+  workspace?.classList.add(
+    'is-busy'
+  );
+
+  workspace?.setAttribute(
+    'aria-busy',
+    'true'
+  );
+
+  try {
+    const page =
+      await nova351FetchQuizPage(
+        normalized
+      );
+
+    if (
+      seq !== nova351QuizSeq ||
+      state.route !== 'activity' ||
+      !state.data.activity
+    ) {
+      return false;
+    }
+
+    const pagePath =
+      normalizePath(
+        page.path ||
+        normalized
+      ) || normalized;
+
+    const pageIdentity =
+      nova351QuizIdentity(
+        pagePath
+      );
+
+    if (
+      !pageIdentity ||
+      pageIdentity.attempt !==
+        target.attempt
+    ) {
+      throw new Error(
+        'Campus вернул не тот вопрос текущей попытки.'
+      );
+    }
+
+    const html =
+      String(
+        page.html || ''
+      ).trim();
+
+    if (!html) {
+      throw new Error(
+        'Campus не передал содержимое вопроса.'
+      );
+    }
+
+    const nextResult = {
+      ...previousResult,
+      kind:'quiz-action',
+      title:
+        page.title ||
+        previousResult.title ||
+        'Тест',
+      html,
+      attemptPath:
+        pagePath,
+      redirectedPath:
+        pagePath,
+      quizNavigation:
+        extractQuizNavigation(
+          html,
+          pagePath
+        )
+    };
+
+    state.data.activity.result =
+      nextResult;
+
+    rememberQuizNavigation(
+      nextResult
+    );
+
+    state.status.activity =
+      'success';
+
+    state.errors.activity =
+      null;
+
+    render();
+    bindCampusContent();
+
+    novaFrame(()=>{
+      document.querySelector(
+        '.nova-quiz-content'
+      )?.scrollIntoView({
+        behavior:'smooth',
+        block:'start'
+      });
+    });
+
+    return true;
+
+  } catch(error) {
+
+    console.error(
+      '[Nova][QuizNavigation351]',
+      {
+        path:normalized,
+        message:
+          error?.message ||
+          String(error)
+      }
+    );
+
+    toast(
+      error?.message ||
+      'Не удалось открыть вопрос. Попробуйте ещё раз.',
+      'error'
+    );
+
+    return false;
+
+  } finally {
+
+    nova351QuizBusy = false;
+
+    workspace?.classList.remove(
+      'is-busy'
+    );
+
+    workspace?.setAttribute(
+      'aria-busy',
+      'false'
+    );
+
+    if (document.body) {
+      triggers.forEach(el=>{
+        if(!document.body.contains(el)){
+          return;
+        }
+
+        const original =
+          originals.get(el);
+
+        if(original !== undefined){
+          el.innerHTML = original;
+        }
+
+        el.disabled = false;
+        el.classList.remove(
+          'is-loading'
+        );
+      });
+    }
+  }
+}
+
+async function nova351SubmitQuizControl(
+  action,
+  trigger = null
+) {
+  if (
+    !['previous','next','finish'].includes(action) ||
+    nova351QuizBusy
+  ) {
+    return false;
+  }
+
+  nova351QuizBusy = true;
+  ++nova351QuizSeq;
+
+  const workspace =
+    document.querySelector(
+      '.nova-quiz-workspace'
+    );
+
+  const controls =
+    [
+      ...document.querySelectorAll(
+        '.nova-quiz-workspace [data-quiz-path], .nova-quiz-workspace [data-quiz-control]'
+      )
+    ];
+
+  controls.forEach(
+    el => {
+      el.disabled = true;
+    }
+  );
+
+  const original =
+    trigger?.innerHTML;
+
+  const label = {
+    previous:'Открываем…',
+    next:'Следующий…',
+    finish:'Завершаем…'
+  }[action];
+
+  if (trigger) {
+    trigger.classList.add(
+      'is-loading'
+    );
+
+    trigger.innerHTML =
+      `${icon('spinner',15)} ${label}`;
+  }
+
+  workspace?.classList.add(
+    'is-busy'
+  );
+
+  workspace?.setAttribute(
+    'aria-busy',
+    'true'
+  );
+
+  try {
+    await submitNovaQuizControl(
+      action
+    );
+
+    return true;
+  } finally {
+    nova351QuizBusy = false;
+
+    workspace?.classList.remove(
+      'is-busy'
+    );
+
+    workspace?.setAttribute(
+      'aria-busy',
+      'false'
+    );
+
+    if (
+      trigger &&
+      document.body.contains(trigger)
+    ) {
+      if(original !== undefined){
+        trigger.innerHTML =
+          original;
+      }
+
+      trigger.disabled =
+        false;
+
+      trigger.classList.remove(
+        'is-loading'
+      );
+    }
+
+    const activeWorkspace =
+      document.querySelector(
+        '.nova-quiz-workspace'
+      );
+
+    if(activeWorkspace){
+      activeWorkspace
+        .querySelectorAll(
+          '[data-quiz-path], [data-quiz-control]'
+        )
+        .forEach(
+          el => {
+            el.disabled = false;
+          }
+        );
+    }
+  }
+}
+
+function bindNova351QuizDelegation() {
+  if (
+    typeof document === 'undefined' ||
+    window.__nova351QuizDelegationBound
+  ) {
+    return;
+  }
+
+  window.__nova351QuizDelegationBound =
+    true;
+
+  document.addEventListener(
+    'click',
+    event=>{
+      const nav =
+        event.target?.closest?.(
+          '.nova-quiz-workspace [data-quiz-path]'
+        );
+
+      if(nav){
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        if(
+          nav.disabled ||
+          nova351QuizBusy
+        ){
+          return;
+        }
+
+        void nova351LoadNovaQuizPage(
+          nav.dataset.quizPath || '',
+          nav
+        );
+
+        return;
+      }
+
+      const control =
+        event.target?.closest?.(
+          '.nova-quiz-workspace [data-quiz-control]'
+        );
+
+      if(!control){
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if(
+        control.disabled ||
+        nova351QuizBusy
+      ){
+        return;
+      }
+
+      void nova351SubmitQuizControl(
+        control.dataset.quizControl || '',
+        control
+      );
+    },
+    true
+  );
+}
+
+bindNova351QuizDelegation();
+
+/* NOVA 35.1 · QUIZ FUNCTIONALITY OVERRIDE END */

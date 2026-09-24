@@ -1083,3 +1083,68 @@
     transition:none !important;
   }
 }
+
+/* NOVA 35.1 · QUIZ LOADING STATES 20260924 */
+
+.nova-quiz-workspace[aria-busy="true"]{
+  cursor:progress;
+}
+
+.nova-quiz-workspace.is-busy .nova-quiz-nav-button,
+.nova-quiz-workspace.is-busy .nova-quiz-control{
+  pointer-events:none;
+}
+
+.nova-quiz-workspace.is-busy .nova-quiz-content{
+  opacity:.72;
+  transition:opacity .18s ease;
+}
+
+.nova-quiz-nav-button.is-loading,
+.nova-quiz-control.is-loading{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+}
+
+.nova-quiz-nav-button.is-loading{
+  color:var(--text);
+  background:color-mix(
+    in srgb,
+    var(--accent) 9%,
+    var(--surface)
+  );
+  border-color:color-mix(
+    in srgb,
+    var(--accent) 28%,
+    var(--line)
+  );
+}
+
+.nova-quiz-nav-button.is-loading .icon,
+.nova-quiz-control.is-loading .icon{
+  animation:nova351QuizSpin .75s linear infinite;
+}
+
+@keyframes nova351QuizSpin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+@media(max-width:900px){
+  .nova-quiz-nav-button.is-loading{
+    flex-basis:112px;
+    min-width:112px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nova-quiz-nav-button.is-loading .icon,
+  .nova-quiz-control.is-loading .icon{
+    animation:none;
+  }
+}
+
+/* NOVA 35.1 · QUIZ LOADING STATES END */
