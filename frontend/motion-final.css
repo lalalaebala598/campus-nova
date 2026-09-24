@@ -1132,3 +1132,753 @@ select:focus{
     filter:none !important;
   }
 }
+
+/* ============================================================
+   NOVA 31.0 · SIDEBAR ICON MOTION SYSTEM
+   Distinct motion scenes for every navigation icon.
+   ============================================================ */
+
+.nav-icon-slot{
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  display:grid;
+  place-items:center;
+  position:relative;
+  overflow:visible;
+}
+
+.nav-icon-slot > .icon{
+  width:18px;
+  height:18px;
+  display:block;
+  transform-box:fill-box;
+  transform-origin:center center;
+  overflow:visible;
+}
+
+/* Kill the tiny legacy hover scale when our dedicated animation runs */
+.nav-item:hover .nav-icon-slot > .icon{
+  transform:translateZ(0);
+}
+
+/* ============================================================
+   01 · ГЛАВНАЯ
+   House wakes up and lands softly.
+   ============================================================ */
+
+.nav-item[data-go="dashboard"]:hover .nav-icon-slot > .icon{
+  animation:nova31Home 1s cubic-bezier(.16,.82,.2,1) both !important;
+}
+
+@keyframes nova31Home{
+  0%{
+    transform:translateY(2px) scale(.88) rotate(-2deg);
+    opacity:.72;
+  }
+  20%{
+    transform:translateY(-4px) scale(1.16) rotate(2deg);
+    opacity:1;
+  }
+  42%{
+    transform:translateY(1px) scale(.98) rotate(-1deg);
+  }
+  64%{
+    transform:translateY(-2px) scale(1.09) rotate(1deg);
+  }
+  82%{
+    transform:translateY(.5px) scale(1.02) rotate(0);
+  }
+  100%{
+    transform:translateY(0) scale(1.06) rotate(0);
+    opacity:1;
+  }
+}
+
+/* ============================================================
+   02 · УЧЕБНЫЙ РЕЖИМ
+   Book opens like two pages.
+   ============================================================ */
+
+.nav-item[data-go="study"]:hover .nav-icon-slot > .icon{
+  animation:nova31Book 1.05s cubic-bezier(.18,.8,.2,1) both !important;
+}
+
+.nav-item[data-go="study"]:hover .nav-icon-slot > .icon path:nth-of-type(1){
+  animation:nova31BookPage .9s cubic-bezier(.18,.82,.22,1) both !important;
+}
+
+@keyframes nova31Book{
+  0%{
+    transform:perspective(120px) rotateY(0) scale(1);
+  }
+  28%{
+    transform:perspective(120px) rotateY(-14deg) rotateZ(-2deg) scale(1.08);
+  }
+  52%{
+    transform:perspective(120px) rotateY(10deg) rotateZ(2deg) scale(1.1);
+  }
+  72%{
+    transform:perspective(120px) rotateY(-5deg) scale(1.05);
+  }
+  100%{
+    transform:perspective(120px) rotateY(0) rotateZ(0) scale(1.06);
+  }
+}
+
+@keyframes nova31BookPage{
+  0%{transform:translateX(0)}
+  38%{transform:translateX(-1.8px)}
+  62%{transform:translateX(1px)}
+  100%{transform:translateX(0)}
+}
+
+/* ============================================================
+   03 · КУРСЫ
+   Four tiles pop in sequence.
+   ============================================================ */
+
+.nav-item[data-go="courses"]:hover .nav-icon-slot > .icon rect{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+.nav-item[data-go="courses"]:hover .nav-icon-slot > .icon rect:nth-of-type(1){
+  animation:nova31Tile 1s cubic-bezier(.18,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover .nav-icon-slot > .icon rect:nth-of-type(2){
+  animation:nova31Tile 1s .08s cubic-bezier(.18,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover .nav-icon-slot > .icon rect:nth-of-type(3){
+  animation:nova31Tile 1s .16s cubic-bezier(.18,.82,.2,1) both;
+}
+
+.nav-item[data-go="courses"]:hover .nav-icon-slot > .icon rect:nth-of-type(4){
+  animation:nova31Tile 1s .24s cubic-bezier(.18,.82,.2,1) both;
+}
+
+@keyframes nova31Tile{
+  0%{
+    transform:scale(.62) rotate(-8deg);
+    opacity:.35;
+  }
+  32%{
+    transform:scale(1.3) rotate(5deg);
+    opacity:1;
+  }
+  52%{
+    transform:scale(.9) rotate(-2deg);
+  }
+  76%{
+    transform:scale(1.08) rotate(1deg);
+  }
+  100%{
+    transform:scale(1) rotate(0);
+  }
+}
+
+/* ============================================================
+   04 · РАСПИСАНИЕ
+   Clock hand makes a clear sweep.
+   ============================================================ */
+
+.nav-item[data-go="schedule"]:hover .nav-icon-slot > .icon{
+  animation:nova31Clock 1.1s cubic-bezier(.16,.8,.2,1) both !important;
+}
+
+.nav-item[data-go="schedule"]:hover .nav-icon-slot > .icon path:nth-of-type(2){
+  transform-box:fill-box;
+  transform-origin:left bottom;
+  animation:nova31ClockHand 1.1s cubic-bezier(.2,.78,.2,1) both !important;
+}
+
+@keyframes nova31Clock{
+  0%{
+    transform:scale(.94) rotate(-8deg);
+  }
+  28%{
+    transform:scale(1.1) rotate(4deg);
+  }
+  62%{
+    transform:scale(1.05) rotate(-3deg);
+  }
+  100%{
+    transform:scale(1.06) rotate(0);
+  }
+}
+
+@keyframes nova31ClockHand{
+  0%{transform:rotate(0)}
+  30%{transform:rotate(110deg)}
+  58%{transform:rotate(235deg)}
+  78%{transform:rotate(315deg)}
+  100%{transform:rotate(360deg)}
+}
+
+/* ============================================================
+   05 · ДЕДЛАЙНЫ
+   Noticeable warning pulse, not a shake.
+   ============================================================ */
+
+.nav-item[data-go="deadlines"]:hover .nav-icon-slot > .icon{
+  animation:nova31Deadline 1.05s cubic-bezier(.2,.82,.2,1) both !important;
+  filter:drop-shadow(0 0 7px currentColor) !important;
+}
+
+@keyframes nova31Deadline{
+  0%{
+    transform:scale(1);
+  }
+  22%{
+    transform:scale(1.14) translateY(-3px);
+  }
+  39%{
+    transform:scale(1.02) translateY(1px);
+  }
+  56%{
+    transform:scale(1.11) translateY(-2px);
+  }
+  73%{
+    transform:scale(1.04) translateY(0);
+  }
+  100%{
+    transform:scale(1.07);
+  }
+}
+
+/* ============================================================
+   06 · ОЦЕНКИ
+   Chart draws slowly and visibly.
+   ============================================================ */
+
+.nav-item[data-go="grades"]:hover .nav-icon-slot > .icon{
+  animation:nova31Grades 1.15s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="grades"]:hover .nav-icon-slot > .icon path:last-of-type{
+  stroke-dasharray:40 !important;
+  stroke-dashoffset:40 !important;
+  animation:nova31GradeLine 1.15s cubic-bezier(.2,.78,.2,1) .1s both !important;
+}
+
+@keyframes nova31Grades{
+  0%{
+    transform:scale(.92) translateY(1px);
+  }
+  32%{
+    transform:scale(1.15) translateY(-3px);
+  }
+  58%{
+    transform:scale(1.05) translateY(0);
+  }
+  82%{
+    transform:scale(1.1) translateY(-1px);
+  }
+  100%{
+    transform:scale(1.07);
+  }
+}
+
+@keyframes nova31GradeLine{
+  0%{
+    stroke-dashoffset:40;
+    opacity:.15;
+  }
+  65%{
+    stroke-dashoffset:7;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+}
+
+/* ============================================================
+   07 · ЗАДАНИЯ
+   Checkmark gets completed.
+   ============================================================ */
+
+.nav-item[data-go="tasks"]:hover .nav-icon-slot > .icon{
+  animation:nova31Task 1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="tasks"]:hover .nav-icon-slot > .icon path:last-of-type{
+  stroke-dasharray:22 !important;
+  stroke-dashoffset:22 !important;
+  animation:nova31Check 1s cubic-bezier(.24,.84,.2,1) .13s both !important;
+}
+
+@keyframes nova31Task{
+  0%{
+    transform:scale(.95) rotate(0);
+  }
+  24%{
+    transform:scale(1.14) rotate(-5deg);
+  }
+  48%{
+    transform:scale(1.02) rotate(3deg);
+  }
+  70%{
+    transform:scale(1.1) rotate(-1deg);
+  }
+  100%{
+    transform:scale(1.06) rotate(0);
+  }
+}
+
+@keyframes nova31Check{
+  0%{
+    stroke-dashoffset:22;
+    opacity:.1;
+  }
+  18%{
+    stroke-dashoffset:20;
+    opacity:.35;
+  }
+  75%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+  100%{
+    stroke-dashoffset:0;
+    opacity:1;
+  }
+}
+
+/* ============================================================
+   08 · КАЛЕНДАРЬ
+   Page flip / tilt.
+   ============================================================ */
+
+.nav-item[data-go="calendar"]:hover .nav-icon-slot > .icon{
+  animation:nova31Calendar 1.05s cubic-bezier(.18,.8,.2,1) both !important;
+}
+
+@keyframes nova31Calendar{
+  0%{
+    transform:perspective(130px) rotateX(0) rotateZ(0) scale(1);
+  }
+  26%{
+    transform:perspective(130px) rotateX(-16deg) rotateZ(6deg) scale(1.1);
+  }
+  52%{
+    transform:perspective(130px) rotateX(9deg) rotateZ(-4deg) scale(1.06);
+  }
+  74%{
+    transform:perspective(130px) rotateX(-4deg) rotateZ(2deg) scale(1.09);
+  }
+  100%{
+    transform:perspective(130px) rotateX(0) rotateZ(0) scale(1.06);
+  }
+}
+
+/* ============================================================
+   09 · СООБЩЕНИЯ
+   Bubble jumps, signal appears separately.
+   ============================================================ */
+
+.nav-item[data-go="messages"]:hover .nav-icon-slot > .icon{
+  animation:nova31Message 1.1s cubic-bezier(.16,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="messages"]:hover .nav-icon-slot > .icon path:first-of-type{
+  animation:nova31BubbleShape 1.05s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="messages"]:hover .nav-icon-slot > .icon path:last-of-type{
+  animation:nova31Signal 1s cubic-bezier(.2,.82,.2,1) .08s both !important;
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+@keyframes nova31Message{
+  0%{
+    transform:translateX(0) scale(1);
+  }
+  18%{
+    transform:translateX(-3px) scale(1.05);
+  }
+  36%{
+    transform:translateX(4px) scale(1.12);
+  }
+  54%{
+    transform:translateX(-2px) scale(1.06);
+  }
+  72%{
+    transform:translateX(1px) scale(1.09);
+  }
+  100%{
+    transform:translateX(0) scale(1.06);
+  }
+}
+
+@keyframes nova31BubbleShape{
+  0%{transform:scale(.96)}
+  35%{transform:scale(1.06)}
+  65%{transform:scale(1.01)}
+  100%{transform:scale(1)}
+}
+
+@keyframes nova31Signal{
+  0%{
+    opacity:.05;
+    transform:scale(.35);
+  }
+  35%{
+    opacity:.5;
+    transform:scale(.75);
+  }
+  62%{
+    opacity:1;
+    transform:scale(1.2);
+  }
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+/* ============================================================
+   10 · ФАЙЛЫ
+   Folder rises and opens.
+   ============================================================ */
+
+.nav-item[data-go="files"]:hover .nav-icon-slot > .icon{
+  animation:nova31Files 1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="files"]:hover .nav-icon-slot > .icon path:first-of-type{
+  animation:nova31FolderBody 1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="files"]:hover .nav-icon-slot > .icon path:last-of-type{
+  animation:nova31FolderLip .9s cubic-bezier(.2,.8,.2,1) .08s both !important;
+}
+
+@keyframes nova31Files{
+  0%{
+    transform:translateY(2px) scale(.96);
+  }
+  28%{
+    transform:translateY(-4px) scale(1.12);
+  }
+  52%{
+    transform:translateY(1px) scale(1.04);
+  }
+  74%{
+    transform:translateY(-1px) scale(1.09);
+  }
+  100%{
+    transform:translateY(0) scale(1.06);
+  }
+}
+
+@keyframes nova31FolderBody{
+  0%{transform:translateY(1px)}
+  40%{transform:translateY(-3px)}
+  70%{transform:translateY(1px)}
+  100%{transform:translateY(0)}
+}
+
+@keyframes nova31FolderLip{
+  0%{
+    opacity:.25;
+    transform:translateY(2px);
+  }
+  48%{
+    opacity:1;
+    transform:translateY(-3px);
+  }
+  72%{
+    transform:translateY(1px);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* ============================================================
+   11 · МАТЕРИАЛЫ
+   Layered document tilt.
+   ============================================================ */
+
+.nav-item[data-go="materials"]:hover .nav-icon-slot > .icon{
+  animation:nova31Materials 1.05s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="materials"]:hover .nav-icon-slot > .icon path:first-of-type{
+  animation:nova31MaterialPage 1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+@keyframes nova31Materials{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+  24%{
+    transform:rotate(-8deg) translateY(-3px) scale(1.1);
+  }
+  46%{
+    transform:rotate(6deg) translateY(1px) scale(1.04);
+  }
+  68%{
+    transform:rotate(-3deg) translateY(-1px) scale(1.09);
+  }
+  100%{
+    transform:rotate(0) translateY(0) scale(1.06);
+  }
+}
+
+@keyframes nova31MaterialPage{
+  0%{transform:translateX(0)}
+  35%{transform:translateX(-2px)}
+  58%{transform:translateX(1.5px)}
+  100%{transform:translateX(0)}
+}
+
+/* ============================================================
+   12 · ТЕСТЫ
+   Scan passes through answer rows.
+   ============================================================ */
+
+.nav-item[data-go="tests"]:hover .nav-icon-slot > .icon{
+  animation:nova31Tests 1.05s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.nav-item[data-go="tests"]:hover .nav-icon-slot > .icon path:nth-of-type(2){
+  animation:nova31Scan  .72s ease both;
+}
+
+.nav-item[data-go="tests"]:hover .nav-icon-slot > .icon path:nth-of-type(3){
+  animation:nova31Scan  .72s .12s ease both;
+}
+
+.nav-item[data-go="tests"]:hover .nav-icon-slot > .icon path:nth-of-type(4){
+  animation:nova31Scan  .72s .24s ease both;
+}
+
+@keyframes nova31Tests{
+  0%{
+    transform:scale(.96);
+  }
+  28%{
+    transform:scale(1.12) translateY(-3px) rotate(-2deg);
+  }
+  56%{
+    transform:scale(1.04) rotate(2deg);
+  }
+  78%{
+    transform:scale(1.09) rotate(-1deg);
+  }
+  100%{
+    transform:scale(1.06) rotate(0);
+  }
+}
+
+@keyframes nova31Scan{
+  0%{
+    opacity:.15;
+    transform:translateX(-3px);
+  }
+  55%{
+    opacity:1;
+    transform:translateX(2px);
+  }
+  100%{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/* ============================================================
+   13 · ПРОФИЛЬ
+   Head and body breathe separately.
+   ============================================================ */
+
+.sidebar-bottom > .nav-item[data-go="profile"]:hover .nav-icon-slot > .icon{
+  animation:nova31Profile 1.05s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.sidebar-bottom > .nav-item[data-go="profile"]:hover .nav-icon-slot > .icon circle{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:nova31ProfileHead .9s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+@keyframes nova31Profile{
+  0%{
+    transform:scale(1);
+  }
+  26%{
+    transform:translateY(-3px) scale(1.12);
+  }
+  52%{
+    transform:translateY(1px) scale(1.04);
+  }
+  76%{
+    transform:translateY(-1px) scale(1.09);
+  }
+  100%{
+    transform:translateY(0) scale(1.06);
+  }
+}
+
+@keyframes nova31ProfileHead{
+  0%{transform:scale(1)}
+  42%{transform:scale(1.18)}
+  68%{transform:scale(.96)}
+  100%{transform:scale(1)}
+}
+
+/* ============================================================
+   14 · СОЛНЦЕ / ЛУНА
+   Theme controls get their own transformation.
+   ============================================================ */
+
+#theme-top:hover > .icon,
+#theme-sidebar:hover > .icon{
+  animation:nova31Theme 1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+#theme-top:hover > .icon path,
+#theme-sidebar:hover > .icon path{
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+/* Sun: rays bloom around the core */
+#theme-top:hover > .icon[data-icon="sun"] path,
+#theme-sidebar:hover > .icon[data-icon="sun"] path{
+  animation:nova31Sun .95s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes nova31Sun{
+  0%{
+    transform:rotate(0) scale(.72);
+    opacity:.55;
+  }
+  35%{
+    transform:rotate(55deg) scale(1.12);
+    opacity:1;
+  }
+  68%{
+    transform:rotate(105deg) scale(.96);
+  }
+  100%{
+    transform:rotate(180deg) scale(1);
+    opacity:1;
+  }
+}
+
+/* Moon: quiet orbital turn */
+#theme-top:hover > .icon[data-icon="moon"],
+#theme-sidebar:hover > .icon[data-icon="moon"]{
+  animation:nova31Moon 1.1s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+@keyframes nova31Moon{
+  0%{
+    transform:rotate(0) translateX(0) scale(.9);
+  }
+  36%{
+    transform:rotate(-18deg) translateX(-1px) scale(1.12);
+  }
+  68%{
+    transform:rotate(14deg) translateX(1px) scale(1.04);
+  }
+  100%{
+    transform:rotate(0) translateX(0) scale(1.07);
+  }
+}
+
+/* Theme toggle button itself gets a subtle orbit */
+#theme-top:hover,
+#theme-sidebar:hover{
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,currentColor 12%,transparent),
+    0 8px 22px color-mix(in srgb,currentColor 10%,transparent);
+}
+
+/* ============================================================
+   15 · УВЕДОМЛЕНИЯ
+   Bell swings, badge pops separately.
+   ============================================================ */
+
+#notifications:hover > .icon{
+  animation:nova31Bell 1.05s cubic-bezier(.2,.82,.2,1) both !important;
+  transform-origin:50% 12%;
+}
+
+#notifications.has-dot:hover > i{
+  animation:nova31Badge .8s cubic-bezier(.2,.82,.2,1) .12s both !important;
+}
+
+@keyframes nova31Bell{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+  18%{
+    transform:rotate(-17deg) scale(1.05);
+  }
+  35%{
+    transform:rotate(15deg) scale(1.1);
+  }
+  50%{
+    transform:rotate(-11deg) scale(1.06);
+  }
+  65%{
+    transform:rotate(8deg) scale(1.09);
+  }
+  80%{
+    transform:rotate(-4deg) scale(1.05);
+  }
+  100%{
+    transform:rotate(0) scale(1.05);
+  }
+}
+
+@keyframes nova31Badge{
+  0%{
+    transform:scale(.45);
+    opacity:.35;
+  }
+  45%{
+    transform:scale(1.45);
+    opacity:1;
+  }
+  68%{
+    transform:scale(.88);
+  }
+  100%{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+/* ============================================================
+   Active state
+   ============================================================ */
+
+.nav-item.active .nav-icon-slot > .icon{
+  filter:drop-shadow(0 2px 5px currentColor);
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion:reduce){
+  .nav-icon-slot > .icon,
+  .nav-icon-slot > .icon *,
+  #theme-top > .icon,
+  #theme-sidebar > .icon,
+  #notifications > .icon,
+  #notifications > i{
+    animation:none !important;
+    transform:none !important;
+    filter:none !important;
+  }
+}
